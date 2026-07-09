@@ -1,0 +1,9 @@
+keystore/*.jks
+keystore/signing.properties
+twa/.gradle/
+twa/build/
+twa/app/build/
+twa/local.properties
+release/*.aab
+release/*.apk
+release/*.sha256

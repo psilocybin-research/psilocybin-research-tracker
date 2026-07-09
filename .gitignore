@@ -1,0 +1,53 @@
+# Runtime data and secrets
+/data/*
+!/data/.htaccess
+*.sqlite
+*.sqlite3
+*.db
+*.db-wal
+*.db-shm
+*.log
+*.lock
+*.bak
+*.tmp
+.env
+.env.*
+!.env.example
+admin_token.php
+push_vapid.php
+
+# Local notes and credentials
+/to do
+to do
+*password*
+*secret*
+*token*
+
+# Site sections not published in the public tracker repository
+/msca-impact/
+/assets/msca-impact/
+
+# Android release/signing outputs
+/android/keystore/
+/android/release/
+/android/twa/.gradle/
+/android/twa/build/
+/android/twa/app/build/
+/android/twa/local.properties
+*.jks
+*.keystore
+*.aab
+*.apk
+
+# Dependency/build caches
+/node_modules/
+/vendor/
+/.phpunit.cache/
+.DS_Store
+Thumbs.db
+
+# IDE/editor
+.idea/
+.vscode/
+*.swp
+*.swo

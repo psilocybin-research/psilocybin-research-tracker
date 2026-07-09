@@ -1,0 +1,59 @@
+DirectoryIndex index.php
+Options -Indexes
+
+<IfModule mod_headers.c>
+  Header unset ETag
+  Header set X-Content-Type-Options "nosniff"
+  <FilesMatch "\.(?:css|js|mjs|json|webmanifest|r|R|png|jpe?g|webp|gif|svg|ico|woff2?|mp3)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  <FilesMatch "\.(?:html|php)$">
+    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+  </FilesMatch>
+  <Files "assetlinks.json">
+    Header set Cache-Control "no-cache, no-store, must-revalidate, max-age=0"
+  </Files>
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/plain "access plus 1 year"
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType text/javascript "access plus 1 year"
+  ExpiresByType application/manifest+json "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+  ExpiresByType image/x-icon "access plus 1 year"
+  ExpiresByType font/woff2 "access plus 1 year"
+  ExpiresByType audio/mpeg "access plus 1 year"
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css text/javascript application/javascript application/json application/manifest+json image/svg+xml
+</IfModule>
+
+<IfModule mod_brotli.c>
+  AddOutputFilterByType BROTLI_COMPRESS text/html text/plain text/css text/javascript application/javascript application/json application/manifest+json image/svg+xml
+</IfModule>
+
+AddType text/plain .R .r
+
+<FilesMatch "^(schema\.sql|README\.md|.*\.(?:sqlite|sqlite3|db|db-wal|db-shm|log|lock|bak))$">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{QUERY_STRING} ^q=([^&]+)$ [NC]
+  RewriteRule ^(.*)$ $1?search=%1 [R=302,L,NE]
+  RewriteCond %{QUERY_STRING} ^q=([^&]+)&(.+)$ [NC]
+  RewriteRule ^(.*)$ $1?search=%1&%2 [R=302,L,NE]
+  RewriteRule ^data/ - [F,L]
+  RewriteRule ^src/ - [F,L]
+  RewriteRule ^bin/ - [F,L]
+  RewriteRule ^tests/ - [F,L]
+  RewriteRule ^android/ - [F,L]
+</IfModule>

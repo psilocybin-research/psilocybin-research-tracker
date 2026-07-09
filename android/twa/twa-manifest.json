@@ -1,0 +1,51 @@
+{
+  "packageId": "com.psilocybinresearch.tracker",
+  "host": "psilocybin-research.com",
+  "name": "Psilocybin Research Tracker",
+  "launcherName": "PsiloTrack",
+  "display": "standalone",
+  "themeColor": "#123C31",
+  "themeColorDark": "#000000",
+  "navigationColor": "#000000",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#F6F3EA",
+  "enableNotifications": true,
+  "startUrl": "/?source=pwa",
+  "iconUrl": "https://psilocybin-research.com/assets/pwa/icon-512.png?v=20260709-network-v81",
+  "maskableIconUrl": "https://psilocybin-research.com/assets/pwa/maskable-512.png?v=20260709-network-v81",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "../keystore/psilocybin-research-upload.jks",
+    "alias": "upload"
+  },
+  "appVersionName": "1",
+  "appVersionCode": 1,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://psilocybin-research.com/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://psilocybin-research.com/",
+  "minSdkVersion": 21,
+  "orientation": "any",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": "",
+  "displayOverride": [
+    "window-controls-overlay",
+    "standalone",
+    "browser"
+  ],
+  "appVersion": "1"
+}

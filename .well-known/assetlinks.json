@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.psilocybinresearch.tracker",
+      "sha256_cert_fingerprints": [
+        "EB:3A:1D:CF:22:3E:B8:2B:2E:3D:23:90:94:6F:A6:E1:2F:8B:A9:E4:6F:13:FB:E7:C9:E3:F2:2C:DB:FD:12:B4"
+      ]
+    }
+  }
+]
