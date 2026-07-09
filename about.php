@@ -3,10 +3,10 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/src/helpers.php';
 
-$assetVersion = '20260709-github-r-v82';
+$assetVersion = '20260709-sidebar-r-v83';
 $baseUrl = Config::publicBaseUrl();
 $canonicalUrl = $baseUrl . 'about.php';
-$shareImageUrl = $baseUrl . 'assets/pwa/icon-512.png?v=20260709-github-r-v82';
+$shareImageUrl = $baseUrl . 'assets/pwa/icon-512.png?v=20260709-sidebar-r-v83';
 $description = 'About the Psilocybin Research Publication Tracker: searchable literature database, analytics, exports, alerts, privacy, encryption, and source coverage.';
 $aboutStats = [
     'engine' => 'SQLite',
@@ -72,9 +72,9 @@ try {
   <meta name="twitter:description" content="<?= h($description) ?>">
   <meta name="twitter:image" content="<?= h($shareImageUrl) ?>">
   <meta name="twitter:image:alt" content="Psilocybin Research Publication Tracker logo">
-  <link rel="icon" href="assets/logo.png?v=20260709-github-r-v82">
-  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260709-github-r-v82">
-  <link rel="manifest" href="manifest.webmanifest?v=20260709-github-r-v82">
+  <link rel="icon" href="assets/logo.png?v=20260709-sidebar-r-v83">
+  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260709-sidebar-r-v83">
+  <link rel="manifest" href="manifest.webmanifest?v=20260709-sidebar-r-v83">
   <link rel="stylesheet" href="assets/styles.min.css?v=<?= h($assetVersion) ?>">
   <script>
     document.documentElement.classList.add('js');
@@ -124,6 +124,7 @@ try {
       <a href="authors.php"><i data-icon="users" aria-hidden="true"></i><span>Authors</span></a>
       <a href="citation-network.php"><i data-icon="network" aria-hidden="true"></i><span>Citation Network</span></a>
       <a href="/#analytics"><i data-icon="network" aria-hidden="true"></i><span>Analytics</span></a>
+      <a href="tools/psilocybin_bibliometrics_visnetwork.R" download><i data-icon="r-script" aria-hidden="true"></i><span>R script</span></a>
       <a href="/#alerts"><i data-icon="bell-plus" aria-hidden="true"></i><span>Alerts</span></a>
       <a href="export.php?format=json" target="_blank" rel="noopener"><i data-icon="download" aria-hidden="true"></i><span>Export data</span></a>
       <a href="api.php" target="_blank" rel="noopener"><i data-icon="braces" aria-hidden="true"></i><span>API</span></a>

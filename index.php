@@ -209,7 +209,7 @@ $publicationGrowthTotal = array_sum(array_column($publicationGrowthYears, 'count
 $publicationGrowthLatest = $publicationGrowthYears ? (int)end($publicationGrowthYears)['count'] : 0;
 $publicationGrowthLatestYear = $publicationGrowthYears ? (int)end($publicationGrowthYears)['year'] : null;
 $publicationGrowthFirstYear = $publicationGrowthYears ? (int)$publicationGrowthYears[0]['year'] : null;
-$assetVersion = '20260709-github-r-v82';
+$assetVersion = '20260709-sidebar-r-v83';
 $appVersion = '2.1.1';
 $formatBytes = static function (int $bytes): string {
     if ($bytes >= 1073741824) {
@@ -245,7 +245,7 @@ $latestAddedDoi = $latestAddedWithDoi ? normalize_doi((string)($latestAddedWithD
 $latestAddedAt = $latestAddedWithDoi ? (string)($latestAddedWithDoi['date_added'] ?? '') : '';
 $baseUrl = Config::publicBaseUrl();
 $canonicalUrl = $baseUrl;
-$shareImageUrl = $baseUrl . 'assets/pwa/icon-512.png?v=20260709-github-r-v82';
+$shareImageUrl = $baseUrl . 'assets/pwa/icon-512.png?v=20260709-sidebar-r-v83';
 $shareImageAlt = 'Psilocybin Research Publication Tracker logo';
 $latestJsonLdItems = [];
 foreach (array_slice($latestPapers, 0, 10) as $index => $paper) {
@@ -346,11 +346,11 @@ $jsonLd = [
   <meta name="twitter:image" content="<?= h($shareImageUrl) ?>">
   <meta name="twitter:image:alt" content="<?= h($shareImageAlt) ?>">
   <title>Publication Tracker | Psilocybin Research</title>
-  <link rel="icon" href="assets/logo.png?v=20260709-github-r-v82">
-  <link rel="icon" type="image/png" sizes="192x192" href="assets/pwa/icon-192.png?v=20260709-github-r-v82">
-  <link rel="icon" type="image/png" sizes="512x512" href="assets/pwa/icon-512.png?v=20260709-github-r-v82">
-  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260709-github-r-v82">
-  <link rel="manifest" href="manifest.webmanifest?v=20260709-github-r-v82">
+  <link rel="icon" href="assets/logo.png?v=20260709-sidebar-r-v83">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/pwa/icon-192.png?v=20260709-sidebar-r-v83">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/pwa/icon-512.png?v=20260709-sidebar-r-v83">
+  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260709-sidebar-r-v83">
+  <link rel="manifest" href="manifest.webmanifest?v=20260709-sidebar-r-v83">
   <link rel="preload" href="assets/preloader-mushroom-desktop.webp" as="image" media="(min-width: 701px)" fetchpriority="high">
   <link rel="preload" href="assets/preloader-mushroom-mobile.webp" as="image" media="(max-width: 700px)" fetchpriority="high">
   <link rel="preload" href="assets/fonts/roboto-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -396,6 +396,7 @@ $jsonLd = [
     <a href="authors.php"><i data-icon="users" aria-hidden="true"></i><span>Authors</span></a>
     <a href="citation-network.php"><i data-icon="network" aria-hidden="true"></i><span>Citation Network</span></a>
     <a href="#analytics" data-open-analytics><i data-icon="network" aria-hidden="true"></i><span>Analytics</span></a>
+    <a href="tools/psilocybin_bibliometrics_visnetwork.R" download><i data-icon="r-script" aria-hidden="true"></i><span>R script</span></a>
     <a href="#alerts" data-open-alerts><i data-icon="bell-plus" aria-hidden="true"></i><span>Alerts</span></a>
     <a href="export.php?<?= h(http_build_query(array_merge(canonical_query_params($_GET), ['format' => 'json']))) ?>" target="_blank" rel="noopener" data-sidebar-export><i data-icon="download" aria-hidden="true"></i><span>Export data</span></a>
     <a href="api.php?<?= h(http_build_query(array_merge(canonical_query_params($_GET), ['resource' => 'papers', 'per_page' => 'all', 'page' => 1]))) ?>" target="_blank" rel="noopener"><i data-icon="braces" aria-hidden="true"></i><span>API</span></a>
@@ -809,7 +810,7 @@ $jsonLd = [
                 <a href="export.php?<?= h(http_build_query(array_merge(canonical_query_params($_GET), ['format' => 'csv']))) ?>" target="_blank" rel="noopener"><i data-icon="table" aria-hidden="true"></i><span>CSV</span></a>
                 <a href="export.php?<?= h(http_build_query(array_merge(canonical_query_params($_GET), ['format' => 'json']))) ?>" target="_blank" rel="noopener"><i data-icon="braces" aria-hidden="true"></i><span>JSON</span></a>
                 <a href="database.php" target="_blank" rel="noopener"><i data-icon="database" aria-hidden="true"></i><span>SQLite database</span></a>
-                <a href="tools/psilocybin_bibliometrics_visnetwork.R" download><i data-icon="file-type" aria-hidden="true"></i><span>R bibliometrics script</span></a>
+                <a href="tools/psilocybin_bibliometrics_visnetwork.R" download><i data-icon="r-script" aria-hidden="true"></i><span>R bibliometrics script</span></a>
                 <a href="api.php?<?= h(http_build_query(array_merge(canonical_query_params($_GET), ['resource' => 'papers', 'per_page' => 'all', 'page' => 1]))) ?>" target="_blank" rel="noopener"><i data-icon="braces" aria-hidden="true"></i><span>Open API</span></a>
               </div>
               <div class="command-menu-status">

@@ -14,7 +14,7 @@ if (!$paper) {
 $related = $paper ? $repo->relatedPapers($paper, 8) : [];
 $references = $paper ? $repo->citedReferences($paper, 40) : [];
 $citing = $paper && !empty($paper['doi']) ? $repo->citingPapers((string)$paper['doi'], 20) : [];
-$assetVersion = '20260709-network-v81';
+$assetVersion = '20260709-sidebar-r-v83';
 $title = $paper ? (string)$paper['title'] : 'Publication not found';
 ?>
 <!doctype html>

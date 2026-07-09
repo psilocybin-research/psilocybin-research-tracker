@@ -8,7 +8,7 @@ $db->initialize();
 $repo = new PublicationRepository($db);
 $alerts = new AlertService($db, $repo);
 $topics = $repo->topics();
-$assetVersion = '20260709-github-r-v82';
+$assetVersion = '20260709-sidebar-r-v83';
 
 $token = request_value('token', '');
 $message = null;
@@ -96,7 +96,7 @@ $statusLabel = $subscription ? ($isActive ? 'Active' : ($isConfirmed ? 'Paused' 
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Manage Publication Alert | Psilocybin Research</title>
-  <link rel="icon" href="assets/logo.png?v=20260709-github-r-v82">
+  <link rel="icon" href="assets/logo.png?v=20260709-sidebar-r-v83">
   <link rel="stylesheet" href="assets/styles.min.css?v=<?= h($assetVersion) ?>">
   <script>
     document.documentElement.classList.add('js');
@@ -132,9 +132,11 @@ $statusLabel = $subscription ? ($isActive ? 'Active' : ($isConfirmed ? 'Paused' 
     <a href="authors.php"><i data-icon="users" aria-hidden="true"></i><span>Authors</span></a>
     <a href="citation-network.php"><i data-icon="network" aria-hidden="true"></i><span>Citation Network</span></a>
     <a href="/#analytics"><i data-icon="network" aria-hidden="true"></i><span>Analytics</span></a>
+    <a href="tools/psilocybin_bibliometrics_visnetwork.R" download><i data-icon="r-script" aria-hidden="true"></i><span>R script</span></a>
     <a href="/#alerts" aria-current="location"><i data-icon="bell-plus" aria-hidden="true"></i><span>Alerts</span></a>
     <a href="export.php?format=json" target="_blank" rel="noopener"><i data-icon="download" aria-hidden="true"></i><span>Export data</span></a>
     <a href="api.php" target="_blank" rel="noopener"><i data-icon="braces" aria-hidden="true"></i><span>API</span></a>
+    <a href="https://github.com/psilocybin-research/psilocybin-research-tracker" target="_blank" rel="noopener me"><i data-icon="github" aria-hidden="true"></i><span>GitHub</span></a>
     <a href="about.php"><i data-icon="circle-alert" aria-hidden="true"></i><span>About</span></a>
     <a href="data-protection.php"><i data-icon="shield" aria-hidden="true"></i><span>Data protection</span></a>
   </nav>

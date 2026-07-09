@@ -68,6 +68,7 @@ function detail_page_header(string $current = ''): string
         ['key' => 'authors', 'href' => 'authors.php', 'icon' => 'users', 'label' => 'Authors'],
         ['key' => 'citation-network', 'href' => 'citation-network.php', 'icon' => 'network', 'label' => 'Citation Network'],
         ['key' => 'analytics', 'href' => './#analytics', 'icon' => 'network', 'label' => 'Analytics'],
+        ['key' => 'r-script', 'href' => 'tools/psilocybin_bibliometrics_visnetwork.R', 'icon' => 'r-script', 'label' => 'R script', 'download' => true],
         ['key' => 'alerts', 'href' => './#alerts', 'icon' => 'bell-plus', 'label' => 'Alerts'],
         ['key' => 'export', 'href' => 'export.php?format=json', 'icon' => 'download', 'label' => 'Export data', 'disabled' => true, 'disabled_title' => 'Use export from a publication results list so current filters can be included.'],
         ['key' => 'api', 'href' => 'api.php', 'icon' => 'braces', 'label' => 'API', 'disabled' => true, 'disabled_title' => 'Use API links from a publication results list so current filters can be included.'],
@@ -84,7 +85,8 @@ function detail_page_header(string $current = ''): string
         }
         $active = $current === $item['key'] ? ' aria-current="location"' : '';
         $external = !empty($item['external']) ? ' target="_blank" rel="noopener me"' : '';
-        $nav .= '<a href="' . h($item['href']) . '"' . $external . $active . '>' . $icon . '</a>';
+        $download = !empty($item['download']) ? ' download' : '';
+        $nav .= '<a href="' . h($item['href']) . '"' . $external . $download . $active . '>' . $icon . '</a>';
     }
     return '<header class="topbar">'
         . '<button class="nav-sidebar-toggle" id="nav-sidebar-toggle" type="button" aria-expanded="true" aria-controls="primary-sidebar-content" title="Collapse sidebar">'

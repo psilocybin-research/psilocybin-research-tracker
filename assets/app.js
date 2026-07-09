@@ -41,6 +41,7 @@ const ICONS = {
   "braces": '<svg viewBox="0 0 24 24"><path d="M8 4c-2 0-2 2-2 3v2c0 1-1 2-2 2 1 0 2 1 2 2v2c0 1 0 3 2 3"></path><path d="M16 4c2 0 2 2 2 3v2c0 1 1 2 2 2-1 0-2 1-2 2v2c0 1 0 3-2 3"></path></svg>',
   "github": '<svg viewBox="0 0 24 24"><path d="M12 2.5a9.5 9.5 0 0 0-3 18.5c.5.1.7-.2.7-.5v-1.8c-2.9.6-3.5-1.2-3.5-1.2-.5-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.6.3-1.1.6-1.3-2.3-.3-4.7-1.2-4.7-5.1 0-1.1.4-2 1-2.8-.1-.3-.4-1.3.1-2.8 0 0 .8-.3 2.9 1.1a10 10 0 0 1 5.2 0c2-1.4 2.9-1.1 2.9-1.1.5 1.5.2 2.5.1 2.8.6.7 1 1.7 1 2.8 0 4-2.4 4.8-4.7 5.1.4.3.7 1 .7 2v2.9c0 .3.2.6.7.5A9.5 9.5 0 0 0 12 2.5z"></path></svg>',
   "file-type": '<svg viewBox="0 0 24 24"><path d="M14 3v5a1 1 0 0 0 1 1h5"></path><path d="M6 3h8l6 6v12H6z"></path><path d="M9 16h6"></path><path d="M10 13h4"></path></svg>',
+  "r-script": '<svg viewBox="0 0 24 24"><path d="M14 3v5a1 1 0 0 0 1 1h5"></path><path d="M6 3h8l6 6v12H6z"></path><path d="M9 18v-6h4a2 2 0 0 1 0 4H9"></path><path d="m12.5 16 3 3"></path></svg>',
   "list-filter": '<svg viewBox="0 0 24 24"><path d="M4 7h16"></path><path d="M7 12h10"></path><path d="M10 17h4"></path></svg>',
   "menu": '<svg viewBox="0 0 24 24"><path d="M4 7h16"></path><path d="M4 12h16"></path><path d="M4 17h16"></path></svg>',
   "chevron-left": '<svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg>',
@@ -2319,7 +2320,7 @@ function initPwa() {
         try {
           new Notification("Psilocybin Research Tracker updated", {
             body: "The installed research app has refreshed to the latest version.",
-            icon: "assets/pwa/icon-192.png?v=20260709-network-v81",
+            icon: "assets/pwa/icon-192.png?v=20260709-sidebar-r-v83",
             tag: "publication-tracker-app-update",
           });
         } catch (error) {}

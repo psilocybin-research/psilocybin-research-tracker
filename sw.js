@@ -1,5 +1,5 @@
-const CACHE_VERSION = "publication-tracker-pwa-v154-20260709-github-r";
-const ASSET_VERSION = "20260709-github-r-v82";
+const CACHE_VERSION = "publication-tracker-pwa-v155-20260709-sidebar-r";
+const ASSET_VERSION = "20260709-sidebar-r-v83";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 

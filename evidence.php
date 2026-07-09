@@ -7,7 +7,7 @@ $db = new Database();
 $db->initialize();
 $repo = new PublicationRepository($db);
 $rows = $repo->evidenceMap();
-$assetVersion = '20260709-network-v81';
+$assetVersion = '20260709-sidebar-r-v83';
 ?>
 <!doctype html>
 <html lang="en">

@@ -11,7 +11,7 @@ if ((string)($filters['q'] ?? '') === '' && request_value('search') !== null) {
     $filters['q'] = request_value('search');
 }
 $trials = $repo->trials($filters, 150);
-$assetVersion = '20260709-network-v81';
+$assetVersion = '20260709-sidebar-r-v83';
 ?>
 <!doctype html>
 <html lang="en">
