@@ -19,6 +19,14 @@ jobs:
           php-version: '8.2'
           extensions: sqlite3, pdo_sqlite, mbstring, json
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install frontend build tool
+        run: npm install --global esbuild
+
       - name: Lint PHP files
         run: find . -name '*.php' -print0 | xargs -0 -n1 php -l
 
