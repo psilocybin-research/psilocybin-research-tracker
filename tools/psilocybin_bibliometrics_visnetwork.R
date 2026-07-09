@@ -16,6 +16,7 @@
 #   PSILO_STATUS         Optional comma list: published,preprint,clinical trial,protocol,review
 #   PSILO_TOPIC          Optional topic substring filter, e.g. depression
 #   PSILO_SUBSTANCE      Optional substance substring filter, e.g. psilocybin
+#   PSILO_AUTO_OPEN      Open finished HTML report/network. Default: 1
 
 options(stringsAsFactors = FALSE, repos = c(CRAN = "https://cloud.r-project.org"))
 
@@ -50,7 +51,8 @@ cfg <- list(
   from_year = Sys.getenv("PSILO_FROM_YEAR", ""),
   status = Sys.getenv("PSILO_STATUS", ""),
   topic = Sys.getenv("PSILO_TOPIC", ""),
-  substance = Sys.getenv("PSILO_SUBSTANCE", "")
+  substance = Sys.getenv("PSILO_SUBSTANCE", ""),
+  auto_open = !tolower(Sys.getenv("PSILO_AUTO_OPEN", "1")) %in% c("0", "false", "no", "off")
 )
 
 if (is.na(cfg$max_papers) || cfg$max_papers < 20) cfg$max_papers <- 300
@@ -498,6 +500,25 @@ summary_html <- htmltools::tagList(
 
 summary_file <- file.path(cfg$output_dir, "bibliometric_report.html")
 htmltools::save_html(summary_html, summary_file)
+
+open_output_file <- function(path) {
+  path <- normalizePath(path, mustWork = FALSE)
+  if (!file.exists(path)) return(invisible(FALSE))
+  opened <- tryCatch({
+    utils::browseURL(path)
+    TRUE
+  }, error = function(e) {
+    message("Could not auto-open ", path, ": ", conditionMessage(e))
+    FALSE
+  })
+  invisible(opened)
+}
+
+if (isTRUE(cfg$auto_open)) {
+  message("Opening report and interactive network in your default browser.")
+  open_output_file(summary_file)
+  open_output_file(network_file)
+}
 
 message("\nDone.")
 message("Records analyzed: ", nrow(publications))
