@@ -30,6 +30,7 @@ pacman::p_load(
   tidyr,
   stringr,
   lubridate,
+  httr2,
   jsonlite,
   purrr,
   readr,
@@ -59,9 +60,49 @@ dir.create(file.path(cfg$output_dir, "tables"), recursive = TRUE, showWarnings =
 dir.create(file.path(cfg$output_dir, "figures"), recursive = TRUE, showWarnings = FALSE)
 dir.create(file.path(cfg$output_dir, "network"), recursive = TRUE, showWarnings = FALSE)
 
+download_database <- function(url, dest) {
+  if (str_starts(url, "file://")) {
+    local_path <- sub("^file://", "", url)
+    if (!file.copy(local_path, dest, overwrite = TRUE)) {
+      stop("Could not copy local database file: ", local_path)
+    }
+    return(invisible(dest))
+  }
+
+  result <- tryCatch({
+    request <- httr2::request(url) |>
+      httr2::req_user_agent("PsilocybinResearchTrackerR/1.0 (+https://psilocybin-research.com/)") |>
+      httr2::req_timeout(180)
+    response <- httr2::req_perform(request, path = dest)
+    if (httr2::resp_status(response) >= 400) {
+      stop("HTTP ", httr2::resp_status(response))
+    }
+    TRUE
+  }, error = function(e) {
+    message("httr2 download failed: ", conditionMessage(e))
+    FALSE
+  })
+
+  if (!isTRUE(result)) {
+    utils::download.file(
+      url,
+      dest,
+      mode = "wb",
+      quiet = FALSE,
+      headers = c("User-Agent" = "PsilocybinResearchTrackerR/1.0 (+https://psilocybin-research.com/)")
+    )
+  }
+
+  if (!file.exists(dest) || file.info(dest)$size < 1024) {
+    stop("Database download failed or returned an unexpectedly small file.")
+  }
+
+  invisible(dest)
+}
+
 message("Downloading current database from: ", cfg$db_url)
 db_file <- file.path(cfg$output_dir, "psilocybin-research-publications.sqlite")
-download.file(cfg$db_url, db_file, mode = "wb", quiet = FALSE)
+download_database(cfg$db_url, db_file)
 
 con <- DBI::dbConnect(RSQLite::SQLite(), db_file)
 on.exit(DBI::dbDisconnect(con), add = TRUE)
@@ -115,7 +156,23 @@ safe_slug <- function(x) {
     str_replace_all("(^-|-$)", "")
 }
 
-publications <- DBI::dbReadTable(con, "publications") |>
+ensure_column <- function(data, name, default = NA_character_) {
+  if (!name %in% names(data)) data[[name]] <- default
+  data
+}
+
+publication_table <- DBI::dbReadTable(con, "publications") |>
+  as_tibble()
+
+for (column in c(
+  "id", "title", "authors", "journal", "publication_date", "publication_year",
+  "doi", "pubmed_id", "source_url", "source_name", "publication_status",
+  "topic_tags", "substance_tags", "study_type", "raw_json"
+)) {
+  publication_table <- ensure_column(publication_table, column)
+}
+
+publications <- publication_table |>
   as_tibble() |>
   mutate(
     id = as.integer(id),
@@ -131,8 +188,15 @@ publications <- DBI::dbReadTable(con, "publications") |>
     substance_tags = coalesce(substance_tags, ""),
     study_type = coalesce(study_type, ""),
     raw_json = coalesce(raw_json, "")
-  ) |>
-  filter(hidden == 0, false_positive == 0)
+  )
+
+if ("hidden" %in% names(publications)) {
+  publications <- publications |> filter(is.na(hidden) | as.integer(hidden) == 0)
+}
+
+if ("false_positive" %in% names(publications)) {
+  publications <- publications |> filter(is.na(false_positive) | as.integer(false_positive) == 0)
+}
 
 if (nzchar(cfg$from_year)) {
   min_year <- suppressWarnings(as.integer(cfg$from_year))
@@ -411,7 +475,7 @@ summary_html <- htmltools::tagList(
     ),
     htmltools::tags$body(
       htmltools::tags$main(
-        htmltools::tags$p(class = "note", "Generated from the live public SQLite database downloaded from psilocybin-research.com."),
+        htmltools::tags$p(class = "note", "Based on the live public SQLite database downloaded from psilocybin-research.com."),
         htmltools::tags$h1("Psilocybin Research Tracker bibliometrics"),
         htmltools::tags$div(class = "cards",
           htmltools::tags$div(class = "card", htmltools::tags$strong(nrow(publications)), htmltools::tags$span("records analyzed")),
