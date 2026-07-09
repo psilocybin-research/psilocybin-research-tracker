@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security issue
+    url: mailto:info@psilocybin-research.com
+    about: Please report vulnerabilities, leaked secrets, private runtime files, and subscription data concerns privately by email.
+  - name: Live tracker
+    url: https://psilocybin-research.com/
+    about: Open the production Psilocybin Research Tracker.

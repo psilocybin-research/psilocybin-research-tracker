@@ -1,0 +1,45 @@
+name: Data or source coverage issue
+description: Report missing, duplicate, misclassified, or incorrectly sourced publication metadata.
+title: "Data: "
+labels:
+  - data
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for public bibliographic metadata issues only. Do not include private exports, credentials, or runtime database files.
+  - type: textarea
+    id: record
+    attributes:
+      label: Record or query
+      description: DOI, PubMed ID, ClinicalTrials.gov ID, title, author, or search URL.
+      placeholder: "DOI: 10.xxxx/xxxxx"
+    validations:
+      required: true
+  - type: dropdown
+    id: issue_type
+    attributes:
+      label: Issue type
+      options:
+        - Missing record
+        - Duplicate record
+        - Incorrect publication status
+        - Incorrect source database
+        - Incorrect topic or study type
+        - Incorrect author/journal/date metadata
+        - Citation/reference metadata issue
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected correction
+      description: Explain the expected source/status/metadata and cite a public source if available.
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Public source link
+      description: PubMed, DOI, Crossref, OpenAlex, Europe PMC, preprint server, or ClinicalTrials.gov URL.

@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use the Psilocybin Research Tracker in research, journalism, policy analysis, teaching, or software work, please cite it using this metadata."
+title: "Psilocybin Research Tracker"
+version: "2.1.1"
+date-released: "2026-07-09"
+type: software
+license: MIT
+url: "https://psilocybin-research.com/"
+repository-code: "https://github.com/psilocybin-research/psilocybin-research-tracker"
+abstract: "A self-contained PHP and SQLite research application for finding, filtering, exporting, monitoring, and analyzing psilocybin and psilocin literature, including public API access, citation exports, analytics, an interactive citation network, PWA support, Android packaging, and an R bibliometrics workflow."
+keywords:
+  - psilocybin
+  - psilocin
+  - psychedelic research
+  - bibliometrics
+  - citation network
+  - publication tracker
+  - clinical trials
+authors:
+  - family-names: Germann
+    given-names: "Christopher B."
+    email: "christopher-germann@uni-wh.de"
+    affiliation: "Witten/Herdecke University"

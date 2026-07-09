@@ -1,0 +1,47 @@
+name: Bug report
+description: Report a reproducible problem in the tracker, API, exports, PWA, Android wrapper, or R script.
+title: "Bug: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a problem. Do not include passwords, admin tokens, private runtime files, alert subscription data, push subscription data, or unpublished datasets.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Include URLs, filters, commands, or input values where relevant.
+      placeholder: |
+        1. Open ...
+        2. Search for ...
+        3. Click ...
+        4. See ...
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser/OS, PHP/R version, Android version, or command-line context.
+      placeholder: "Chrome 126 on Windows 11; R 4.5; PHP 8.3; Android 15"
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Paste public-safe logs, screenshots, or error messages.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: I have not included tokens, credentials, private database files, or subscription data.
+          required: true

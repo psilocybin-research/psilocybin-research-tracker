@@ -21,7 +21,9 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/psilocybin-research/psilocybin-research-tracker/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/psilocybin-research/psilocybin-research-tracker/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-2f6f5e"></a>
+  <a href="CITATION.cff"><img alt="Cite this software" src="https://img.shields.io/badge/citation-CFF-7a5c2e"></a>
   <img alt="PHP 8+" src="https://img.shields.io/badge/PHP-8%2B-4f6f9f">
   <img alt="SQLite" src="https://img.shields.io/badge/database-SQLite-366f91">
   <img alt="PWA" src="https://img.shields.io/badge/PWA-installable-7a5c2e">
@@ -59,6 +61,7 @@ Production is deployed at the domain root only; do not use or recreate the forme
 - Search, advanced filters, citation copy, export formats, public JSON API, widgets, analytics, alerts, PWA offline fallback, and Web Push support.
 - R analysis script for live SQLite download, bibliometric tables, PDF figures, and interactive `visNetwork` citation maps.
 - Android Trusted Web Activity wrapper under `android/` for Google Play distribution.
+- GitHub CI, issue templates, pull request checklist, security policy, and `CITATION.cff` metadata.
 - Local frontend assets only: no CDN JavaScript, CSS, or fonts.
 
 ## What Is Not Included
