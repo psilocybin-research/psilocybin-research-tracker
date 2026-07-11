@@ -10,6 +10,12 @@
 *.lock
 *.bak
 *.tmp
+/public-dataset-snapshot*
+/psilocybin-research-dataset-*
+/publications.csv
+/publications.json
+/publications.bib
+/publications.ris
 .env
 .env.*
 !.env.example

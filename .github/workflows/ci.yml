@@ -13,6 +13,16 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Audit public repository paths
+        shell: bash
+        run: |
+          forbidden=$(git ls-files | grep -E '(^data/|^manuscript/|^msca-impact/|^assets/msca-impact/|\.sqlite$|\.sqlite3$|\.db$|\.log$|\.tar\.gz$|(^|/)publications\.(csv|json|bib|ris)$|^android/keystore/|^android/release/|\.jks$|\.keystore$|\.aab$|\.apk$)' | grep -v '^data/\.htaccess$' || true)
+          if [ -n "$forbidden" ]; then
+            echo "Forbidden public-repository paths detected:"
+            echo "$forbidden"
+            exit 1
+          fi
+
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
