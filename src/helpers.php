@@ -112,7 +112,7 @@ function public_paper(array $paper): array
         'doi' => $doi,
         'pmid' => $pubmedId,
         'publication_date' => (string)($paper['publication_date'] ?? ''),
-        'importer_version' => '2.1.1',
+        'importer_version' => '2.1.2',
         'text_redistributed' => false,
     ];
     return $public;

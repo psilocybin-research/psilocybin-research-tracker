@@ -210,7 +210,7 @@ $publicationGrowthLatest = $publicationGrowthYears ? (int)end($publicationGrowth
 $publicationGrowthLatestYear = $publicationGrowthYears ? (int)end($publicationGrowthYears)['year'] : null;
 $publicationGrowthFirstYear = $publicationGrowthYears ? (int)$publicationGrowthYears[0]['year'] : null;
 $assetVersion = '20260711-rights-safe-v87';
-$appVersion = '2.1.1';
+$appVersion = '2.1.2';
 $formatBytes = static function (int $bytes): string {
     if ($bytes >= 1073741824) {
         return number_format($bytes / 1073741824, 2) . ' GB';

@@ -457,7 +457,7 @@ final class PublicationRepository
                 return $row;
             }
         }
-        if ($doi === null && $pubmedId === null) {
+        if ($normalizedTitle !== '') {
             return $this->bestDuplicate('normalized_title = :title', ['title' => $normalizedTitle]);
         }
         return null;
@@ -583,10 +583,10 @@ final class PublicationRepository
         $tags = [];
         $hasMagicMushroomContext = preg_match('/\bmagic mushroom(s)?\b/', $lower)
             && preg_match('/\b(psychedelic|hallucinogenic|psilocybe|psilocybin|psilocin|tryptamine)\b/', $lower);
-        if (preg_match('/\bpsilocybin\b/', $lower) || $hasMagicMushroomContext) {
+        if (preg_match('/\bpsilocybin(?:s|e|en)?\b/', $lower) || $hasMagicMushroomContext) {
             $tags[] = 'psilocybin';
         }
-        if (preg_match('/\bpsilocin\b|\b4[\s-]?ho[\s-]?dmt\b/', $lower)) {
+        if (preg_match('/\bpsilocin(?:s|e|en)?\b|\b4[\s-]?ho[\s-]?dmt\b/', $lower)) {
             $tags[] = 'psilocin';
         }
         return implode(',', array_values(array_unique($tags)));

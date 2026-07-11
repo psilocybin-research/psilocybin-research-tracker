@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use the Psilocybin Research Tracker in research, journalism, policy analysis, teaching, or software work, please cite it using this metadata."
 title: "Psilocybin Research Tracker"
-version: "2.1.1"
+version: "2.1.2"
 date-released: "2026-07-09"
 type: software
 license: MIT
