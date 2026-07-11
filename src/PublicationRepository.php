@@ -19,6 +19,9 @@ final class PublicationRepository
         if ($title === '') {
             return 'skipped';
         }
+        if (self::isNonScholarlyDownloadArtifact($title, (string)($paper['abstract'] ?? ''))) {
+            return 'skipped';
+        }
         $normalizedTitle = normalize_title($title);
         $publicationDate = parse_date_or_null($paper['publication_date'] ?? null);
         $publicationYear = $publicationDate ? (int)substr($publicationDate, 0, 4) : null;
@@ -37,9 +40,15 @@ final class PublicationRepository
                 return 'skipped';
             }
         }
-        if (!$existing && $isOpenAlexSource && !self::hasStandaloneOpenAlexTitleSignal($title)) {
+        if (!$existing && $isOpenAlexSource && !self::hasExplicitPsilocybinEvidence([
+            'title' => $title,
+            'abstract' => $paper['abstract'] ?? '',
+            'keywords' => $paper['keywords'] ?? '',
+            'substance_tags' => '',
+            'raw_json' => isset($paper['raw']) ? json_encode($paper['raw'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) : '',
+        ])) {
             if ($openAlexId !== null) {
-                $this->recordOpenAlexQualityReview($openAlexId, null, 'rejected', 'standalone title lacks psilocybin/psilocin signal');
+                $this->recordOpenAlexQualityReview($openAlexId, null, 'rejected', 'standalone row lacks explicit psilocybin/psilocin evidence');
             }
             return 'skipped';
         }
@@ -264,14 +273,47 @@ final class PublicationRepository
         return preg_match('/\b(psilocybin|psilocin|psilocybe|magic mushroom|psychedelic mushroom|4[\s-]?ho[\s-]?dmt|4[\s-]?hydroxy[\s-]?dmt)\b/u', $lower) === 1;
     }
 
-    public function restoreOverQuarantinedOpenAlexRows(int $limit = 5000): array
+    private static function isNonScholarlyDownloadArtifact(string $title, string $abstract): bool
+    {
+        $text = mb_strtolower($title . ' ' . $abstract, 'UTF-8');
+        return str_contains($text, '#downloadbook')
+            || str_contains($text, 'read online =>')
+            || str_contains($text, 'download book =>')
+            || preg_match('/\b(best\\s*\\[pdf\\]|epub download|full pdf online|free download pdf)\\b/u', $text) === 1;
+    }
+
+    private static function hasBroadPsychedelicTitleSignal(string $title): bool
+    {
+        $lower = mb_strtolower($title, 'UTF-8');
+        return preg_match('/\b(psychedelic|psychedelics|hallucinogen|hallucinogens|entheogen|entheogens|tryptamine|tryptamines|serotonergic|5[\s-]?ht2a|microdosing|brain circuit|brain entropy|fmri|neuroimaging)\b/u', $lower) === 1;
+    }
+
+    private static function hasExplicitPsilocybinEvidence(array $row): bool
+    {
+        $title = (string)($row['title'] ?? '');
+        if (self::hasStandaloneOpenAlexTitleSignal($title)) {
+            return true;
+        }
+        if (!self::hasBroadPsychedelicTitleSignal($title)) {
+            return false;
+        }
+        $metadataText = mb_strtolower(implode(' ', [
+            (string)($row['abstract'] ?? ''),
+            (string)($row['keywords'] ?? ''),
+            (string)($row['substance_tags'] ?? ''),
+            (string)($row['raw_json'] ?? ''),
+        ]), 'UTF-8');
+        return preg_match('/\b(psilocybin|psilocin|4[\s-]?ho[\s-]?dmt|4[\s-]?hydroxy[\s-]?dmt)\b/u', $metadataText) === 1;
+    }
+
+    public function restoreOverQuarantinedOpenAlexRows(int $limit = 5000, bool $dryRun = false): array
     {
         $limit = max(1, min($limit, 20000));
         $stmt = $this->db->pdo()->prepare(
-            'SELECT id, title, doi, pubmed_id, openalex_id, normalized_title, curation_notes
+            'SELECT id, title, abstract, keywords, substance_tags, raw_json, doi, pubmed_id,
+                    openalex_id, normalized_title, source_name, publication_date, curation_notes
              FROM publications
-             WHERE source_name = "OpenAlex"
-               AND (hidden = 1 OR false_positive = 1)
+             WHERE (hidden = 1 OR false_positive = 1)
                AND curation_notes LIKE "OpenAlex %"
              ORDER BY publication_date DESC, id DESC
              LIMIT :limit'
@@ -288,26 +330,41 @@ final class PublicationRepository
              WHERE id = :id'
         );
         $restored = [];
+        $reviewed = 0;
+        $keptNoExplicitEvidence = 0;
+        $keptVisibleDuplicate = 0;
         foreach ($stmt->fetchAll() as $row) {
-            if (!self::hasStandaloneOpenAlexTitleSignal((string)($row['title'] ?? ''))) {
+            $reviewed++;
+            if (!self::hasExplicitPsilocybinEvidence($row)) {
+                $keptNoExplicitEvidence++;
                 continue;
             }
             if ($this->hasVisibleDuplicateForStoredRow($row)) {
+                $keptVisibleDuplicate++;
                 continue;
             }
-            $update->execute(['id' => (int)$row['id']]);
+            if (!$dryRun) {
+                $update->execute(['id' => (int)$row['id']]);
+            }
             if (!empty($row['openalex_id'])) {
-                $this->recordOpenAlexQualityReview((string)$row['openalex_id'], (int)$row['id'], 'approved', 'restored after OpenAlex visibility review');
+                if (!$dryRun) {
+                    $this->recordOpenAlexQualityReview((string)$row['openalex_id'], (int)$row['id'], 'approved', 'restored after quarantine visibility review');
+                }
             }
             $restored[] = [
                 'id' => (int)$row['id'],
                 'title' => (string)$row['title'],
                 'doi' => (string)($row['doi'] ?? ''),
+                'source_name' => (string)($row['source_name'] ?? ''),
             ];
         }
 
         return [
+            'reviewed' => $reviewed,
             'restored' => count($restored),
+            'kept_no_explicit_evidence' => $keptNoExplicitEvidence,
+            'kept_visible_duplicate' => $keptVisibleDuplicate,
+            'dry_run' => $dryRun,
             'sample' => array_slice($restored, 0, 20),
         ];
     }
@@ -897,7 +954,7 @@ final class PublicationRepository
         return [
             'trends' => $pdo->query("SELECT publication_year year, COUNT(*) count FROM publications WHERE publication_year IS NOT NULL AND hidden = 0 AND false_positive = 0 GROUP BY publication_year ORDER BY publication_year")->fetchAll(),
             'timeline' => $pdo->query("SELECT publication_date date, COUNT(*) count FROM publications WHERE publication_date IS NOT NULL AND hidden = 0 AND false_positive = 0 GROUP BY publication_date ORDER BY publication_date")->fetchAll(),
-            'timeline_papers' => $pdo->query("SELECT id, title, authors, journal, publication_date, doi, pubmed_id, source_url, source_name, publication_status, keywords, substance_tags, topic_tags, study_type FROM publications WHERE publication_date IS NOT NULL AND hidden = 0 AND false_positive = 0 ORDER BY publication_date DESC, title")->fetchAll(),
+            'timeline_papers' => $pdo->query("SELECT id, title, authors, journal, publication_date, publication_year, doi, pubmed_id, openalex_id, source_url, source_name, publication_status, substance_tags, topic_tags, study_type, date_added, last_checked, CASE WHEN abstract IS NOT NULL AND TRIM(abstract) != '' THEN 1 ELSE 0 END abstract_available FROM publications WHERE publication_date IS NOT NULL AND hidden = 0 AND false_positive = 0 ORDER BY publication_date DESC, title")->fetchAll(),
             'top_journals' => $pdo->query('SELECT journal, COUNT(*) count FROM publications WHERE ' . $journalWhere . ' GROUP BY journal ORDER BY count DESC, journal LIMIT 10')->fetchAll(),
             'study_types' => $this->studyTypes(),
             'topics' => array_slice($this->topics(), 0, 12),

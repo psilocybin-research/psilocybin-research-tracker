@@ -8,11 +8,13 @@ final class ExportService
     public static function csv(array $papers): string
     {
         $stream = fopen('php://temp', 'r+');
-        fputcsv($stream, ['title', 'authors', 'journal', 'publication_date', 'doi', 'pubmed_id', 'source_url', 'source_name', 'publication_status', 'keywords', 'substance_tags', 'topic_tags', 'study_type', 'tracker_site_url']);
+        fputcsv($stream, ['id', 'title', 'authors', 'journal', 'publication_date', 'publication_year', 'doi', 'pubmed_id', 'source_url', 'source_record_id', 'source_name', 'publication_status', 'substance_tags', 'topic_tags', 'study_type', 'abstract_available', 'abstract_source', 'abstract_source_url', 'abstract_redistributed', 'text_rights_status', 'text_license_uri', 'tracker_site_url']);
         foreach ($papers as $paper) {
+            $paper = public_paper($paper);
             fputcsv($stream, [
-                $paper['title'], $paper['authors'], $paper['journal'], $paper['publication_date'], $paper['doi'], $paper['pubmed_id'],
-                $paper['source_url'], $paper['source_name'] ?? '', $paper['publication_status'] ?? 'published', $paper['keywords'], $paper['substance_tags'], $paper['topic_tags'] ?? '', $paper['study_type'] ?? '', self::TRACKER_SITE_URL,
+                $paper['id'], $paper['title'], $paper['authors'], $paper['journal'], $paper['publication_date'], $paper['publication_year'], $paper['doi'], $paper['pubmed_id'],
+                $paper['source_url'], $paper['source_record_id'], $paper['source_name'] ?? '', $paper['publication_status'] ?? 'published', $paper['substance_tags'], $paper['topic_tags'] ?? '', $paper['study_type'] ?? '',
+                !empty($paper['abstract_available']) ? 'true' : 'false', $paper['abstract_source'], $paper['abstract_source_url'], 'false', $paper['text_rights_status'], $paper['text_license_uri'], self::TRACKER_SITE_URL,
             ]);
         }
         rewind($stream);
@@ -27,8 +29,10 @@ final class ExportService
                 'publication_tracker_url' => Config::publicBaseUrl(),
                 'generated_at_utc' => current_utc(),
                 'record_count' => count($papers),
+                'schema_variant' => 'rights-safe-core-v1',
+                'text_redistribution' => 'Source-derived abstracts, descriptions, keywords, and unrestricted payload text are not redistributed.',
             ],
-            'papers' => $papers,
+            'papers' => public_papers($papers),
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{"papers":[]}';
     }
 

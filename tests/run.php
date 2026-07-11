@@ -190,9 +190,19 @@ assert_true($repo->upsert(array_merge($base, [
     'publication_date' => '2026-01-03',
     'source_name' => 'OpenAlex',
     'raw' => ['openalex_id' => 'https://openalex.org/W2234567890'],
-])) === 'skipped', 'standalone OpenAlex rows should require title-level psilocybin/psilocin signal');
+])) === 'skipped', 'standalone OpenAlex rows should require direct title evidence or broader psychedelic title context with explicit psilocybin/psilocin metadata evidence');
 $rejectedOpenAlex = $repo->openAlexReviewDecision('W2234567890');
 assert_true($rejectedOpenAlex !== null && $rejectedOpenAlex['decision'] === 'rejected', 'skipped OpenAlex rows should be recorded in quality review workflow');
+assert_true($repo->upsert(array_merge($base, [
+    'doi' => '10.5281/zenodo.4208128',
+    'pubmed_id' => null,
+    'title' => 'Best [PDF] The Psilocybin Mushroom Bible: The Definitive Guide to Growing and Using Magic Mushrooms Full PDF Online',
+    'authors' => 'Download Artifact',
+    'abstract' => 'Read Online => Read The Psilocybin Mushroom Bible. Download Book => Download The Psilocybin Mushroom Bible. #downloadbook',
+    'publication_date' => '2020-11-01',
+    'source_name' => 'OpenAlex',
+    'raw' => ['openalex_id' => 'https://openalex.org/W4287610338'],
+])) === 'skipped', 'non-scholarly PDF/download artifacts should be skipped');
 assert_true(OpenAlexFetcher::paperFromWork([
     'id' => 'https://openalex.org/W555',
     'display_name' => 'Psilocybin therapy and depression outcomes',
@@ -354,11 +364,29 @@ $bib = ExportService::bibtex([$latest[0]]);
 $latex = ExportService::latex([$latest[0]]);
 $ris = ExportService::ris([$latest[0]]);
 $csv = ExportService::csv([$latest[0]]);
+$jsonExport = ExportService::json([$latest[0]]);
 assert_true(str_contains($bib, '@article'), 'BibTeX export failed');
 assert_true(str_contains($latex, '\\documentclass') && str_contains($latex, '\\begin{enumerate}') && str_contains($latex, 'psilocybin-research.com'), 'LaTeX export failed');
 assert_true(str_contains($ris, 'TY  - JOUR'), 'RIS export failed');
-assert_true(str_contains($csv, 'title,authors,journal'), 'CSV export failed');
+assert_true(str_contains($csv, 'id,title,authors,journal') && str_contains($csv, 'abstract_available') && str_contains($csv, 'text_rights_status'), 'rights-safe CSV export failed');
 assert_true(str_contains($bib, 'https://psilocybin-research.com') && str_contains($latex, 'https://psilocybin-research.com') && str_contains($ris, 'https://psilocybin-research.com') && str_contains($csv, 'tracker_site_url'), 'export provenance metadata missing');
+
+$rightsSentinels = [
+    'abstract' => 'DO-NOT-PUBLISH-ABSTRACT-7f25',
+    'keywords' => 'DO-NOT-PUBLISH-KEYWORDS-9a31',
+    'raw_json' => json_encode(['description' => 'DO-NOT-PUBLISH-RAW-DESCRIPTION-4c82']),
+];
+$rightsPaper = array_merge($latest[0], $rightsSentinels);
+$publicRightsPaper = public_paper($rightsPaper);
+$publicRightsPayload = json_encode(rights_safe_public_payload(['papers' => [$rightsPaper]]), JSON_UNESCAPED_SLASHES);
+$rightsCsv = ExportService::csv([$rightsPaper]);
+$rightsJson = ExportService::json([$rightsPaper]);
+assert_true(!array_key_exists('abstract', $publicRightsPaper) && !array_key_exists('keywords', $publicRightsPaper) && !array_key_exists('raw_json', $publicRightsPaper), 'public paper projection must omit source text and unrestricted payloads');
+assert_true(($publicRightsPaper['abstract_available'] ?? false) === true && ($publicRightsPaper['abstract_redistributed'] ?? true) === false && ($publicRightsPaper['text_rights_status'] ?? '') === 'unverified_not_redistributed', 'public paper rights indicators are incorrect');
+foreach (array_values($rightsSentinels) as $sentinel) {
+    assert_true(!str_contains((string)$publicRightsPayload, (string)$sentinel) && !str_contains($rightsCsv, (string)$sentinel) && !str_contains($rightsJson, (string)$sentinel), 'source-text sentinel leaked through public payload or export');
+}
+assert_true(str_contains($jsonExport, 'rights-safe-core-v1') && !str_contains($jsonExport, '"abstract"') && !str_contains($jsonExport, '"keywords"') && !str_contains($jsonExport, '"raw_json"'), 'JSON export must use the rights-safe core projection');
 
 $repo->curate((int)$latest[0]['id'], ['hidden' => 1, 'false_positive' => 1, 'topic_tags' => 'curated']);
 $repo->upsert([
@@ -411,6 +439,29 @@ $repo->curate((int)$katoFixture['rows'][0]['id'], [
 $repo->restoreOverQuarantinedOpenAlexRows();
 $restoredKatoFixture = $repo->search(['q' => 'Kato Hecker npj Aging', 'substances' => ['psilocybin'], 'per_page' => 10]);
 assert_true($restoredKatoFixture['total'] === 1 && $restoredKatoFixture['rows'][0]['doi'] === '10.1038/s41514-025-00244-x', 'over-quarantined high-confidence OpenAlex rows should be restored');
+$repo->upsert([
+    'title' => 'An international mega-analysis of psychedelic drug effects on brain circuit function',
+    'authors' => 'Manesh Girn, Manoj K. Doss',
+    'abstract' => 'This mega-analysis integrates resting-state fMRI datasets across classic psychedelics including psilocybin.',
+    'journal' => 'Nature Medicine',
+    'publication_date' => '2026-04-06',
+    'doi' => '10.1038/s41591-026-04287-9',
+    'pubmed_id' => '41942645',
+    'source_url' => 'https://doi.org/10.1038/s41591-026-04287-9',
+    'keywords' => 'psychedelic neuroimaging',
+    'source_name' => 'OpenAlex',
+    'raw' => ['openalex_id' => 'https://openalex.org/W7150978140'],
+]);
+$megaFixture = $repo->search(['q' => '10.1038/s41591-026-04287-9', 'include_hidden' => true, 'per_page' => 10]);
+assert_true($megaFixture['total'] === 1, 'broader psychedelic OpenAlex fixture with abstract psilocybin evidence should insert');
+$repo->curate((int)$megaFixture['rows'][0]['id'], [
+    'hidden' => 1,
+    'false_positive' => 1,
+    'curation_notes' => 'OpenAlex duplicate DOI quarantined after provenance repair.',
+]);
+$repo->restoreOverQuarantinedOpenAlexRows();
+$restoredMegaFixture = $repo->search(['q' => 'mega-analysis', 'substances' => ['psilocybin'], 'per_page' => 10]);
+assert_true($restoredMegaFixture['total'] === 1 && $restoredMegaFixture['rows'][0]['doi'] === '10.1038/s41591-026-04287-9', 'quarantine repair should restore broader records with explicit psilocybin evidence outside the title');
 $heckerInitialResults = $repo->search(['author' => 'Hecker L', 'substances' => ['psilocybin'], 'range' => 'all', 'per_page' => 20]);
 $heckerInitialTitles = array_column($heckerInitialResults['rows'], 'title');
 assert_true(in_array('Psilocybin treatment extends cellular lifespan and improves survival of aged mice', $heckerInitialTitles, true), 'surname-initial author search should match full first-name author metadata');
@@ -427,23 +478,34 @@ $repo->upsert([
     'keywords' => 'psilocybin',
     'source_name' => 'Europe PMC',
 ]);
-$repo->upsert([
+$db->pdo()->prepare('INSERT INTO publications
+    (title, normalized_title, authors, abstract, journal, publication_date, publication_year, doi, pubmed_id, openalex_id, source_url, keywords, substance_tags, topic_tags, study_type, hidden, false_positive, curation_notes, curation_locked, source_name, publication_status, date_added, last_checked, raw_json)
+    VALUES
+    (:title, :normalized_title, :authors, :abstract, :journal, :publication_date, :publication_year, :doi, :pubmed_id, :openalex_id, :source_url, :keywords, :substance_tags, :topic_tags, :study_type, :hidden, :false_positive, :curation_notes, :curation_locked, :source_name, :publication_status, :date_added, :last_checked, :raw_json)')->execute([
     'title' => 'Psilocybin duplicate visible source record',
+    'normalized_title' => normalize_title('Psilocybin duplicate visible source record'),
     'authors' => 'OpenAlex Source',
     'abstract' => 'A hidden duplicate psilocybin record.',
     'journal' => 'Visible Journal',
     'publication_date' => '2025-01-02',
+    'publication_year' => 2025,
     'doi' => null,
+    'pubmed_id' => null,
+    'openalex_id' => 'https://openalex.org/W7777777778',
+    'source_url' => null,
     'keywords' => 'psilocybin',
-    'source_name' => 'OpenAlex',
-    'raw' => ['openalex_id' => 'https://openalex.org/W7777777778'],
-]);
-$duplicateCandidate = $repo->search(['q' => 'W7777777778', 'include_hidden' => true, 'per_page' => 10]);
-assert_true($duplicateCandidate['total'] === 1, 'OpenAlex duplicate fixture insert failed');
-$repo->curate((int)$duplicateCandidate['rows'][0]['id'], [
+    'substance_tags' => 'psilocybin',
+    'topic_tags' => 'Clinical',
+    'study_type' => 'Other',
     'hidden' => 1,
     'false_positive' => 1,
     'curation_notes' => 'OpenAlex duplicate DOI quarantined after provenance repair.',
+    'curation_locked' => 1,
+    'source_name' => 'OpenAlex',
+    'publication_status' => 'published',
+    'date_added' => current_utc(),
+    'last_checked' => current_utc(),
+    'raw_json' => json_encode(['openalex_id' => 'https://openalex.org/W7777777778'], JSON_UNESCAPED_SLASHES),
 ]);
 $repo->restoreOverQuarantinedOpenAlexRows();
 $stillHiddenDuplicate = $repo->search(['q' => 'W7777777778', 'substances' => ['psilocybin'], 'per_page' => 10]);
@@ -606,8 +668,8 @@ assert_true(str_contains($index, 'class="brand-icon brand-icon-mushroom"') && st
 assert_true(str_contains($index, 'hero-filter-shortcut') && str_contains($index, 'data-open-advanced') && str_contains($index, 'id="publication-results"') && str_contains($index, 'Latest publications') && str_contains($index, 'Full SQLite index sorted by newest first') && !str_contains($index, 'data-entry-action="search"') && !str_contains($index, 'data-entry-action="alert"'), 'hero settings button should directly open advanced filters without duplicate search/alert shortcuts');
 assert_true(str_contains($index, 'class="hero-action-panel"') && str_contains($css, '.hero-action-panel') && str_contains($css, 'preloader-mushroom-desktop.webp') && str_contains($css, 'min-height: 54px') && str_contains($css, 'backdrop-filter: blur(18px)') && str_contains($css, 'background: rgba(255, 255, 255, .34)') && str_contains($css, '.hero-search input:focus') && str_contains($css, 'background: rgba(255, 255, 255, .54)'), 'central translucent glass search/status mushroom photo treatment missing');
 assert_true(str_contains($index, 'href="#alerts" data-open-alerts'), 'sidebar alert link should open alert enrollment sheet');
-assert_true(str_contains($index, 'href="about.php"') && str_contains($alertPhp, 'href="about.php"') && str_contains($aboutPhp, 'About the Psilocybin Research Publication Tracker') && str_contains($aboutPhp, 'What It Does') && str_contains($aboutPhp, 'Privacy') && str_contains($aboutPhp, 'Encryption') && str_contains($aboutPhp, 'Non-Sensitive Security Stats') && str_contains($aboutPhp, 'PHP Architecture') && str_contains($aboutPhp, 'AJAX search flow') && str_contains($aboutPhp, 'asynchronous JavaScript requests') && str_contains($aboutPhp, 'Progressive enhancement') && str_contains($aboutPhp, 'Data Provenance And Automated Updates') && str_contains($aboutPhp, 'Daily cron update') && str_contains($aboutPhp, '03:20 server time') && str_contains($aboutPhp, 'Data Compression And Speed') && str_contains($aboutPhp, 'Deflate and Brotli') && str_contains($aboutPhp, 'Minified static assets') && str_contains($aboutPhp, 'SQLite read performance') && str_contains($aboutPhp, 'PWA caching strategy') && !str_contains($aboutPhp, 'Storage protection') && !str_contains($aboutPhp, 'Backup freshness') && !str_contains($aboutPhp, 'Alert cipher/index fields') && !str_contains($aboutPhp, 'Push cipher/index fields') && str_contains($aboutPhp, 'double opt-in') && str_contains($aboutPhp, 'encrypted at rest') && str_contains($aboutPhp, 'no tracking pixel') && str_contains($aboutPhp, 'full SQLite database') && str_contains($aboutPhp, 'og:image:width') && str_contains($aboutPhp, 'application/ld+json'), 'about page, navigation, privacy, encryption, architecture, provenance, compression, stats, or SEO metadata missing');
-assert_true(str_contains($index, 'href="data-protection.php"') && str_contains($aboutPhp, 'href="data-protection.php"') && str_contains($alertPhp, 'href="data-protection.php"') && str_contains($alertServicePhp, "Config::publicBaseUrl() . 'data-protection.php'") && str_contains($dataProtectionPhp, 'Data Protection Notice') && str_contains($dataProtectionPhp, 'What data is processed, where it goes, and why') && str_contains($dataProtectionPhp, 'Core App Use') && str_contains($dataProtectionPhp, 'Search, API, Export, And Widget Data') && str_contains($dataProtectionPhp, 'Email Alert Encryption Model') && str_contains($dataProtectionPhp, 'search terms') && str_contains($dataProtectionPhp, 'research topics') && str_contains($dataProtectionPhp, 'email alert configuration') && str_contains($dataProtectionPhp, 'Digest emails show the current research filters') && str_contains($dataProtectionPhp, 'Email configuration') && str_contains($dataProtectionPhp, 'protection-flow') && str_contains($dataProtectionPhp, 'Publication Data Sources And Provenance') && str_contains($dataProtectionPhp, 'Automated Updates') && str_contains($dataProtectionPhp, '03:20 server time') && str_contains($dataProtectionPhp, 'Web Push And PWA Data') && str_contains($dataProtectionPhp, 'Cookies And Local Browser Storage') && str_contains($dataProtectionPhp, 'User Rights') && str_contains($css, '.protection-flow') && str_contains($css, '.protection-step-secure') && str_contains($css, '.protection-arrow'), 'dedicated data protection page, chart, navigation, alert filter configuration, current email filter display, or alert links missing');
+assert_true(str_contains($index, 'href="about.php"') && str_contains($alertPhp, 'href="about.php"') && str_contains($aboutPhp, 'About the Psilocybin Research Publication Tracker') && str_contains($aboutPhp, 'What It Does') && str_contains($aboutPhp, 'Privacy') && str_contains($aboutPhp, 'Encryption') && str_contains($aboutPhp, 'Non-Sensitive Security Stats') && str_contains($aboutPhp, 'PHP Architecture') && str_contains($aboutPhp, 'AJAX search flow') && str_contains($aboutPhp, 'asynchronous JavaScript requests') && str_contains($aboutPhp, 'Progressive enhancement') && str_contains($aboutPhp, 'Source Context And Automated Updates') && str_contains($aboutPhp, 'Daily cron update') && str_contains($aboutPhp, '03:20 server time') && str_contains($aboutPhp, 'Data Compression And Speed') && str_contains($aboutPhp, 'Deflate and Brotli') && str_contains($aboutPhp, 'Minified static assets') && str_contains($aboutPhp, 'SQLite read performance') && str_contains($aboutPhp, 'PWA caching strategy') && !str_contains($aboutPhp, 'Storage protection') && !str_contains($aboutPhp, 'Backup freshness') && !str_contains($aboutPhp, 'Alert cipher/index fields') && !str_contains($aboutPhp, 'Push cipher/index fields') && str_contains($aboutPhp, 'double opt-in') && str_contains($aboutPhp, 'encrypted at rest') && str_contains($aboutPhp, 'no tracking pixel') && str_contains($aboutPhp, 'full SQLite database') && str_contains($aboutPhp, 'og:image:width') && str_contains($aboutPhp, 'application/ld+json'), 'about page, navigation, privacy, encryption, architecture, source context, compression, stats, or SEO metadata missing');
+assert_true(str_contains($index, 'href="data-protection.php"') && str_contains($aboutPhp, 'href="data-protection.php"') && str_contains($alertPhp, 'href="data-protection.php"') && str_contains($alertServicePhp, "Config::publicBaseUrl() . 'data-protection.php'") && str_contains($dataProtectionPhp, 'Data Protection Notice') && str_contains($dataProtectionPhp, 'What data is processed, where it goes, and why') && str_contains($dataProtectionPhp, 'Core App Use') && str_contains($dataProtectionPhp, 'Search, API, Export, And Widget Data') && str_contains($dataProtectionPhp, 'Email Alert Encryption Model') && str_contains($dataProtectionPhp, 'search terms') && str_contains($dataProtectionPhp, 'research topics') && str_contains($dataProtectionPhp, 'email alert configuration') && str_contains($dataProtectionPhp, 'Digest emails show the current research filters') && str_contains($dataProtectionPhp, 'Email configuration') && str_contains($dataProtectionPhp, 'protection-flow') && str_contains($dataProtectionPhp, 'Publication Data Sources And Source Context') && str_contains($dataProtectionPhp, 'Automated Updates') && str_contains($dataProtectionPhp, '03:20 server time') && str_contains($dataProtectionPhp, 'Web Push And PWA Data') && str_contains($dataProtectionPhp, 'Cookies And Local Browser Storage') && str_contains($dataProtectionPhp, 'User Rights') && str_contains($css, '.protection-flow') && str_contains($css, '.protection-step-secure') && str_contains($css, '.protection-arrow'), 'dedicated data protection page, chart, navigation, alert filter configuration, current email filter display, or alert links missing');
 assert_true(str_contains($index, 'class="page-tools"') && str_contains($index, 'id="sidebar-fullscreen-toggle"') && str_contains($index, 'id="sidebar-print-results"') && str_contains($index, 'id="sidebar-share-results"') && str_contains($index, 'Share results') && str_contains($index, 'Print results'), 'page tool fullscreen, print, or share controls missing');
 assert_true(str_contains($index, 'Application created by Dr. Christopher B. Germann') && str_contains($index, '$appVersion = \'2.1.1\'') && str_contains($index, 'Version <?= h($appVersion) ?>') && str_contains($index, 'gmdate(\'Y\')') && str_contains($index, 'data-client-environment'), 'footer creator/version/year/client environment metadata missing');
 assert_true(str_contains($index, '<span>Auto-updated</span>') && str_contains($index, '<em>Indexed records</em>') && str_contains($index, 'data-count-up') && str_contains($index, 'Updated <?= h(format_utc_display($lastSuccessfulUpdate)) ?>') && str_contains($js, 'initCountUpStats') && str_contains($js, 'prefers-reduced-motion: reduce') && str_contains($css, 'font-variant-numeric: tabular-nums'), 'sidebar status should show animated auto-updated indexed records and timestamp');
@@ -696,8 +758,15 @@ assert_true(str_contains($rss, 'http_response_code(410)') && str_contains($rss, 
 assert_true(is_file(__DIR__ . '/../widget.js.php'), 'script widget endpoint missing');
 assert_true(is_file(__DIR__ . '/../database.php'), 'SQLite database download endpoint missing');
 $databasePhp = file_get_contents(__DIR__ . '/../database.php');
-assert_true(str_contains($databasePhp, 'application/vnd.sqlite3') && str_contains($databasePhp, 'public-literature-only') && str_contains($databasePhp, 'tracker_site_url') && str_contains($databasePhp, 'X-Publication-Tracker-Filename') && str_contains($databasePhp, 'download_filename'), 'SQLite database download headers missing');
+assert_true(str_contains($databasePhp, 'application/vnd.sqlite3') && str_contains($databasePhp, 'rights-safe-metadata-core') && str_contains($databasePhp, 'tracker_site_url') && str_contains($databasePhp, 'X-Publication-Tracker-Filename') && str_contains($databasePhp, 'download_filename'), 'SQLite database download headers missing');
 assert_true(!str_contains($databasePhp, 'alert_subscriptions') && !str_contains($databasePhp, 'push_subscriptions') && !str_contains($databasePhp, 'admin_token'), 'SQLite database download must not expose sensitive runtime tables');
+assert_true(
+    str_contains($databasePhp, 'source_provenance_json')
+    && str_contains($databasePhp, 'abstract_available')
+    && str_contains($databasePhp, 'abstract_redistributed')
+    && preg_match('/:\\b(?:abstract|keywords|raw_json)\\b/', $databasePhp) !== 1,
+    'SQLite download must use an allowlisted rights-safe projection'
+);
 assert_true(is_file(__DIR__ . '/../manifest.webmanifest') && is_file(__DIR__ . '/../sw.js') && is_file(__DIR__ . '/../offline.html'), 'PWA files missing');
 $manifest = json_decode((string)file_get_contents(__DIR__ . '/../manifest.webmanifest'), true);
 assert_true(($manifest['display'] ?? '') === 'standalone' && ($manifest['scope'] ?? '') === '/' && ($manifest['start_url'] ?? '') === '/?source=pwa' && count($manifest['icons'] ?? []) >= 3, 'PWA manifest incomplete');

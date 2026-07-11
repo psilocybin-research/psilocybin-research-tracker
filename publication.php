@@ -14,7 +14,7 @@ if (!$paper) {
 $related = $paper ? $repo->relatedPapers($paper, 8) : [];
 $references = $paper ? $repo->citedReferences($paper, 40) : [];
 $citing = $paper && !empty($paper['doi']) ? $repo->citingPapers((string)$paper['doi'], 20) : [];
-$assetVersion = '20260709-sidebar-r-v83';
+$assetVersion = '20260711-rights-safe-v87';
 $title = $paper ? (string)$paper['title'] : 'Publication not found';
 ?>
 <!doctype html>
@@ -35,7 +35,12 @@ $title = $paper ? (string)$paper['title'] : 'Publication not found';
     <article class="panel detail-hero">
       <span class="eyebrow"><?= h(publication_status_label($paper['publication_status'] ?? null)) ?></span>
       <h1><?= h((string)$paper['title']) ?></h1>
-      <p><?= h((string)($paper['abstract'] ?: 'No abstract is available for this record.')) ?></p>
+      <p>
+        <?php if (trim((string)($paper['abstract'] ?? '')) !== ''): ?>
+          An abstract is available from the original source but is not redistributed by this tracker.
+          <?php if (!empty($paper['source_url'])): ?><a href="<?= h((string)$paper['source_url']) ?>" target="_blank" rel="noopener">Read the source record</a>.<?php endif; ?>
+        <?php else: ?>No abstract availability was recorded for this entry.<?php endif; ?>
+      </p>
       <div class="detail-actions">
         <?php if ($paper['source_url']): ?><a class="primary iconed" href="<?= h((string)$paper['source_url']) ?>" target="_blank" rel="noopener"><i data-icon="external-link" aria-hidden="true"></i><span>Open source</span></a><?php endif; ?>
         <a class="secondary iconed" href="export.php?format=bibtex&ids[]=<?= h((string)$paper['id']) ?>"><i data-icon="braces" aria-hidden="true"></i><span>BibTeX</span></a>
@@ -63,12 +68,11 @@ $title = $paper ? (string)$paper['title'] : 'Publication not found';
         <a class="secondary iconed watch-author" href="authors.php?author=<?= h(urlencode((string)(split_tag_values((string)$paper['authors'])[0] ?? ''))) ?>#watch"><i data-icon="bell-plus" aria-hidden="true"></i><span>Watch author</span></a>
       </div>
       <div class="panel detail-card">
-        <h2>Topics and keywords</h2>
+        <h2>Derived topics and classifications</h2>
         <div class="chip-cloud">
           <?php foreach (split_tag_values((string)$paper['substance_tags']) as $tag): ?><?= chip_link($tag, ['substances' => [$tag]], '') ?><?php endforeach; ?>
           <?php foreach (split_tag_values((string)$paper['topic_tags']) as $tag): ?><?= chip_link($tag, ['topic' => $tag], 'soft') ?><?php endforeach; ?>
           <?php if ($paper['study_type']): ?><?= chip_link((string)$paper['study_type'], ['study_type' => (string)$paper['study_type']], 'soft') ?><?php endif; ?>
-          <?php foreach (split_tag_values((string)$paper['keywords'], 20) as $tag): ?><?= chip_link($tag, ['search' => $tag], 'soft keyword-chip') ?><?php endforeach; ?>
         </div>
       </div>
       <div class="panel detail-card">

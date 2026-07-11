@@ -32,14 +32,13 @@ $export->exec('CREATE TABLE publications (
     id INTEGER PRIMARY KEY,
     title TEXT NOT NULL,
     authors TEXT,
-    abstract TEXT,
     journal TEXT,
     publication_date TEXT,
     publication_year INTEGER,
     doi TEXT,
     pubmed_id TEXT,
     source_url TEXT,
-    keywords TEXT,
+    source_record_id TEXT,
     substance_tags TEXT NOT NULL DEFAULT "",
     topic_tags TEXT NOT NULL DEFAULT "",
     study_type TEXT,
@@ -47,7 +46,13 @@ $export->exec('CREATE TABLE publications (
     publication_status TEXT NOT NULL DEFAULT "published",
     date_added TEXT NOT NULL,
     last_checked TEXT NOT NULL,
-    raw_json TEXT
+    abstract_available INTEGER NOT NULL DEFAULT 0,
+    abstract_source TEXT,
+    abstract_source_url TEXT,
+    abstract_redistributed INTEGER NOT NULL DEFAULT 0,
+    text_rights_status TEXT NOT NULL,
+    text_license_uri TEXT,
+    source_provenance_json TEXT NOT NULL
 )');
 $export->exec('CREATE INDEX idx_publications_date ON publications(publication_date)');
 $export->exec('CREATE INDEX idx_publications_year ON publications(publication_year)');
@@ -66,34 +71,33 @@ $lastChecked = (string)($source->query("SELECT MAX(last_checked) FROM publicatio
 
 $export->beginTransaction();
 $insert = $export->prepare('INSERT INTO publications (
-    id, title, authors, abstract, journal, publication_date, publication_year, doi, pubmed_id,
-    source_url, keywords, substance_tags, topic_tags, study_type, source_name, publication_status,
-    date_added, last_checked, raw_json
+    id, title, authors, journal, publication_date, publication_year, doi, pubmed_id,
+    source_url, source_record_id, substance_tags, topic_tags, study_type, source_name, publication_status,
+    date_added, last_checked, abstract_available, abstract_source, abstract_source_url,
+    abstract_redistributed, text_rights_status, text_license_uri, source_provenance_json
 ) VALUES (
-    :id, :title, :authors, :abstract, :journal, :publication_date, :publication_year, :doi, :pubmed_id,
-    :source_url, :keywords, :substance_tags, :topic_tags, :study_type, :source_name, :publication_status,
-    :date_added, :last_checked, :raw_json
+    :id, :title, :authors, :journal, :publication_date, :publication_year, :doi, :pubmed_id,
+    :source_url, :source_record_id, :substance_tags, :topic_tags, :study_type, :source_name, :publication_status,
+    :date_added, :last_checked, :abstract_available, :abstract_source, :abstract_source_url,
+    :abstract_redistributed, :text_rights_status, :text_license_uri, :source_provenance_json
 )');
-$select = $source->query('SELECT
-    id, title, authors, abstract, journal, publication_date, publication_year, doi, pubmed_id,
-    source_url, keywords, substance_tags, topic_tags, study_type, source_name, publication_status,
-    date_added, last_checked, raw_json
-    FROM publications
+$select = $source->query('SELECT * FROM publications
     WHERE hidden = 0 AND false_positive = 0
     ORDER BY publication_date DESC, id DESC');
 while ($row = $select->fetch()) {
+    $row = public_paper($row);
+    $provenance = json_encode($row['source_provenance'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}';
     $insert->execute([
         'id' => (int)$row['id'],
         'title' => (string)$row['title'],
         'authors' => $row['authors'],
-        'abstract' => $row['abstract'],
         'journal' => $row['journal'],
         'publication_date' => $row['publication_date'],
         'publication_year' => $row['publication_year'] !== null ? (int)$row['publication_year'] : null,
         'doi' => $row['doi'],
         'pubmed_id' => $row['pubmed_id'],
         'source_url' => $row['source_url'],
-        'keywords' => $row['keywords'],
+        'source_record_id' => $row['source_record_id'],
         'substance_tags' => (string)$row['substance_tags'],
         'topic_tags' => (string)($row['topic_tags'] ?? ''),
         'study_type' => $row['study_type'],
@@ -101,19 +105,27 @@ while ($row = $select->fetch()) {
         'publication_status' => (string)($row['publication_status'] ?: 'published'),
         'date_added' => (string)$row['date_added'],
         'last_checked' => (string)$row['last_checked'],
-        'raw_json' => $row['raw_json'],
+        'abstract_available' => !empty($row['abstract_available']) ? 1 : 0,
+        'abstract_source' => $row['abstract_source'],
+        'abstract_source_url' => $row['abstract_source_url'],
+        'abstract_redistributed' => 0,
+        'text_rights_status' => (string)$row['text_rights_status'],
+        'text_license_uri' => $row['text_license_uri'],
+        'source_provenance_json' => $provenance,
     ]);
 }
 $metadata = $export->prepare('INSERT INTO metadata (key, value) VALUES (:key, :value)');
 foreach ([
     'title' => 'Psilocybin and Psilocin Research Publications',
-    'description' => 'Public literature-only SQLite export from the Psilocybin Research Publication Tracker. Runtime state, private notification data, admin data, hidden records, and curated false positives are excluded.',
+    'description' => 'Rights-sanitized bibliographic and registry metadata core. Runtime state, private notification data, admin data, hidden records, curated false positives, source-derived abstracts, descriptions, keywords, and unrestricted payload text are excluded.',
     'tracker_site_url' => ExportService::TRACKER_SITE_URL,
     'source_url' => Config::publicBaseUrl(),
     'generated_at_utc' => current_utc(),
     'record_count' => (string)$count,
     'last_checked_utc' => $lastChecked,
-    'license_note' => 'Bibliographic metadata is aggregated from upstream public sources. Check source_url, DOI, PubMed, and registry links for upstream rights and authoritative records.',
+    'schema_variant' => 'rights-safe-core-v1',
+    'rights_sanitization' => 'Abstracts, descriptions, source-derived keywords, and unrestricted payloads are not redistributed. Abstract availability and allowlisted factual provenance are retained.',
+    'license_note' => 'CC BY 4.0 applies only to compiler-held rights in selection, arrangement, normalization, annotations, validation outputs, and documentation. Third-party bibliographic fields remain subject to upstream rights and terms.',
 ] as $key => $value) {
     $metadata->execute(['key' => $key, 'value' => $value]);
 }
@@ -126,7 +138,7 @@ header('Content-Type: application/vnd.sqlite3');
 header('Content-Disposition: attachment; filename="' . $filename . '"');
 header('Content-Length: ' . filesize($sqlitePath));
 header('X-Publication-Tracker-Export-Count: ' . $count);
-header('X-Publication-Tracker-Export-Scope: public-literature-only');
+header('X-Publication-Tracker-Export-Scope: rights-safe-metadata-core');
 header('X-Publication-Tracker-Filename: ' . $filename);
 header('X-Publication-Tracker-Site: ' . ExportService::TRACKER_SITE_URL);
 if ($_SERVER['REQUEST_METHOD'] === 'HEAD') {

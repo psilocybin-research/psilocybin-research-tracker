@@ -1,5 +1,5 @@
-const CACHE_VERSION = "publication-tracker-pwa-v155-20260709-sidebar-r";
-const ASSET_VERSION = "20260709-sidebar-r-v83";
+const CACHE_VERSION = "publication-tracker-pwa-v157-20260711-rights-safe";
+const ASSET_VERSION = "20260711-rights-safe-v87";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 

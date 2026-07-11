@@ -102,7 +102,7 @@ Copy `.env.example` if you want a local environment file. Never commit a populat
 
 `schema.sql` creates:
 
-- `publications`: title, authors, abstract, journal, publication date/year, DOI, PubMed ID, source URL, keywords, substance tags, source name, publication status, date added, last checked, raw metadata.
+- Runtime `publications`: bibliographic fields plus source text and importer payloads used privately for ingestion, relevance screening, search, classification, deduplication, and source tracing. Public pages, APIs, exports, widgets, and SQLite downloads apply a rights-safe projection that omits unverified abstracts, descriptions, keywords, and unrestricted payload text while retaining abstract-availability indicators and allowlisted factual provenance.
 - `fetch_runs`: status, imported/updated/skipped/error counts, timing, source.
 - `fetch_errors`: API/import error messages.
 - `alert_subscriptions`: email, frequency, keywords, substance settings, active flag.

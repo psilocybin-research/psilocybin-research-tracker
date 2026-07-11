@@ -70,6 +70,85 @@ function clean_paper(array $paper): array
     return $paper;
 }
 
+/**
+ * Return the rights-safe representation permitted on public pages, APIs and exports.
+ * Source text remains available in the private runtime database for ingestion,
+ * relevance screening, search and deterministic classification, but is not redistributed.
+ */
+function public_paper(array $paper): array
+{
+    $paper = clean_paper($paper);
+    $abstractAvailable = array_key_exists('abstract_available', $paper)
+        ? (bool)$paper['abstract_available']
+        : trim((string)($paper['abstract'] ?? '')) !== '';
+    $sourceUrl = trim((string)($paper['source_url'] ?? ''));
+    $sourceName = trim((string)($paper['source_name'] ?? ''));
+    $pubmedId = trim((string)($paper['pubmed_id'] ?? ''));
+    $doi = trim((string)($paper['doi'] ?? ''));
+    $sourceRecordId = $pubmedId !== ''
+        ? 'PMID:' . $pubmedId
+        : ($doi !== '' ? 'DOI:' . normalize_doi($doi) : ($sourceUrl !== '' ? $sourceUrl : 'tracker:' . (int)($paper['id'] ?? 0)));
+
+    $allowed = [
+        'id', 'title', 'authors', 'journal', 'publication_date', 'publication_year',
+        'doi', 'pubmed_id', 'openalex_id', 'source_url', 'substance_tags', 'topic_tags',
+        'study_type', 'source_name', 'publication_status', 'date_added', 'last_checked', 'bibtex',
+    ];
+    $public = [];
+    foreach ($allowed as $field) {
+        $public[$field] = $paper[$field] ?? null;
+    }
+    $public['source_record_id'] = $sourceRecordId;
+    $public['abstract_available'] = $abstractAvailable;
+    $public['abstract_source'] = $abstractAvailable ? $sourceName : null;
+    $public['abstract_source_url'] = $abstractAvailable && $sourceUrl !== '' ? $sourceUrl : null;
+    $public['abstract_redistributed'] = false;
+    $public['text_rights_status'] = $abstractAvailable ? 'unverified_not_redistributed' : 'not_applicable_no_text';
+    $public['text_license_uri'] = null;
+    $public['source_provenance'] = [
+        'source_name' => $sourceName,
+        'source_record_id' => $sourceRecordId,
+        'source_url' => $sourceUrl,
+        'doi' => $doi,
+        'pmid' => $pubmedId,
+        'publication_date' => (string)($paper['publication_date'] ?? ''),
+        'importer_version' => '2.1.1',
+        'text_redistributed' => false,
+    ];
+    return $public;
+}
+
+function public_papers(array $papers): array
+{
+    return array_map('public_paper', $papers);
+}
+
+function rights_safe_public_payload(mixed $value): mixed
+{
+    if (!is_array($value)) {
+        return $value;
+    }
+    $isPaper = array_key_exists('id', $value)
+        && array_key_exists('title', $value)
+        && (array_key_exists('source_name', $value) || array_key_exists('publication_status', $value));
+    if ($isPaper) {
+        return public_paper($value);
+    }
+    $blocked = [
+        'abstract', 'abstractText', 'abstract_text', 'keywords', 'raw_json', 'description',
+        'briefSummary', 'brief_summary', 'detailedDescription', 'detailed_description',
+        'full_text', 'fullText', 'body',
+    ];
+    $safe = [];
+    foreach ($value as $key => $item) {
+        if (is_string($key) && in_array($key, $blocked, true)) {
+            continue;
+        }
+        $safe[$key] = rights_safe_public_payload($item);
+    }
+    return $safe;
+}
+
 function normalize_doi(?string $doi): ?string
 {
     if ($doi === null) {

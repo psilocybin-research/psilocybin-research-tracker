@@ -3,10 +3,10 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/src/helpers.php';
 
-$assetVersion = '20260709-sidebar-r-v83';
+$assetVersion = '20260711-rights-safe-v87';
 $baseUrl = Config::publicBaseUrl();
 $canonicalUrl = $baseUrl . 'about.php';
-$shareImageUrl = $baseUrl . 'assets/pwa/icon-512.png?v=20260709-sidebar-r-v83';
+$shareImageUrl = $baseUrl . 'assets/pwa/icon-512.png?v=20260711-rights-safe-v87';
 $description = 'About the Psilocybin Research Publication Tracker: searchable literature database, analytics, exports, alerts, privacy, encryption, and source coverage.';
 $aboutStats = [
     'engine' => 'SQLite',
@@ -72,9 +72,9 @@ try {
   <meta name="twitter:description" content="<?= h($description) ?>">
   <meta name="twitter:image" content="<?= h($shareImageUrl) ?>">
   <meta name="twitter:image:alt" content="Psilocybin Research Publication Tracker logo">
-  <link rel="icon" href="assets/logo.png?v=20260709-sidebar-r-v83">
-  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260709-sidebar-r-v83">
-  <link rel="manifest" href="manifest.webmanifest?v=20260709-sidebar-r-v83">
+  <link rel="icon" href="assets/logo.png?v=20260711-rights-safe-v87">
+  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260711-rights-safe-v87">
+  <link rel="manifest" href="manifest.webmanifest?v=20260711-rights-safe-v87">
   <link rel="stylesheet" href="assets/styles.min.css?v=<?= h($assetVersion) ?>">
   <script>
     document.documentElement.classList.add('js');
@@ -129,6 +129,7 @@ try {
       <a href="export.php?format=json" target="_blank" rel="noopener"><i data-icon="download" aria-hidden="true"></i><span>Export data</span></a>
       <a href="api.php" target="_blank" rel="noopener"><i data-icon="braces" aria-hidden="true"></i><span>API</span></a>
       <a href="https://github.com/psilocybin-research/psilocybin-research-tracker" target="_blank" rel="noopener me"><i data-icon="github" aria-hidden="true"></i><span>GitHub</span></a>
+      <a href="https://doi.org/10.5281/zenodo.21293526" target="_blank" rel="noopener" title="Fixed citable dataset snapshot on Zenodo"><i data-icon="zenodo" aria-hidden="true"></i><span>Zenodo DOI</span></a>
       <a href="about.php" aria-current="location"><i data-icon="circle-alert" aria-hidden="true"></i><span>About</span></a>
       <a href="data-protection.php"><i data-icon="shield" aria-hidden="true"></i><span>Data protection</span></a>
     </nav>
@@ -235,23 +236,26 @@ try {
         <li><strong>Progressive enhancement:</strong> all core search and export forms still work as normal PHP GET/POST routes without JavaScript; JavaScript adds smoother interaction, copy-to-clipboard, modals, timeline inspection, install prompts, and Web Push enrollment.</li>
         <li><strong>Defensive request handling:</strong> `RequestFilters::fromGlobals()` normalizes incoming filters, output is escaped through view helpers, admin operations are POST-only, and public refresh is bounded by lock/cooldown controls.</li>
         <li><strong>Dependency-light frontend:</strong> local SVG icons, native dialog sheets, native SVG charts, CSS media queries, and small focused JavaScript initializers replace heavyweight client frameworks for the public app surface.</li>
-        <li><strong>Public endpoints:</strong> `api.php`, `export.php`, `database.php`, `widget.php`, `widget.js.php`, `status.php`, and `health.php` expose structured data and operational status without exposing private runtime secrets.</li>
+        <li><strong>Public endpoints:</strong> `api.php`, `export.php`, `database.php`, `widget.php`, `widget.js.php`, `status.php`, and `health.php` expose rights-sanitized structured data and operational status without exposing private runtime secrets or unverified source text.</li>
         <li><strong>Notification services:</strong> `src/AlertService.php` and `src/PushService.php` handle double opt-in email alerts, preference management, Web Push subscriptions, encrypted payload delivery, and stale-subscription cleanup.</li>
         <li><strong>Runtime hardening:</strong> runtime data lives under `data/`, web access is denied by Apache rules, sensitive values are encrypted at rest, logs are JSONL with redaction, and SQLite backups are created through `bin/backup-sqlite.php`.</li>
       </ul>
     </article>
 
     <article class="about-panel about-panel-wide">
-      <h2>Data Provenance And Automated Updates</h2>
+      <h2>Source Context And Automated Updates</h2>
       <p>
         Every publication row keeps source and status context so records do not collapse into an
         undifferentiated feed. The app stores a `source_name`, normalized publication status, DOI,
-        PubMed ID where available, source URL, raw importer metadata, timestamps, topics, substances,
-        and study-type classifications so users can trace records back to source systems.
+        PubMed ID where available, source URL, timestamps, topics, substances, and study-type
+        classifications so users can trace records back to source systems. Source-derived text and
+        unrestricted importer payloads may be retained privately for processing, but public routes
+        expose only the rights-sanitized metadata core, abstract-availability indicators, and
+        allowlisted factual provenance.
       </p>
       <ul class="about-list about-architecture-list">
-        <li><strong>Source provenance:</strong> PubMed, Crossref, Europe PMC, OpenAlex, medRxiv, bioRxiv, PsyArXiv, and ClinicalTrials.gov records remain source-labeled in UI, API, exports, widgets, and analytics.</li>
-        <li><strong>Status provenance:</strong> published literature records, preprints, reviews, protocols, and clinical trials keep separate status labels; preprints remain visibly marked as not peer reviewed.</li>
+        <li><strong>Source context:</strong> PubMed, Crossref, Europe PMC, OpenAlex, medRxiv, bioRxiv, PsyArXiv, and ClinicalTrials.gov records remain source-labeled in UI, API, exports, widgets, and analytics.</li>
+        <li><strong>Status context:</strong> published literature records, preprints, reviews, protocols, and clinical trials keep separate status labels; preprints remain visibly marked as not peer reviewed.</li>
         <li><strong>Deduplication logic:</strong> imported records are matched by DOI, PubMed ID, and normalized title to reduce duplicate publications while preserving source metadata.</li>
         <li><strong>Daily cron update:</strong> production runs `php bin/update.php --daily` from cron at 03:20 server time, which corresponds to 01:20 UTC during Central European Summer Time.</li>
         <li><strong>Operational traceability:</strong> fetch runs, fetch errors, heartbeat files, JSONL logs, update freshness, backup freshness, and public-safe health checks make update state auditable without exposing secrets.</li>
@@ -283,7 +287,7 @@ try {
       <h2>Scientific Context And Limits</h2>
       <p>
         The database is a discovery and monitoring tool, not a clinical guideline and not a substitute
-        for source verification. Bibliographic coverage can be incomplete, source metadata can contain
+        for source verification. Bibliographic coverage is not exhaustive, source metadata can contain
         errors, and deterministic topic classification is only a navigation aid. Users should verify
         records at the publisher, registry, PubMed, DOI, or source database before citation, reporting,
         clinical interpretation, or policy use.

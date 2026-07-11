@@ -233,6 +233,56 @@ a svg {
   gap: 6px;
 }
 
+.topbar nav.is-nav-grouped {
+  gap: 8px;
+}
+
+.nav-group {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, .72);
+}
+
+.nav-group > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 42px;
+  padding: 0 12px;
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: .02em;
+  list-style: none;
+  text-transform: uppercase;
+}
+
+.nav-group > summary::-webkit-details-marker {
+  display: none;
+}
+
+.nav-group > summary i {
+  color: var(--green);
+  transition: transform .18s ease;
+}
+
+.nav-group[open] > summary {
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-soft);
+}
+
+.nav-group[open] > summary i {
+  transform: rotate(180deg);
+}
+
+.nav-group-body {
+  display: grid;
+  gap: 4px;
+  padding: 6px;
+}
+
 .topbar nav a,
 .topbar nav .is-disabled,
 .top-actions a,
@@ -3974,18 +4024,21 @@ dialog::backdrop {
 }
 
 @media (max-width: 1180px) {
-  .topbar {
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: auto;
-    left: 0;
-    z-index: 45;
-    width: 100%;
-    padding: 10px 14px;
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-    background: rgba(255, 255, 255, .94);
+	  .topbar {
+	    position: fixed;
+	    top: 0;
+	    right: 0;
+	    bottom: auto;
+	    left: 0;
+	    z-index: 45;
+	    width: 100%;
+	    max-height: 100dvh;
+	    overflow-y: auto;
+	    overscroll-behavior: contain;
+	    padding: 10px 14px;
+	    border-right: 0;
+	    border-bottom: 1px solid var(--line);
+	    background: rgba(255, 255, 255, .94);
     box-shadow: 0 1px 2px rgba(36, 37, 31, .08);
     backdrop-filter: blur(14px) saturate(1.08);
   }
@@ -4013,15 +4066,28 @@ dialog::backdrop {
     color: var(--green);
   }
 
-  .primary-sidebar-content {
-    display: grid;
-    gap: 12px;
-    padding-top: 50px;
-  }
+	  .primary-sidebar-content {
+	    display: grid;
+	    gap: 12px;
+	    align-content: start;
+	    padding-top: 50px;
+	  }
 
-  html.nav-sidebar-collapsed .topbar {
-    overflow: hidden;
-  }
+	  html:not(.nav-sidebar-collapsed) .topbar {
+	    bottom: 0;
+	    border-bottom-color: rgba(189, 182, 165, .9);
+	    box-shadow: 0 16px 36px rgba(18, 60, 49, .14);
+	  }
+
+	  html:not(.nav-sidebar-collapsed) .primary-sidebar-content {
+	    min-height: calc(100dvh - 20px);
+	    padding-bottom: max(18px, env(safe-area-inset-bottom));
+	  }
+
+	  html.nav-sidebar-collapsed .topbar {
+	    overflow: hidden;
+	    max-height: 67px;
+	  }
 
   html.nav-sidebar-collapsed .primary-sidebar-content {
     display: flex;
@@ -4059,14 +4125,64 @@ dialog::backdrop {
     color: var(--ink);
   }
 
-  .topbar nav {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 6px;
-  }
+	  .topbar nav {
+	    grid-template-columns: minmax(0, 1fr);
+	    gap: 6px;
+	  }
 
-  .topbar nav a,
-  .topbar nav .is-disabled {
-    justify-content: flex-start;
+	  .topbar nav.is-nav-grouped {
+	    gap: 8px;
+	  }
+
+	  .nav-group {
+	    overflow: hidden;
+	    border: 1px solid var(--line);
+	    border-radius: 7px;
+	    background: rgba(255, 255, 255, .72);
+	  }
+
+	  .nav-group > summary {
+	    display: flex;
+	    align-items: center;
+	    justify-content: space-between;
+	    min-height: 42px;
+	    padding: 0 12px;
+	    color: var(--ink);
+	    cursor: pointer;
+	    font-size: 13px;
+	    font-weight: 850;
+	    letter-spacing: .02em;
+	    list-style: none;
+	    text-transform: uppercase;
+	  }
+
+	  .nav-group > summary::-webkit-details-marker {
+	    display: none;
+	  }
+
+	  .nav-group > summary i {
+	    color: var(--green);
+	    transition: transform .18s ease;
+	  }
+
+	  .nav-group[open] > summary {
+	    border-bottom: 1px solid var(--line);
+	    background: var(--surface-soft);
+	  }
+
+	  .nav-group[open] > summary i {
+	    transform: rotate(180deg);
+	  }
+
+	  .nav-group-body {
+	    display: grid;
+	    gap: 4px;
+	    padding: 6px;
+	  }
+
+	  .topbar nav a,
+	  .topbar nav .is-disabled {
+	    justify-content: flex-start;
     min-height: 40px;
     padding: 0 12px;
     color: var(--ink-soft);

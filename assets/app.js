@@ -38,6 +38,7 @@ const ICONS = {
   "library": '<svg viewBox="0 0 24 24"><path d="M4 19V5"></path><path d="M8 19V5"></path><path d="M12 19V5"></path><path d="M16 19V5"></path><path d="M20 19V5"></path></svg>',
   "table": '<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="1.5"></rect><path d="M4 10h16"></path><path d="M10 5v14"></path></svg>',
   "database": '<svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="7" ry="3"></ellipse><path d="M5 5v6c0 1.7 3.1 3 7 3s7-1.3 7-3V5"></path><path d="M5 11v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"></path></svg>',
+  "zenodo": '<svg viewBox="0 0 24 24"><path d="M7 4h10a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3z"></path><path d="M8 8h8l-8 8h8"></path><path d="M16 8v3"></path><path d="M8 13v3"></path></svg>',
   "braces": '<svg viewBox="0 0 24 24"><path d="M8 4c-2 0-2 2-2 3v2c0 1-1 2-2 2 1 0 2 1 2 2v2c0 1 0 3 2 3"></path><path d="M16 4c2 0 2 2 2 3v2c0 1 1 2 2 2-1 0-2 1-2 2v2c0 1 0 3-2 3"></path></svg>',
   "github": '<svg viewBox="0 0 24 24"><path d="M12 2.5a9.5 9.5 0 0 0-3 18.5c.5.1.7-.2.7-.5v-1.8c-2.9.6-3.5-1.2-3.5-1.2-.5-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.6.3-1.1.6-1.3-2.3-.3-4.7-1.2-4.7-5.1 0-1.1.4-2 1-2.8-.1-.3-.4-1.3.1-2.8 0 0 .8-.3 2.9 1.1a10 10 0 0 1 5.2 0c2-1.4 2.9-1.1 2.9-1.1.5 1.5.2 2.5.1 2.8.6.7 1 1.7 1 2.8 0 4-2.4 4.8-4.7 5.1.4.3.7 1 .7 2v2.9c0 .3.2.6.7.5A9.5 9.5 0 0 0 12 2.5z"></path></svg>',
   "file-type": '<svg viewBox="0 0 24 24"><path d="M14 3v5a1 1 0 0 0 1 1h5"></path><path d="M6 3h8l6 6v12H6z"></path><path d="M9 16h6"></path><path d="M10 13h4"></path></svg>',
@@ -411,6 +412,7 @@ function initNavSidebarCollapse() {
     if (icon) icon.setAttribute("data-icon", compact ? (collapsed ? "menu" : "x") : (collapsed ? "chevron-right" : "chevron-left"));
     if (persist) localStorage.setItem(storageKey(), collapsed ? "1" : "0");
     refreshIcons();
+    window.dispatchEvent(new CustomEvent("nav-sidebar-statechange"));
   };
   collapsePrimaryNavSidebarOnCompact = () => {
     if (isCompact()) setCollapsed(true);
@@ -427,6 +429,72 @@ function initNavSidebarCollapse() {
   toggle.addEventListener("click", () => {
     setCollapsed(!document.documentElement.classList.contains("nav-sidebar-collapsed"));
   });
+  content.addEventListener("click", (event) => {
+    const link = event.target.closest?.("a");
+    if (!link || !isCompact()) return;
+    window.setTimeout(() => setCollapsed(true), 120);
+  });
+}
+
+function initNavGroups() {
+  const nav = document.querySelector(".topbar nav");
+  const content = document.querySelector("#primary-sidebar-content");
+  if (!nav || !content || nav.dataset.navGroupReady === "1") return;
+  nav.dataset.navGroupReady = "1";
+  const compactQuery = window.matchMedia?.("(max-width: 1180px)");
+  const isCompact = () => Boolean(compactQuery?.matches);
+  const shouldGroup = () => isCompact() || !document.documentElement.classList.contains("nav-sidebar-collapsed");
+  const originalItems = [...nav.children];
+  const groups = [
+    { name: "Explore", labels: new Set(["Publications", "Evidence", "Trials", "Authors", "Citation Network"]) },
+    { name: "Tools", labels: new Set(["Analytics", "R script", "Alerts", "Export data", "API"]) },
+    { name: "Project", labels: new Set(["GitHub", "Zenodo DOI", "About", "Data protection"]) },
+  ];
+  const labelFor = (item) => item.querySelector("span")?.textContent?.trim() || item.textContent.trim();
+  const groupFor = (item) => groups.find((group) => group.labels.has(labelFor(item))) || groups[groups.length - 1];
+  const isActiveItem = (item) => item.matches?.("[aria-current='location'], .is-active") || Boolean(item.querySelector?.("[aria-current='location'], .is-active"));
+  const buildGroup = (group, items, activeGroupName) => {
+    const details = document.createElement("details");
+    details.className = "nav-group";
+    details.dataset.navGroup = group.name;
+    const summary = document.createElement("summary");
+    summary.innerHTML = `<span>${group.name}</span><i data-icon="chevron-down" aria-hidden="true"></i>`;
+    const body = document.createElement("div");
+    body.className = "nav-group-body";
+    items.forEach((item) => body.append(item));
+    details.append(summary, body);
+    if (group.name === (activeGroupName || "Explore")) details.open = true;
+    details.addEventListener("toggle", () => {
+      if (!details.open) return;
+      nav.querySelectorAll(".nav-group[open]").forEach((other) => {
+        if (other !== details) other.open = false;
+      });
+    });
+    return details;
+  };
+  const apply = () => {
+    if (!shouldGroup()) {
+      nav.classList.remove("is-nav-grouped");
+      nav.replaceChildren(...originalItems);
+      refreshIcons();
+      return;
+    }
+    const byGroup = new Map(groups.map((group) => [group.name, []]));
+    originalItems.forEach((item) => byGroup.get(groupFor(item).name).push(item));
+    const activeItem = originalItems.find(isActiveItem);
+    const activeGroupName = activeItem ? groupFor(activeItem).name : "";
+    const fragment = document.createDocumentFragment();
+    groups.forEach((group) => {
+      const items = byGroup.get(group.name) || [];
+      if (items.length) fragment.append(buildGroup(group, items, activeGroupName));
+    });
+    nav.classList.add("is-nav-grouped");
+    nav.replaceChildren(fragment);
+    refreshIcons();
+  };
+  apply();
+  compactQuery?.addEventListener?.("change", apply);
+  window.addEventListener("nav-sidebar-statechange", apply);
 }
 
 function initEntryChoices() {
@@ -1183,7 +1251,6 @@ function analyticsPapers() {
     source_url: String(paper.source_url || ""),
     source_name: String(paper.source_name || ""),
     publication_status: String(paper.publication_status || "published"),
-    keywords: String(paper.keywords || ""),
     substance_tags: String(paper.substance_tags || ""),
     topic_tags: String(paper.topic_tags || ""),
     study_type: String(paper.study_type || ""),
@@ -1205,7 +1272,7 @@ function activeAnalyticsFilterEntries(filters = currentAnalyticsFilters) {
 function analyticsLensSearchText(paper) {
   return [
     paper.title, paper.authors, paper.journal, paper.doi, paper.pubmed_id, paper.source_name,
-    paper.publication_status, paper.keywords, paper.substance_tags, paper.topic_tags, paper.study_type,
+    paper.publication_status, paper.substance_tags, paper.topic_tags, paper.study_type,
   ].join(" ").toLowerCase();
 }
 
@@ -1722,7 +1789,7 @@ function renderAnalyticsLensResults() {
             <div><dt>Source</dt><dd>${source}</dd></div>
             <div><dt>Topics</dt><dd>${escapeHtml(compactListLabel(paper.topic_tags))}</dd></div>
             <div><dt>Substances</dt><dd>${escapeHtml(compactListLabel(paper.substance_tags))}</dd></div>
-            <div><dt>Keywords</dt><dd>${escapeHtml(compactListLabel(paper.keywords))}</dd></div>
+            <div><dt>Text access</dt><dd>Source-derived abstracts and keywords are not redistributed; use the source record link.</dd></div>
           </dl>
         </details>
       </div>
@@ -2320,7 +2387,7 @@ function initPwa() {
         try {
           new Notification("Psilocybin Research Tracker updated", {
             body: "The installed research app has refreshed to the latest version.",
-            icon: "assets/pwa/icon-192.png?v=20260709-sidebar-r-v83",
+            icon: "assets/pwa/icon-192.png?v=20260711-rights-safe-v87",
             tag: "publication-tracker-app-update",
           });
         } catch (error) {}
@@ -3489,6 +3556,7 @@ function initPublicationTracker() {
   initSettingsMenus();
   initSidebarControls();
   initNavSidebarCollapse();
+  initNavGroups();
   initFullscreenToggle();
   initPrintResults();
   initNativeShare();

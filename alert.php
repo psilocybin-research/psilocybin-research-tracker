@@ -8,7 +8,7 @@ $db->initialize();
 $repo = new PublicationRepository($db);
 $alerts = new AlertService($db, $repo);
 $topics = $repo->topics();
-$assetVersion = '20260709-sidebar-r-v83';
+$assetVersion = '20260711-rights-safe-v87';
 
 $token = request_value('token', '');
 $message = null;
@@ -96,7 +96,7 @@ $statusLabel = $subscription ? ($isActive ? 'Active' : ($isConfirmed ? 'Paused' 
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Manage Publication Alert | Psilocybin Research</title>
-  <link rel="icon" href="assets/logo.png?v=20260709-sidebar-r-v83">
+  <link rel="icon" href="assets/logo.png?v=20260711-rights-safe-v87">
   <link rel="stylesheet" href="assets/styles.min.css?v=<?= h($assetVersion) ?>">
   <script>
     document.documentElement.classList.add('js');
@@ -137,6 +137,7 @@ $statusLabel = $subscription ? ($isActive ? 'Active' : ($isConfirmed ? 'Paused' 
     <a href="export.php?format=json" target="_blank" rel="noopener"><i data-icon="download" aria-hidden="true"></i><span>Export data</span></a>
     <a href="api.php" target="_blank" rel="noopener"><i data-icon="braces" aria-hidden="true"></i><span>API</span></a>
     <a href="https://github.com/psilocybin-research/psilocybin-research-tracker" target="_blank" rel="noopener me"><i data-icon="github" aria-hidden="true"></i><span>GitHub</span></a>
+    <a href="https://doi.org/10.5281/zenodo.21293526" target="_blank" rel="noopener" title="Fixed citable dataset snapshot on Zenodo"><i data-icon="zenodo" aria-hidden="true"></i><span>Zenodo DOI</span></a>
     <a href="about.php"><i data-icon="circle-alert" aria-hidden="true"></i><span>About</span></a>
     <a href="data-protection.php"><i data-icon="shield" aria-hidden="true"></i><span>Data protection</span></a>
   </nav>

@@ -3,11 +3,11 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/src/helpers.php';
 
-$assetVersion = '20260709-sidebar-r-v83';
+$assetVersion = '20260711-rights-safe-v87';
 $baseUrl = Config::publicBaseUrl();
 $canonicalUrl = $baseUrl . 'data-protection.php';
-$shareImageUrl = $baseUrl . 'assets/pwa/icon-512.png?v=20260709-sidebar-r-v83';
-$description = 'Data protection notice for the Psilocybin Research Publication Tracker, including user data, data sources, publication provenance, alerts, push notifications, logs, and automated updates.';
+$shareImageUrl = $baseUrl . 'assets/pwa/icon-512.png?v=20260711-rights-safe-v87';
+$description = 'Data protection notice for the Psilocybin Research Publication Tracker, including user data, source context, alerts, push notifications, logs, and automated updates.';
 $contactEmail = 'christopher-germann@uni-wh.de';
 ?>
 <!doctype html>
@@ -34,11 +34,11 @@ $contactEmail = 'christopher-germann@uni-wh.de';
   <meta name="twitter:description" content="<?= h($description) ?>">
   <meta name="twitter:image" content="<?= h($shareImageUrl) ?>">
   <meta name="twitter:image:alt" content="Psilocybin Research Publication Tracker logo">
-  <link rel="icon" href="assets/logo.png?v=20260709-sidebar-r-v83">
-  <link rel="icon" type="image/png" sizes="192x192" href="assets/pwa/icon-192.png?v=20260709-sidebar-r-v83">
-  <link rel="icon" type="image/png" sizes="512x512" href="assets/pwa/icon-512.png?v=20260709-sidebar-r-v83">
-  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260709-sidebar-r-v83">
-  <link rel="manifest" href="manifest.webmanifest?v=20260709-sidebar-r-v83">
+  <link rel="icon" href="assets/logo.png?v=20260711-rights-safe-v87">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/pwa/icon-192.png?v=20260711-rights-safe-v87">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/pwa/icon-512.png?v=20260711-rights-safe-v87">
+  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260711-rights-safe-v87">
+  <link rel="manifest" href="manifest.webmanifest?v=20260711-rights-safe-v87">
   <link rel="stylesheet" href="assets/styles.min.css?v=<?= h($assetVersion) ?>">
   <script>
     document.documentElement.classList.add('js');
@@ -93,6 +93,7 @@ $contactEmail = 'christopher-germann@uni-wh.de';
       <a href="export.php?format=json" target="_blank" rel="noopener"><i data-icon="download" aria-hidden="true"></i><span>Export data</span></a>
       <a href="api.php" target="_blank" rel="noopener"><i data-icon="braces" aria-hidden="true"></i><span>API</span></a>
       <a href="https://github.com/psilocybin-research/psilocybin-research-tracker" target="_blank" rel="noopener me"><i data-icon="github" aria-hidden="true"></i><span>GitHub</span></a>
+      <a href="https://doi.org/10.5281/zenodo.21293526" target="_blank" rel="noopener" title="Fixed citable dataset snapshot on Zenodo"><i data-icon="zenodo" aria-hidden="true"></i><span>Zenodo DOI</span></a>
       <a href="about.php"><i data-icon="circle-alert" aria-hidden="true"></i><span>About</span></a>
       <a href="data-protection.php" aria-current="location"><i data-icon="shield" aria-hidden="true"></i><span>Data protection</span></a>
     </nav>
@@ -107,7 +108,7 @@ $contactEmail = 'christopher-germann@uni-wh.de';
       This notice describes the data processing of the Psilocybin Research Publication Tracker.
       The app is designed as a self-contained PHP and SQLite research tool with local frontend
       assets, no third-party analytics scripts, no CDN JavaScript, no CDN CSS, and no tracking
-      pixels in alert emails. Last updated: July 3, 2026.
+      pixels in alert emails. Last updated: July 10, 2026.
     </p>
   </section>
 
@@ -121,9 +122,9 @@ $contactEmail = 'christopher-germann@uni-wh.de';
         operator. Alert emails use the configured sender address <a href="mailto:<?= h($contactEmail) ?>"><?= h($contactEmail) ?></a>.
       </p>
       <p>
-        If a separate legal notice or imprint is used for the wider website, that notice should be
-        treated as the authoritative provider-identification document. This page describes the
-        data processing of the publication tracker application itself.
+        The website imprint/legal notice provides the authoritative provider-identification
+        information. This page describes the data processing activities of the Psilocybin Research
+        Tracker application.
       </p>
     </article>
 
@@ -244,14 +245,16 @@ $contactEmail = 'christopher-germann@uni-wh.de';
     </article>
 
     <article class="about-panel about-panel-wide">
-      <h2>Publication Data Sources And Provenance</h2>
+      <h2>Publication Data Sources And Source Context</h2>
       <p>
         The database contains publication and registry metadata from public bibliographic and
         research-data services. The active source stack is PubMed, Crossref, Europe PMC, OpenAlex,
-        medRxiv, bioRxiv, PsyArXiv, and ClinicalTrials.gov. Imported records keep source labels,
-        source URLs, DOI, PubMed ID where available, publication status, timestamps, raw importer
-        metadata, topics, substances, study type, journal, authors, abstracts, keywords, and links
-        back to the original source where available.
+        medRxiv, bioRxiv, PsyArXiv, and ClinicalTrials.gov. The private runtime database can retain
+        source-derived abstracts, descriptions, keywords, and importer payloads for ingestion,
+        relevance screening, deduplication, classification, and source tracing. Public pages, APIs,
+        exports, widgets, and database downloads do not redistribute that unverified source text.
+        They expose a rights-sanitized metadata core containing bibliographic facts, source links,
+        derived annotations, abstract-availability indicators, and allowlisted factual provenance.
       </p>
       <ul class="about-list about-architecture-list">
         <li><strong>PubMed / NCBI E-utilities:</strong> biomedical citation metadata and PubMed identifiers.</li>
@@ -266,6 +269,13 @@ $contactEmail = 'christopher-germann@uni-wh.de';
         Source APIs receive server-side bibliographic queries, source-specific search terms, date
         windows, identifiers, and configured contact metadata when required or appropriate for
         responsible API use. Normal visitor search terms are not forwarded to these source APIs.
+      </p>
+      <p>
+        CC BY 4.0 applies only to rights held by the compiler in the selection and arrangement,
+        normalization, original annotations, validation outputs, and documentation. Third-party
+        bibliographic fields remain subject to applicable upstream rights and terms. An abstract
+        being publicly readable or available through an API is not treated as permission to
+        redistribute it.
       </p>
     </article>
 
@@ -301,7 +311,7 @@ $contactEmail = 'christopher-germann@uni-wh.de';
         <li>HTTPS protects browser traffic on the live site.</li>
         <li>Runtime data is kept under <code>data/</code> with web-deny rules for sensitive files.</li>
         <li>Sensitive alert and push fields are encrypted at rest where present.</li>
-        <li>Admin actions are protected by server-side token checks and should use POST.</li>
+        <li>Admin actions are protected by server-side token checks and POST request handling.</li>
         <li>Generated public health output is designed not to expose secrets, traces, or private runtime data.</li>
       </ul>
     </article>
@@ -331,11 +341,11 @@ $contactEmail = 'christopher-germann@uni-wh.de';
     <article class="about-panel about-panel-wide">
       <h2>Important Limits</h2>
       <p>
-        The tracker is a bibliographic discovery and monitoring tool. Source metadata may be incomplete
-        or wrong, source APIs may change, and deterministic classification is a navigation aid rather
-        than a scientific conclusion. Users should verify records at the DOI, publisher, PubMed,
-        registry, or source database before relying on them for citation, clinical interpretation,
-        reporting, or policy work.
+        The tracker is a bibliographic discovery and monitoring tool. Source metadata can be
+        incomplete or contain errors, source APIs can change, and deterministic classification is a
+        navigation aid rather than a scientific conclusion. Users should verify records at the DOI,
+        publisher, PubMed, registry, or source database before relying on them for citation,
+        clinical interpretation, reporting, or policy work.
       </p>
     </article>
   </section>

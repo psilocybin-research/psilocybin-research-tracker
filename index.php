@@ -209,7 +209,7 @@ $publicationGrowthTotal = array_sum(array_column($publicationGrowthYears, 'count
 $publicationGrowthLatest = $publicationGrowthYears ? (int)end($publicationGrowthYears)['count'] : 0;
 $publicationGrowthLatestYear = $publicationGrowthYears ? (int)end($publicationGrowthYears)['year'] : null;
 $publicationGrowthFirstYear = $publicationGrowthYears ? (int)$publicationGrowthYears[0]['year'] : null;
-$assetVersion = '20260709-sidebar-r-v83';
+$assetVersion = '20260711-rights-safe-v87';
 $appVersion = '2.1.1';
 $formatBytes = static function (int $bytes): string {
     if ($bytes >= 1073741824) {
@@ -245,7 +245,7 @@ $latestAddedDoi = $latestAddedWithDoi ? normalize_doi((string)($latestAddedWithD
 $latestAddedAt = $latestAddedWithDoi ? (string)($latestAddedWithDoi['date_added'] ?? '') : '';
 $baseUrl = Config::publicBaseUrl();
 $canonicalUrl = $baseUrl;
-$shareImageUrl = $baseUrl . 'assets/pwa/icon-512.png?v=20260709-sidebar-r-v83';
+$shareImageUrl = $baseUrl . 'assets/pwa/icon-512.png?v=20260711-rights-safe-v87';
 $shareImageAlt = 'Psilocybin Research Publication Tracker logo';
 $latestJsonLdItems = [];
 foreach (array_slice($latestPapers, 0, 10) as $index => $paper) {
@@ -287,7 +287,7 @@ $jsonLd = [
         'url' => $canonicalUrl,
         'keywords' => 'psilocybin research, psilocin, psychedelic therapy, clinical trials, preprints, PubMed, Crossref, Europe PMC',
         'dateModified' => $lastSuccessfulUpdate ? gmdate('c', strtotime((string)$lastSuccessfulUpdate)) : gmdate('c'),
-        'variableMeasured' => ['title', 'abstract', 'authors', 'journal', 'publication date', 'DOI', 'PubMed ID', 'source database', 'publication status', 'topic tags', 'study type', 'substance tags'],
+        'variableMeasured' => ['title', 'authors', 'journal', 'publication date', 'DOI', 'PubMed ID', 'source database', 'publication status', 'topic tags', 'study type', 'substance tags', 'abstract availability', 'text rights status'],
         'measurementTechnique' => ['PubMed E-utilities', 'Crossref API', 'Europe PMC REST API', 'ClinicalTrials.gov API v2', 'preprint server APIs'],
         'includedInDataCatalog' => ['@type' => 'DataCatalog', 'name' => 'Psilocybin-Research.com'],
         'distribution' => [
@@ -346,11 +346,11 @@ $jsonLd = [
   <meta name="twitter:image" content="<?= h($shareImageUrl) ?>">
   <meta name="twitter:image:alt" content="<?= h($shareImageAlt) ?>">
   <title>Publication Tracker | Psilocybin Research</title>
-  <link rel="icon" href="assets/logo.png?v=20260709-sidebar-r-v83">
-  <link rel="icon" type="image/png" sizes="192x192" href="assets/pwa/icon-192.png?v=20260709-sidebar-r-v83">
-  <link rel="icon" type="image/png" sizes="512x512" href="assets/pwa/icon-512.png?v=20260709-sidebar-r-v83">
-  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260709-sidebar-r-v83">
-  <link rel="manifest" href="manifest.webmanifest?v=20260709-sidebar-r-v83">
+  <link rel="icon" href="assets/logo.png?v=20260711-rights-safe-v87">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/pwa/icon-192.png?v=20260711-rights-safe-v87">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/pwa/icon-512.png?v=20260711-rights-safe-v87">
+  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260711-rights-safe-v87">
+  <link rel="manifest" href="manifest.webmanifest?v=20260711-rights-safe-v87">
   <link rel="preload" href="assets/preloader-mushroom-desktop.webp" as="image" media="(min-width: 701px)" fetchpriority="high">
   <link rel="preload" href="assets/preloader-mushroom-mobile.webp" as="image" media="(max-width: 700px)" fetchpriority="high">
   <link rel="preload" href="assets/fonts/roboto-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -401,6 +401,7 @@ $jsonLd = [
     <a href="export.php?<?= h(http_build_query(array_merge(canonical_query_params($_GET), ['format' => 'json']))) ?>" target="_blank" rel="noopener" data-sidebar-export><i data-icon="download" aria-hidden="true"></i><span>Export data</span></a>
     <a href="api.php?<?= h(http_build_query(array_merge(canonical_query_params($_GET), ['resource' => 'papers', 'per_page' => 'all', 'page' => 1]))) ?>" target="_blank" rel="noopener"><i data-icon="braces" aria-hidden="true"></i><span>API</span></a>
     <a href="https://github.com/psilocybin-research/psilocybin-research-tracker" target="_blank" rel="noopener me"><i data-icon="github" aria-hidden="true"></i><span>GitHub</span></a>
+    <a href="https://doi.org/10.5281/zenodo.21293526" target="_blank" rel="noopener" title="Fixed citable dataset snapshot on Zenodo"><i data-icon="zenodo" aria-hidden="true"></i><span>Zenodo DOI</span></a>
     <a href="about.php"><i data-icon="circle-alert" aria-hidden="true"></i><span>About</span></a>
     <a href="data-protection.php"><i data-icon="shield" aria-hidden="true"></i><span>Data protection</span></a>
   </nav>
@@ -468,7 +469,7 @@ $jsonLd = [
           <form class="hero-search" method="get" action="./#papers">
             <label class="sr-only" for="hero-q">Search publications</label>
             <i data-icon="search" aria-hidden="true"></i>
-            <input id="hero-q" type="search" name="search" value="<?= h($filters['q']) ?>" placeholder="Search title, abstract, authors, keywords...">
+            <input id="hero-q" type="search" name="search" value="<?= h($filters['q']) ?>" placeholder="Search indexed metadata and derived topics...">
             <button type="submit">Search</button>
           </form>
           <button class="hero-settings-menu hero-filter-shortcut" type="button" data-open-advanced aria-label="<?= $advancedFiltersActive ? 'Advanced filters active' : 'Open advanced filters' ?>"><i data-icon="settings" aria-hidden="true"></i><span>Filters</span></button>
@@ -652,7 +653,7 @@ $jsonLd = [
     </div>
     <label class="field">
       <span>Keyword search</span>
-      <input type="search" name="search" value="<?= h($filters['q']) ?>" placeholder="Search title, abstract, authors...">
+      <input type="search" name="search" value="<?= h($filters['q']) ?>" placeholder="Search indexed metadata and derived topics...">
     </label>
     <label class="field">
       <span>Author</span>
@@ -855,7 +856,12 @@ $jsonLd = [
               <div class="paper-main">
                 <label class="collection-pick"><input type="checkbox" data-collection-paper value="<?= h((string)$paper['id']) ?>"> <span>Select for export</span></label>
                 <h3><a href="publication.php?id=<?= h((string)$paper['id']) ?>"><?= h($paper['title']) ?></a></h3>
-                <p class="abstract"><?= h(mb_substr((string)$paper['abstract'], 0, 360)) ?><?= mb_strlen((string)$paper['abstract']) > 360 ? '...' : '' ?></p>
+                <p class="abstract rights-safe-text-note">
+                  <?php if (trim((string)($paper['abstract'] ?? '')) !== ''): ?>
+                    Abstract available at the source but not redistributed here.
+                    <?php if (!empty($paper['source_url'])): ?><a href="<?= h((string)$paper['source_url']) ?>" target="_blank" rel="noopener">Read at source</a>.<?php endif; ?>
+                  <?php else: ?>No abstract availability was recorded for this entry.<?php endif; ?>
+                </p>
                 <div class="links">
                   <a href="publication.php?id=<?= h((string)$paper['id']) ?>"><i data-icon="book-open" aria-hidden="true"></i> Details</a>
                   <?php if ($paper['doi']): ?><a href="https://doi.org/<?= h($paper['doi']) ?>" target="_blank" rel="noopener"><i data-icon="link" aria-hidden="true"></i> DOI <?= h($paper['doi']) ?></a><?php endif; ?>
@@ -878,7 +884,6 @@ $jsonLd = [
                 <?php foreach (split_tag_values((string)$paper['substance_tags']) as $tag): ?><?= chip_link($tag, ['substances' => [$tag]], '') ?><?php endforeach; ?>
                 <?php foreach (split_tag_values((string)($paper['topic_tags'] ?? ''), 3) as $tag): ?><?= chip_link($tag, ['topic' => $tag], 'soft') ?><?php endforeach; ?>
                 <?php if (!empty($paper['study_type'])): ?><?= chip_link((string)$paper['study_type'], ['study_type' => (string)$paper['study_type']], 'soft') ?><?php endif; ?>
-                <?php foreach (split_tag_values((string)$paper['keywords'], 1) as $keyword): ?><?= chip_link($keyword, ['search' => $keyword], 'soft keyword-chip') ?><?php endforeach; ?>
                 <a class="tag-link soft more-tags-link" href="publication.php?id=<?= h((string)$paper['id']) ?>">More</a>
               </div>
             </article>
@@ -1112,7 +1117,7 @@ $jsonLd = [
       <?= h(number_format($statusCounts['preprint'] ?? 0)) ?> preprints,
       <?= h(number_format($statusCounts['clinical trial'] ?? 0)) ?> clinical trials.
     </button>
-    Coverage may be incomplete; verify records before citation or clinical use.
+    Coverage is not exhaustive; verify records before citation or clinical interpretation.
   </span>
   <span class="footer-db-meta">
     Generated <?= h(format_utc_display(current_utc())) ?> · SQLite size <?= h($databaseSizeLabel) ?> · Last update <?= h(format_utc_display($lastSuccessfulUpdate)) ?> · Last DOI article added

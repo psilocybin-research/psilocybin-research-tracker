@@ -11,7 +11,7 @@ if ((string)($filters['q'] ?? '') === '' && request_value('search') !== null) {
     $filters['q'] = request_value('search');
 }
 $trials = $repo->trials($filters, 150);
-$assetVersion = '20260709-sidebar-r-v83';
+$assetVersion = '20260711-rights-safe-v87';
 ?>
 <!doctype html>
 <html lang="en">
@@ -41,10 +41,15 @@ $assetVersion = '20260709-sidebar-r-v83';
     </div>
     <div class="compact-paper-list">
       <?php foreach ($trials['rows'] as $paper): ?>
-        <?php $raw = json_decode((string)($paper['raw_json'] ?? ''), true) ?: []; ?>
+        <?php
+          $trialIdentifier = (string)($paper['doi'] ?? '');
+          if (preg_match('/\bNCT\d{8}\b/i', (string)($paper['source_url'] ?? ''), $trialMatch)) {
+              $trialIdentifier = strtoupper($trialMatch[0]);
+          }
+        ?>
         <a href="publication.php?id=<?= h((string)$paper['id']) ?>">
           <strong><?= h((string)$paper['title']) ?></strong>
-          <span><?= h((string)($paper['authors'] ?: 'Sponsor unavailable')) ?> · <?= h((string)($paper['publication_date'] ?: 'Date unavailable')) ?> · <?= h((string)($raw['nct_id'] ?? $paper['doi'] ?? '')) ?></span>
+          <span><?= h((string)($paper['authors'] ?: 'Sponsor unavailable')) ?> · <?= h((string)($paper['publication_date'] ?: 'Date unavailable')) ?> · <?= h($trialIdentifier) ?></span>
         </a>
       <?php endforeach; ?>
     </div>

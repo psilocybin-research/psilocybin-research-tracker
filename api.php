@@ -58,4 +58,4 @@ $payload = match ($resource) {
         'filters' => $paperFilters,
     ]),
 };
-echo json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+echo json_encode(rights_safe_public_payload($payload), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
