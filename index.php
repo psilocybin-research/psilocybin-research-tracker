@@ -282,7 +282,7 @@ $jsonLd = [
     [
         '@context' => 'https://schema.org',
         '@type' => 'Dataset',
-        'name' => 'Psilocybin and Psilocin Research Publications',
+        'name' => 'An integrated living dataset of psilocybin and psilocin publications, preprints, and trial records',
         'description' => 'A structured SQLite-backed index of psilocybin and psilocin publications, preprints, protocols, reviews, and clinical trials with source, status, topic, DOI, PubMed, export, API, and analytics metadata.',
         'url' => $canonicalUrl,
         'keywords' => 'psilocybin research, psilocin, psychedelic therapy, clinical trials, preprints, PubMed, Crossref, Europe PMC',

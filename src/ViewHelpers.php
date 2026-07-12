@@ -128,7 +128,7 @@ function funding_acknowledgement(): string
         . '<img src="assets/funding/eu-marie-curie-actions.jpg" alt="European Union Research and Innovation Marie Curie Actions" width="481" height="150" loading="lazy" decoding="async">'
         . '</a>'
         . '</div>'
-        . '<p class="footer-funding-copy">Initial development was supported through CogNovo, an EU FP7 Marie Curie Initial Training Network (grant agreement 604764).</p>'
+        . '<p class="footer-funding-copy">The psilocybin research infrastructure and psilocybin-research.com were initially developed with support from the European Union’s Seventh Framework Programme (FP7/2007–2013) through the Marie Skłodowska-Curie Initial Training Network CogNovo (grant agreement No. 604764).</p>'
         . '</aside>';
 }
 

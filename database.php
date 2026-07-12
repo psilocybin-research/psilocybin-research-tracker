@@ -116,7 +116,7 @@ while ($row = $select->fetch()) {
 }
 $metadata = $export->prepare('INSERT INTO metadata (key, value) VALUES (:key, :value)');
 foreach ([
-    'title' => 'Psilocybin and Psilocin Research Publications',
+    'title' => 'An integrated living dataset of psilocybin and psilocin publications, preprints, and trial records',
     'description' => 'Rights-sanitized bibliographic and registry metadata core. Runtime state, private notification data, admin data, hidden records, curated false positives, source-derived abstracts, descriptions, keywords, and unrestricted payload text are excluded.',
     'tracker_site_url' => ExportService::TRACKER_SITE_URL,
     'source_url' => Config::publicBaseUrl(),

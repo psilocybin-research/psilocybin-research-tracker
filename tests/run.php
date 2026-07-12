@@ -706,7 +706,7 @@ assert_true(str_contains($index, 'assets/styles.min.css?v=') && str_contains($in
 assert_true(!str_contains($css, 'mushrooms-4560675.jpg') && str_contains($css, 'preloader-mushroom-desktop.webp') && str_contains($css, 'preloader-mushroom-mobile.webp'), 'main app background image should be removed while preloader keeps responsive backgrounds');
 assert_true(!str_contains($index, 'footer-image-band') && !str_contains($css, 'footer-image-band') && !str_contains($css, 'footer-mushroom-bg.webp') && !str_contains($index, '<footer class="footer">' . "\n" . '  <img'), 'footer image surfaces should not render');
 assert_true(str_contains($index, 'funding_acknowledgement()') && str_contains($aboutPhp, 'funding_acknowledgement()') && str_contains($dataProtectionPhp, 'funding_acknowledgement()'), 'historical funding acknowledgement should appear in primary public footers');
-assert_true(str_contains($viewHelpers, 'Initial development was supported through CogNovo, an EU FP7 Marie Curie Initial Training Network (grant agreement 604764).') && str_contains($viewHelpers, 'cordis.europa.eu/project/id/604764/reporting') && str_contains($css, '.footer-funding-logos'), 'funding statement, official grant link, or compact logo styling missing');
+assert_true(str_contains($viewHelpers, 'The psilocybin research infrastructure and psilocybin-research.com were initially developed with support from the European Union’s Seventh Framework Programme (FP7/2007–2013) through the Marie Skłodowska-Curie Initial Training Network CogNovo (grant agreement No. 604764).') && str_contains($viewHelpers, 'cordis.europa.eu/project/id/604764/reporting') && str_contains($css, '.footer-funding-logos'), 'funding statement, official grant link, or compact logo styling missing');
 foreach (['assets/funding/cognovo-logo.png', 'assets/funding/marie-curie.svg', 'assets/funding/eu-marie-curie-actions.jpg'] as $fundingAsset) {
     assert_true(is_file(__DIR__ . '/../' . $fundingAsset), 'historical funding asset missing: ' . $fundingAsset);
 }
@@ -766,6 +766,8 @@ assert_true(str_contains($rss, 'http_response_code(410)') && str_contains($rss, 
 assert_true(is_file(__DIR__ . '/../widget.js.php'), 'script widget endpoint missing');
 assert_true(is_file(__DIR__ . '/../database.php'), 'SQLite database download endpoint missing');
 $databasePhp = file_get_contents(__DIR__ . '/../database.php');
+$datasetTitle = 'An integrated living dataset of psilocybin and psilocin publications, preprints, and trial records';
+assert_true(str_contains($index, $datasetTitle) && str_contains($databasePhp, $datasetTitle), 'canonical dataset title must match across structured website and SQLite metadata');
 assert_true(str_contains($databasePhp, 'application/vnd.sqlite3') && str_contains($databasePhp, 'rights-safe-metadata-core') && str_contains($databasePhp, 'tracker_site_url') && str_contains($databasePhp, 'X-Publication-Tracker-Filename') && str_contains($databasePhp, 'download_filename'), 'SQLite database download headers missing');
 assert_true(!str_contains($databasePhp, 'alert_subscriptions') && !str_contains($databasePhp, 'push_subscriptions') && !str_contains($databasePhp, 'admin_token'), 'SQLite database download must not expose sensitive runtime tables');
 assert_true(
