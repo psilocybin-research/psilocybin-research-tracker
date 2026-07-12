@@ -114,6 +114,24 @@ function detail_scroll_top(): string
     return '<button class="scroll-top" id="scroll-top" type="button" aria-label="Scroll to top"><i data-icon="arrow-up" aria-hidden="true"></i><span>Top</span></button>';
 }
 
+function funding_acknowledgement(): string
+{
+    return '<aside class="footer-funding" aria-label="Historical funding acknowledgement">'
+        . '<div class="footer-funding-logos" aria-label="CogNovo, Marie Curie Actions and European Union">'
+        . '<a class="footer-funding-logo footer-funding-cognovo" href="https://cognovo.eu/" target="_blank" rel="noopener noreferrer" aria-label="CogNovo programme">'
+        . '<img src="assets/funding/cognovo-logo.png" alt="CogNovo" width="415" height="155" loading="lazy" decoding="async">'
+        . '</a>'
+        . '<a class="footer-funding-logo footer-funding-marie" href="https://marie-sklodowska-curie-actions.ec.europa.eu/" target="_blank" rel="noopener noreferrer" aria-label="Marie Skłodowska-Curie Actions">'
+        . '<img src="assets/funding/marie-curie.svg" alt="Marie Curie Actions" width="57" height="77" loading="lazy" decoding="async">'
+        . '</a>'
+        . '<a class="footer-funding-logo footer-funding-eu" href="https://cordis.europa.eu/project/id/604764/reporting" target="_blank" rel="noopener noreferrer" aria-label="European Union FP7 CogNovo grant 604764">'
+        . '<img src="assets/funding/eu-marie-curie-actions.jpg" alt="European Union Research and Innovation Marie Curie Actions" width="481" height="150" loading="lazy" decoding="async">'
+        . '</a>'
+        . '</div>'
+        . '<p class="footer-funding-copy">Initial development was supported through CogNovo, an EU FP7 Marie Curie Initial Training Network (grant agreement 604764).</p>'
+        . '</aside>';
+}
+
 function hidden_query_inputs(array $exclude = []): string
 {
     $html = '';

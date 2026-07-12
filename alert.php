@@ -8,7 +8,7 @@ $db->initialize();
 $repo = new PublicationRepository($db);
 $alerts = new AlertService($db, $repo);
 $topics = $repo->topics();
-$assetVersion = '20260711-rights-safe-v87';
+$assetVersion = '20260712-funding-footer-v88';
 
 $token = request_value('token', '');
 $message = null;
@@ -96,7 +96,7 @@ $statusLabel = $subscription ? ($isActive ? 'Active' : ($isConfirmed ? 'Paused' 
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Manage Publication Alert | Psilocybin Research</title>
-  <link rel="icon" href="assets/logo.png?v=20260711-rights-safe-v87">
+  <link rel="icon" href="assets/logo.png?v=20260712-funding-footer-v88">
   <link rel="stylesheet" href="assets/styles.min.css?v=<?= h($assetVersion) ?>">
   <script>
     document.documentElement.classList.add('js');

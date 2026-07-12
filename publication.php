@@ -14,7 +14,7 @@ if (!$paper) {
 $related = $paper ? $repo->relatedPapers($paper, 8) : [];
 $references = $paper ? $repo->citedReferences($paper, 40) : [];
 $citing = $paper && !empty($paper['doi']) ? $repo->citingPapers((string)$paper['doi'], 20) : [];
-$assetVersion = '20260711-rights-safe-v87';
+$assetVersion = '20260712-funding-footer-v88';
 $title = $paper ? (string)$paper['title'] : 'Publication not found';
 ?>
 <!doctype html>

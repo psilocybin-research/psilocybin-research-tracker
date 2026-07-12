@@ -11,7 +11,7 @@ $selectedAuthor = (string)request_value('author', '');
 $authors = $repo->authors($query, 120);
 $profile = $selectedAuthor !== '' ? $repo->authorProfile($selectedAuthor) : null;
 $topics = $repo->topics();
-$assetVersion = '20260711-rights-safe-v87';
+$assetVersion = '20260712-funding-footer-v88';
 ?>
 <!doctype html>
 <html lang="en">

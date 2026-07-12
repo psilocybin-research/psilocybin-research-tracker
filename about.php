@@ -3,10 +3,10 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/src/helpers.php';
 
-$assetVersion = '20260711-rights-safe-v87';
+$assetVersion = '20260712-funding-footer-v88';
 $baseUrl = Config::publicBaseUrl();
 $canonicalUrl = $baseUrl . 'about.php';
-$shareImageUrl = $baseUrl . 'assets/pwa/icon-512.png?v=20260711-rights-safe-v87';
+$shareImageUrl = $baseUrl . 'assets/pwa/icon-512.png?v=20260712-funding-footer-v88';
 $description = 'About the Psilocybin Research Publication Tracker: searchable literature database, analytics, exports, alerts, privacy, encryption, and source coverage.';
 $aboutStats = [
     'engine' => 'SQLite',
@@ -72,9 +72,9 @@ try {
   <meta name="twitter:description" content="<?= h($description) ?>">
   <meta name="twitter:image" content="<?= h($shareImageUrl) ?>">
   <meta name="twitter:image:alt" content="Psilocybin Research Publication Tracker logo">
-  <link rel="icon" href="assets/logo.png?v=20260711-rights-safe-v87">
-  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260711-rights-safe-v87">
-  <link rel="manifest" href="manifest.webmanifest?v=20260711-rights-safe-v87">
+  <link rel="icon" href="assets/logo.png?v=20260712-funding-footer-v88">
+  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260712-funding-footer-v88">
+  <link rel="manifest" href="manifest.webmanifest?v=20260712-funding-footer-v88">
   <link rel="stylesheet" href="assets/styles.min.css?v=<?= h($assetVersion) ?>">
   <script>
     document.documentElement.classList.add('js');
@@ -298,6 +298,7 @@ try {
 
 <footer class="footer about-footer">
   <span>Application created by Dr. Christopher B. Germann · <a href="/">Open tracker</a> · <a href="api.php" target="_blank" rel="noopener">API</a> · <a href="data-protection.php">Data protection</a>.</span>
+  <?= funding_acknowledgement() ?>
 </footer>
 
 <?= detail_scroll_top() ?>

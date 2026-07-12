@@ -1,5 +1,5 @@
-const CACHE_VERSION = "publication-tracker-pwa-v157-20260711-rights-safe";
-const ASSET_VERSION = "20260711-rights-safe-v87";
+const CACHE_VERSION = "publication-tracker-pwa-v158-20260712-funding-footer";
+const ASSET_VERSION = "20260712-funding-footer-v88";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -14,6 +14,9 @@ const STATIC_ASSETS = [
   "./assets/mushroom-brand-mark.webp",
   "./assets/preloader-mushroom-desktop.webp",
   "./assets/preloader-mushroom-mobile.webp",
+  "./assets/funding/cognovo-logo.png",
+  "./assets/funding/marie-curie.svg",
+  "./assets/funding/eu-marie-curie-actions.jpg",
   "./assets/fonts/roboto-latin.woff2",
   "./assets/fonts/roboto-latin-ext.woff2",
   `./assets/pwa/icon-192.png?v=${ASSET_VERSION}`,

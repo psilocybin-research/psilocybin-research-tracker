@@ -7,7 +7,7 @@ $db = new Database();
 $db->initialize();
 $repo = new PublicationRepository($db);
 $rows = $repo->evidenceMap();
-$assetVersion = '20260711-rights-safe-v87';
+$assetVersion = '20260712-funding-footer-v88';
 ?>
 <!doctype html>
 <html lang="en">

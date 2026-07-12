@@ -61,7 +61,7 @@ if ($range !== 'all') $activeFilterLabels[] = $range === 'custom' ? 'Custom date
 if ($selectedSources) $activeFilterLabels[] = 'Sources: ' . implode(', ', $selectedSources);
 if ($selectedStatuses) $activeFilterLabels[] = 'Status: ' . implode(', ', array_map(static fn(string $status): string => $publicationStatuses[$status] ?? $status, $selectedStatuses));
 $hasActiveFilters = (bool)($activeFilterLabels || $paperId > 0 || $selectedSubstances !== ['psilocybin', 'psilocin']);
-$assetVersion = '20260711-rights-safe-v87';
+$assetVersion = '20260712-funding-footer-v88';
 ?>
 <!doctype html>
 <html lang="en">
