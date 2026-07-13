@@ -1,5 +1,5 @@
-const CACHE_VERSION = "publication-tracker-pwa-v158-20260712-funding-footer";
-const ASSET_VERSION = "20260712-funding-footer-v88";
+const CACHE_VERSION = "publication-tracker-pwa-v159-20260713-push-footer";
+const ASSET_VERSION = "20260713-push-footer-v89";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 

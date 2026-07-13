@@ -3801,8 +3801,8 @@ dialog::backdrop {
 .footer .footer-funding-logo {
   display: grid;
   place-items: center;
-  height: 38px;
-  padding: 4px 7px;
+  height: 52px;
+  padding: 5px 9px;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
   border-radius: 7px;
@@ -3821,15 +3821,15 @@ dialog::backdrop {
 }
 
 .footer-funding-cognovo img {
-  width: 84px;
+  width: 112px;
 }
 
 .footer-funding-marie img {
-  width: 23px;
+  width: 31px;
 }
 
 .footer-funding-eu img {
-  width: 112px;
+  width: 150px;
 }
 
 .footer .footer-funding-copy {
@@ -3850,20 +3850,20 @@ dialog::backdrop {
   }
 
   .footer .footer-funding-logo {
-    height: 34px;
+    height: 44px;
     padding: 4px 6px;
   }
 
   .footer-funding-cognovo img {
-    width: 72px;
+    width: 90px;
   }
 
   .footer-funding-marie img {
-    width: 20px;
+    width: 25px;
   }
 
   .footer-funding-eu img {
-    width: 96px;
+    width: 120px;
   }
 }
 

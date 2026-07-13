@@ -2387,7 +2387,7 @@ function initPwa() {
         try {
           new Notification("Psilocybin Research Tracker updated", {
             body: "The installed research app has refreshed to the latest version.",
-            icon: "assets/pwa/icon-192.png?v=20260712-funding-footer-v88",
+            icon: "assets/pwa/icon-192.png?v=20260713-push-footer-v89",
             tag: "publication-tracker-app-update",
           });
         } catch (error) {}

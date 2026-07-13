@@ -209,8 +209,8 @@ $publicationGrowthTotal = array_sum(array_column($publicationGrowthYears, 'count
 $publicationGrowthLatest = $publicationGrowthYears ? (int)end($publicationGrowthYears)['count'] : 0;
 $publicationGrowthLatestYear = $publicationGrowthYears ? (int)end($publicationGrowthYears)['year'] : null;
 $publicationGrowthFirstYear = $publicationGrowthYears ? (int)$publicationGrowthYears[0]['year'] : null;
-$assetVersion = '20260712-funding-footer-v88';
-$appVersion = '2.1.3';
+$assetVersion = '20260713-push-footer-v89';
+$appVersion = '2.1.5';
 $formatBytes = static function (int $bytes): string {
     if ($bytes >= 1073741824) {
         return number_format($bytes / 1073741824, 2) . ' GB';
@@ -245,7 +245,7 @@ $latestAddedDoi = $latestAddedWithDoi ? normalize_doi((string)($latestAddedWithD
 $latestAddedAt = $latestAddedWithDoi ? (string)($latestAddedWithDoi['date_added'] ?? '') : '';
 $baseUrl = Config::publicBaseUrl();
 $canonicalUrl = $baseUrl;
-$shareImageUrl = $baseUrl . 'assets/pwa/icon-512.png?v=20260712-funding-footer-v88';
+$shareImageUrl = $baseUrl . 'assets/pwa/icon-512.png?v=20260713-push-footer-v89';
 $shareImageAlt = 'Psilocybin Research Publication Tracker logo';
 $latestJsonLdItems = [];
 foreach (array_slice($latestPapers, 0, 10) as $index => $paper) {
@@ -346,11 +346,11 @@ $jsonLd = [
   <meta name="twitter:image" content="<?= h($shareImageUrl) ?>">
   <meta name="twitter:image:alt" content="<?= h($shareImageAlt) ?>">
   <title>Publication Tracker | Psilocybin Research</title>
-  <link rel="icon" href="assets/logo.png?v=20260712-funding-footer-v88">
-  <link rel="icon" type="image/png" sizes="192x192" href="assets/pwa/icon-192.png?v=20260712-funding-footer-v88">
-  <link rel="icon" type="image/png" sizes="512x512" href="assets/pwa/icon-512.png?v=20260712-funding-footer-v88">
-  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260712-funding-footer-v88">
-  <link rel="manifest" href="manifest.webmanifest?v=20260712-funding-footer-v88">
+  <link rel="icon" href="assets/logo.png?v=20260713-push-footer-v89">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/pwa/icon-192.png?v=20260713-push-footer-v89">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/pwa/icon-512.png?v=20260713-push-footer-v89">
+  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260713-push-footer-v89">
+  <link rel="manifest" href="manifest.webmanifest?v=20260713-push-footer-v89">
   <link rel="preload" href="assets/preloader-mushroom-desktop.webp" as="image" media="(min-width: 701px)" fetchpriority="high">
   <link rel="preload" href="assets/preloader-mushroom-mobile.webp" as="image" media="(max-width: 700px)" fetchpriority="high">
   <link rel="preload" href="assets/fonts/roboto-latin.woff2" as="font" type="font/woff2" crossorigin>

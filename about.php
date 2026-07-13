@@ -3,10 +3,10 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/src/helpers.php';
 
-$assetVersion = '20260712-funding-footer-v88';
+$assetVersion = '20260713-push-footer-v89';
 $baseUrl = Config::publicBaseUrl();
 $canonicalUrl = $baseUrl . 'about.php';
-$shareImageUrl = $baseUrl . 'assets/pwa/icon-512.png?v=20260712-funding-footer-v88';
+$shareImageUrl = $baseUrl . 'assets/pwa/icon-512.png?v=20260713-push-footer-v89';
 $description = 'About the Psilocybin Research Publication Tracker: searchable literature database, analytics, exports, alerts, privacy, encryption, and source coverage.';
 $aboutStats = [
     'engine' => 'SQLite',
@@ -72,9 +72,9 @@ try {
   <meta name="twitter:description" content="<?= h($description) ?>">
   <meta name="twitter:image" content="<?= h($shareImageUrl) ?>">
   <meta name="twitter:image:alt" content="Psilocybin Research Publication Tracker logo">
-  <link rel="icon" href="assets/logo.png?v=20260712-funding-footer-v88">
-  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260712-funding-footer-v88">
-  <link rel="manifest" href="manifest.webmanifest?v=20260712-funding-footer-v88">
+  <link rel="icon" href="assets/logo.png?v=20260713-push-footer-v89">
+  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260713-push-footer-v89">
+  <link rel="manifest" href="manifest.webmanifest?v=20260713-push-footer-v89">
   <link rel="stylesheet" href="assets/styles.min.css?v=<?= h($assetVersion) ?>">
   <script>
     document.documentElement.classList.add('js');

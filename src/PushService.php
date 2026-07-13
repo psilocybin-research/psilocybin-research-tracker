@@ -225,22 +225,60 @@ final class PushService
 
     private function derToJose(string $der): string
     {
-        $offset = 3;
-        if (ord($der[1]) > 0x80) {
-            $offset += ord($der[1]) - 0x80;
-        }
-        if (ord($der[$offset]) !== 0x02) {
+        $offset = 0;
+        if ($der === '' || ord($der[$offset++]) !== 0x30) {
             throw new RuntimeException('Invalid DER signature.');
         }
-        $rLength = ord($der[++$offset]);
-        $r = substr($der, ++$offset, $rLength);
+
+        $sequenceLength = $this->readDerLength($der, $offset);
+        if ($sequenceLength !== strlen($der) - $offset || $offset >= strlen($der) || ord($der[$offset++]) !== 0x02) {
+            throw new RuntimeException('Invalid DER signature.');
+        }
+
+        $rLength = $this->readDerLength($der, $offset);
+        $r = substr($der, $offset, $rLength);
         $offset += $rLength;
-        if (ord($der[$offset]) !== 0x02) {
+        if (strlen($r) !== $rLength || $offset >= strlen($der) || ord($der[$offset++]) !== 0x02) {
             throw new RuntimeException('Invalid DER signature.');
         }
-        $sLength = ord($der[++$offset]);
-        $s = substr($der, ++$offset, $sLength);
-        return str_pad(ltrim($r, "\x00"), 32, "\x00", STR_PAD_LEFT) . str_pad(ltrim($s, "\x00"), 32, "\x00", STR_PAD_LEFT);
+
+        $sLength = $this->readDerLength($der, $offset);
+        $s = substr($der, $offset, $sLength);
+        $offset += $sLength;
+        if (strlen($s) !== $sLength || $offset !== strlen($der)) {
+            throw new RuntimeException('Invalid DER signature.');
+        }
+
+        $r = ltrim($r, "\x00");
+        $s = ltrim($s, "\x00");
+        if ($r === '' || $s === '' || strlen($r) > 32 || strlen($s) > 32) {
+            throw new RuntimeException('Invalid DER signature.');
+        }
+
+        return str_pad($r, 32, "\x00", STR_PAD_LEFT) . str_pad($s, 32, "\x00", STR_PAD_LEFT);
+    }
+
+    private function readDerLength(string $der, int &$offset): int
+    {
+        if ($offset >= strlen($der)) {
+            throw new RuntimeException('Invalid DER signature.');
+        }
+
+        $length = ord($der[$offset++]);
+        if (($length & 0x80) === 0) {
+            return $length;
+        }
+
+        $byteCount = $length & 0x7f;
+        if ($byteCount < 1 || $byteCount > 4 || $offset + $byteCount > strlen($der)) {
+            throw new RuntimeException('Invalid DER signature.');
+        }
+
+        $length = 0;
+        for ($i = 0; $i < $byteCount; $i++) {
+            $length = ($length << 8) | ord($der[$offset++]);
+        }
+        return $length;
     }
 
     private function markSent(int $id): void
