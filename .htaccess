@@ -47,10 +47,7 @@ AddType text/plain .R .r
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
-  RewriteCond %{QUERY_STRING} ^q=([^&]+)$ [NC]
-  RewriteRule ^(.*)$ $1?search=%1 [R=302,L,NE]
-  RewriteCond %{QUERY_STRING} ^q=([^&]+)&(.+)$ [NC]
-  RewriteRule ^(.*)$ $1?search=%1&%2 [R=302,L,NE]
+  RewriteRule ^var/www/vhosts/[^/]+/html/psilocybin-research\.com/(.*)$ /$1 [R=301,L,NE]
   RewriteRule ^data/ - [F,L]
   RewriteRule ^src/ - [F,L]
   RewriteRule ^bin/ - [F,L]

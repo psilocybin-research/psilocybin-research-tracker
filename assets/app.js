@@ -2609,7 +2609,6 @@ function initCitationNetwork() {
   const fullscreenTarget = document.querySelector("[data-citation-fullscreen-target]");
   const searchInput = document.querySelector("[data-citation-search]");
   const seedLimitSelect = document.querySelector("[data-citation-seed-limit]");
-  const seedPresetButtons = [...document.querySelectorAll("[data-citation-seed-preset]")];
   const clearSearchButton = document.querySelector("[data-citation-clear-search]");
   const copySelectedButton = document.querySelector("[data-citation-copy-selected]");
   const focusSelectedButton = document.querySelector("[data-citation-focus-selected]");
@@ -3034,6 +3033,16 @@ function initCitationNetwork() {
     node: null,
     focusNodeId: initialParams.get("network_node") || "",
   };
+  const syncCitationSelectionActions = () => {
+    const hasSelection = Boolean(selectedState.node);
+    [copySelectedButton, focusSelectedButton, exportSubgraphButton].forEach((button) => {
+      if (!button) return;
+      button.disabled = !hasSelection;
+      button.setAttribute("aria-disabled", hasSelection ? "false" : "true");
+      button.title = hasSelection ? "" : "Select a node first";
+    });
+  };
+  syncCitationSelectionActions();
   const splitCitationNames = (value) => String(value || "")
     .split(",")
     .map((item) => item.trim())
@@ -3132,6 +3141,7 @@ function initCitationNetwork() {
   };
   const updateDetail = (node) => {
     selectedState.node = node;
+    syncCitationSelectionActions();
     nodeLayer.querySelectorAll(".citation-node").forEach((element) => {
       element.classList.toggle("is-selected", element.dataset.nodeId === node.id);
     });
@@ -3442,9 +3452,6 @@ function initCitationNetwork() {
   seedLimitSelect?.addEventListener("change", () => {
     applySeedLimit(seedLimitSelect.value || "1");
   });
-  seedPresetButtons.forEach((button) => {
-    button.addEventListener("click", () => applySeedLimit(button.dataset.citationSeedPreset || "1"));
-  });
   copySelectedButton?.addEventListener("click", async () => {
     const text = selectedNodeText();
     if (!text) {
@@ -3528,7 +3535,7 @@ function initCitationNetwork() {
     if (clusterToggle) clusterToggle.checked = true;
     updateSavedViewUrl();
     updateGraphState();
-    showAppToast("Citation network focus cleared.");
+    showAppToast("Graph view reset.");
   });
   [...nodeTypeInputs, ...edgeTypeInputs].forEach((input) => input.addEventListener("change", updateGraphState));
   window.addEventListener("resize", () => {

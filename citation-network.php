@@ -7,7 +7,7 @@ $db = new Database();
 $db->initialize();
 $repo = new PublicationRepository($db);
 
-$q = trim((string)request_value('q', ''));
+$q = trim((string)request_value('search', request_value('q', '')));
 $author = trim((string)request_value('author', ''));
 $topic = trim((string)request_value('topic', ''));
 $journal = trim((string)request_value('journal', ''));
@@ -61,7 +61,8 @@ if ($range !== 'all') $activeFilterLabels[] = $range === 'custom' ? 'Custom date
 if ($selectedSources) $activeFilterLabels[] = 'Sources: ' . implode(', ', $selectedSources);
 if ($selectedStatuses) $activeFilterLabels[] = 'Status: ' . implode(', ', array_map(static fn(string $status): string => $publicationStatuses[$status] ?? $status, $selectedStatuses));
 $hasActiveFilters = (bool)($activeFilterLabels || $paperId > 0 || $selectedSubstances !== ['psilocybin', 'psilocin']);
-$assetVersion = '20260713-push-footer-v89';
+$hasAdvancedFilters = (bool)($year !== '' || $range !== 'all' || $selectedSources || $selectedStatuses || $selectedSubstances !== ['psilocybin', 'psilocin']);
+$assetVersion = '20260713-accordion-emphasis-v93';
 ?>
 <!doctype html>
 <html lang="en">
@@ -79,8 +80,8 @@ $assetVersion = '20260713-push-footer-v89';
   <section class="panel detail-hero citation-network-hero">
     <div class="citation-network-hero-copy">
       <span class="eyebrow">Citation network</span>
-      <h1>Map the literature by citations, journals, authors, and topics</h1>
-      <p>Build a focused graph from indexed psilocybin and psilocin publications. Narrow the network by time window, journal, source database, publication status, author, topic, substance, or a specific paper.</p>
+      <h1>Explore the literature network</h1>
+      <p>Start with one or more papers, then follow citations and shared authors, topics, and journals. Select any node to inspect its evidence and open the underlying record.</p>
     </div>
     <div class="citation-network-hero-stats" aria-label="Current citation network summary">
       <div><strong><?= h(number_format((int)$graph['stats']['seed_papers'])) ?></strong><span>seed papers</span></div>
@@ -89,10 +90,14 @@ $assetVersion = '20260713-push-footer-v89';
       <div><strong><?= h(number_format((int)($nodeTypeCounts['journal'] ?? 0))) ?></strong><span>journals</span></div>
     </div>
     <form class="citation-network-form" method="get">
+      <div class="citation-workflow-heading">
+        <span>1</span>
+        <div><strong>Choose the literature</strong><small>Search broadly or narrow the seed papers before exploring.</small></div>
+      </div>
       <div class="citation-filter-primary">
         <label class="field citation-search-field">
           <span>Search terms, DOI, or PMID</span>
-          <input type="search" name="q" value="<?= h($q) ?>" placeholder="depression, telomere, Carhart-Harris, 10.1038/...">
+          <input type="search" name="search" value="<?= h($q) ?>" placeholder="depression, telomere, Carhart-Harris, 10.1038/...">
         </label>
         <label class="field">
           <span>Author</span>
@@ -117,8 +122,8 @@ $assetVersion = '20260713-push-footer-v89';
           </select>
         </label>
       </div>
-      <details class="citation-filter-advanced" <?= $hasActiveFilters ? 'open' : '' ?>>
-        <summary><span>Advanced options</span><em>Time, year, status, source, substance, and graph size</em></summary>
+      <details class="citation-filter-advanced" <?= $hasAdvancedFilters ? 'open' : '' ?>>
+        <summary><span><i data-icon="list-filter" aria-hidden="true"></i>More filters</span><em>Time, year, status, source, and substance</em></summary>
         <div class="citation-filter-secondary">
           <label class="field">
             <span>Time window</span>
@@ -145,14 +150,6 @@ $assetVersion = '20260713-push-footer-v89';
             <span>To</span>
             <input type="date" name="to" value="<?= h($range === 'custom' ? $to : '') ?>">
           </label>
-          <label class="field">
-            <span>Graph size</span>
-            <select name="limit">
-              <?php foreach ([1, 8, 16, 24, 28, 36, 48] as $option): ?>
-                <option value="<?= h((string)$option) ?>" <?= $limit === $option ? 'selected' : '' ?>><?= h((string)$option) ?> seed papers</option>
-              <?php endforeach; ?>
-            </select>
-          </label>
         </div>
         <div class="citation-filter-checks">
           <fieldset>
@@ -177,7 +174,8 @@ $assetVersion = '20260713-push-footer-v89';
       </details>
       <?php if ($paperId > 0): ?><input type="hidden" name="paper" value="<?= h((string)$paperId) ?>"><?php endif; ?>
       <div class="citation-filter-actions">
-        <button class="primary iconed" type="submit"><i data-icon="network" aria-hidden="true"></i><span>Build graph</span></button>
+        <input type="hidden" name="limit" value="<?= h((string)$limit) ?>">
+        <button class="primary iconed" type="submit"><i data-icon="network" aria-hidden="true"></i><span>Update network</span></button>
         <?php if ($hasActiveFilters): ?><a class="secondary iconed" href="citation-network.php"><i data-icon="x" aria-hidden="true"></i><span>Reset</span></a><?php endif; ?>
         <a class="secondary iconed" href="./#papers"><i data-icon="book-marked" aria-hidden="true"></i><span>Back to papers</span></a>
       </div>
@@ -192,15 +190,16 @@ $assetVersion = '20260713-push-footer-v89';
   <section class="citation-network-layout" id="network" data-citation-fullscreen-target>
     <div class="panel citation-network-card">
       <div class="section-head-row citation-network-toolbar">
-        <div>
-          <h2><?= h(number_format((int)$graph['stats']['nodes'])) ?> nodes · <?= h(number_format((int)$graph['stats']['edges'])) ?> connections</h2>
-          <p><?= h(number_format((int)$graph['stats']['seed_papers'])) ?> seed papers, <?= h(number_format((int)($nodeTypeCounts['author'] ?? 0))) ?> authors, <?= h(number_format((int)($nodeTypeCounts['topic'] ?? 0))) ?> topics, <?= h(number_format((int)$graph['stats']['external_references'])) ?> external DOI references.</p>
+        <div class="citation-network-title">
+          <span class="citation-step-number">2</span>
+          <div>
+            <h2>Explore the network</h2>
+            <p><?= h(number_format((int)$graph['stats']['nodes'])) ?> nodes · <?= h(number_format((int)$graph['stats']['edges'])) ?> connections · <?= h(number_format((int)$graph['stats']['seed_papers'])) ?> seed papers · <?= h(number_format((int)$graph['stats']['external_references'])) ?> external references</p>
+          </div>
         </div>
         <div class="citation-network-controls" aria-label="Citation graph controls">
           <button class="secondary" type="button" data-citation-fit><i data-icon="maximize" aria-hidden="true"></i><span>Fit</span></button>
-          <button class="secondary" type="button" data-citation-labels aria-pressed="true"><i data-icon="list-filter" aria-hidden="true"></i><span>Labels</span></button>
           <button class="secondary" type="button" data-citation-fullscreen hidden aria-pressed="false"><i data-icon="maximize" aria-hidden="true"></i><span>Fullscreen</span></button>
-          <button class="secondary" type="button" data-citation-print><i data-icon="printer" aria-hidden="true"></i><span>Print references</span></button>
         </div>
       </div>
       <div class="citation-network-legend" aria-label="Graph legend">
@@ -211,47 +210,48 @@ $assetVersion = '20260713-push-footer-v89';
         <span><i class="legend-journal"></i> Journals</span>
       </div>
       <div class="citation-network-workbench" aria-label="Network analysis controls">
-        <label class="citation-network-search"><span>Find in graph</span><input type="search" data-citation-search placeholder="Title, DOI, author, journal, topic"></label>
-        <div class="citation-seed-control">
-          <label><span>Seed papers</span><select data-citation-seed-limit aria-label="Change number of seed papers">
-            <?php foreach ([1, 8, 16, 24, 28, 36, 48] as $option): ?>
-              <option value="<?= h((string)$option) ?>" <?= $limit === $option ? 'selected' : '' ?>><?= h((string)$option) ?></option>
-            <?php endforeach; ?>
-          </select></label>
-          <div class="citation-seed-presets" aria-label="Quick seed paper counts">
-            <?php foreach ([1, 8, 24, 48] as $option): ?>
-              <button type="button" data-citation-seed-preset="<?= h((string)$option) ?>" <?= $limit === $option ? 'aria-pressed="true"' : 'aria-pressed="false"' ?>><?= h((string)$option) ?></button>
-            <?php endforeach; ?>
+        <div class="citation-view-controls">
+          <label class="citation-network-search"><span>Find in this graph</span><input type="search" data-citation-search placeholder="Title, DOI, author, journal, or topic"></label>
+          <div class="citation-seed-control">
+            <label><span>Seed papers</span><select data-citation-seed-limit aria-label="Change number of seed papers">
+              <?php foreach ([1, 8, 16, 24, 28, 36, 48] as $option): ?>
+                <option value="<?= h((string)$option) ?>" <?= $limit === $option ? 'selected' : '' ?>><?= h((string)$option) ?></option>
+              <?php endforeach; ?>
+            </select></label>
           </div>
+          <label><span>Layout</span><select data-citation-layout-mode aria-label="Change network layout">
+            <option value="force">Organic map</option>
+            <option value="radial">Citation rings</option>
+            <option value="timeline">Publication timeline</option>
+          </select></label>
+          <label><span>Node labels</span><select data-citation-label-mode><option value="important">Important only</option><option value="all">All labels</option><option value="selected">Selected node</option><option value="off">No labels</option></select></label>
+          <label class="citation-toggle-control"><span>Context nodes</span><input type="checkbox" data-citation-clusters checked><em>Authors, topics, journals</em></label>
         </div>
-        <label><span>Topology</span><select data-citation-layout-mode aria-label="Change network topology">
-          <option value="force">Organic map</option>
-          <option value="radial">Citation rings</option>
-          <option value="timeline">Publication timeline</option>
-        </select></label>
-        <label><span>Labels</span><select data-citation-label-mode><option value="important">Important</option><option value="all">All</option><option value="selected">Selected</option><option value="off">Off</option></select></label>
-        <label class="citation-toggle-control"><span>Clustering nodes</span><input type="checkbox" data-citation-clusters checked><em>Authors, topics, journals</em></label>
-        <div class="citation-network-utility-actions">
-          <button class="secondary" type="button" data-citation-focus-selected>Focus node</button>
-          <button class="secondary" type="button" data-citation-share-view>Copy view URL</button>
-          <button class="secondary" type="button" data-citation-copy-selected>Copy selected</button>
-          <button class="secondary" type="button" data-citation-export-json>Export graph</button>
-          <button class="secondary" type="button" data-citation-export-subgraph>Export focus</button>
-          <button class="secondary" type="button" data-citation-export-csv>Export CSV</button>
-          <button class="secondary" type="button" data-citation-clear-search>Clear focus</button>
-        </div>
+        <details class="citation-analysis-tools">
+          <summary><span><i data-icon="settings" aria-hidden="true"></i>Analysis, sharing, and export</span></summary>
+          <div class="citation-network-utility-actions">
+            <button class="secondary" type="button" data-citation-focus-selected>Focus selection</button>
+            <button class="secondary" type="button" data-citation-copy-selected>Copy selection</button>
+            <button class="secondary" type="button" data-citation-share-view>Copy view link</button>
+            <button class="secondary" type="button" data-citation-export-subgraph>Export selection</button>
+            <button class="secondary" type="button" data-citation-export-json>Export JSON</button>
+            <button class="secondary" type="button" data-citation-export-csv>Export CSV</button>
+            <button class="secondary" type="button" data-citation-print><i data-icon="printer" aria-hidden="true"></i><span>Print references</span></button>
+            <button class="secondary" type="button" data-citation-clear-search>Reset graph view</button>
+          </div>
+        </details>
       </div>
       <div class="citation-network-insight" data-citation-insight aria-live="polite">
         Showing the full graph. Search or filter to focus the network.
       </div>
-      <p class="citation-network-note">Edges explain shared citations, authors, topics, and journals for discovery. They are not causal claims or formal bibliometric strength estimates.</p>
+      <p class="citation-network-note"><strong>How to read this:</strong> arrows show citation direction; dashed links show shared authors, topics, or journals. Connections support discovery, not causal claims or formal bibliometric strength estimates.</p>
       <div class="citation-network-canvas" data-citation-network aria-label="Interactive citation network visualization" role="img">
         <div class="citation-network-empty">Loading network...</div>
       </div>
     </div>
 
     <aside class="panel citation-network-detail" data-citation-detail>
-      <span class="eyebrow">Selected node</span>
+      <span class="eyebrow">3 · Inspect selection</span>
       <h2>Choose a node</h2>
       <p>Tap or click a paper, author, topic, journal, or reference to inspect it. Drag nodes to untangle dense areas.</p>
       <dl class="detail-list">

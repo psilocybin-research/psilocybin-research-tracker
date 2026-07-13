@@ -1653,30 +1653,7 @@ final class PublicationRepository
     {
         if ($this->normalizedTableHasRows('publication_authors')) {
             $limit = max(1, min($limit, 500));
-            $params = [];
-            $where = 'pa.publication_id IN (SELECT id FROM publications WHERE hidden = 0 AND false_positive = 0)';
-            $needle = trim((string)$query);
-            if ($needle !== '') {
-                $where .= ' AND (pa.author_name LIKE :query OR pa.author_key LIKE :query_key)';
-                $params = [
-                    'query' => '%' . str_replace(['%', '_'], ['\\%', '\\_'], $needle) . '%',
-                    'query_key' => '%' . self::metadataKey($needle) . '%',
-                ];
-            }
-            $stmt = $this->db->pdo()->prepare(
-                'SELECT pa.author_name name, COUNT(DISTINCT pa.publication_id) count
-                 FROM publication_authors pa
-                 WHERE ' . $where . '
-                 GROUP BY pa.author_key
-                 ORDER BY count DESC, pa.author_name
-                 LIMIT :limit'
-            );
-            foreach ($params as $key => $value) {
-                $stmt->bindValue(':' . $key, $value);
-            }
-            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-            $stmt->execute();
-            return $stmt->fetchAll();
+            return $this->canonicalAuthorCounts($limit, $query);
         }
 
         $counts = [];
@@ -1697,6 +1674,251 @@ final class PublicationRepository
             $out[] = ['name' => $name, 'count' => $count];
         }
         return $out;
+    }
+
+    /**
+     * Combine source-specific renderings such as "Carhart-Harris RL.",
+     * "Carhart-Harris R" and "Robin Carhart-Harris" without rewriting the
+     * source metadata. Abbreviations are attached only when one full-name
+     * candidate is available, or when a stable author identifier resolves an
+     * otherwise ambiguous match.
+     */
+    private function canonicalAuthorCounts(int $limit, ?string $query): array
+    {
+        $rows = $this->db->pdo()->query(
+            'SELECT pa.publication_id, pa.author_name, pa.author_key, pa.orcid, pa.openalex_id
+             FROM publication_authors pa
+             INNER JOIN publications p ON p.id = pa.publication_id
+             WHERE p.hidden = 0 AND p.false_positive = 0'
+        )->fetchAll();
+
+        $exact = [];
+        foreach ($rows as $row) {
+            $key = (string)$row['author_key'];
+            if (!isset($exact[$key])) {
+                $exact[$key] = [
+                    'names' => [],
+                    'publications' => [],
+                    'identifiers' => [],
+                    'identity' => self::authorDirectoryIdentity((string)$row['author_name']),
+                ];
+            }
+            $name = (string)$row['author_name'];
+            $exact[$key]['names'][$name] = ($exact[$key]['names'][$name] ?? 0) + 1;
+            $exact[$key]['publications'][(int)$row['publication_id']] = true;
+            foreach (['orcid', 'openalex_id'] as $field) {
+                $identifier = trim((string)($row[$field] ?? ''));
+                if ($identifier !== '') {
+                    $exact[$key]['identifiers'][$identifier] = true;
+                }
+            }
+        }
+
+        $groups = [];
+        $abbreviated = [];
+        foreach ($exact as $key => $entry) {
+            if (($entry['identity']['kind'] ?? '') !== 'full') {
+                $abbreviated[$key] = $entry;
+                continue;
+            }
+            $identity = $entry['identity'];
+            $groupKey = $identity['first'] . '|' . $identity['surname'];
+            if (!isset($groups[$groupKey])) {
+                $groups[$groupKey] = self::emptyAuthorDirectoryGroup();
+                $groups[$groupKey]['identity'] = $identity;
+            }
+            $groups[$groupKey]['full_initials'][$identity['initials']] = true;
+            foreach ($entry['names'] as $fullName => $nameCount) {
+                $groups[$groupKey]['full_names'][$fullName] = ($groups[$groupKey]['full_names'][$fullName] ?? 0) + $nameCount;
+            }
+            self::mergeAuthorDirectoryEntry($groups[$groupKey], $entry);
+        }
+
+        $identifierGroups = [];
+        $surnameInitialGroups = [];
+        foreach ($groups as $groupKey => $group) {
+            foreach (array_keys($group['identifiers']) as $identifier) {
+                $identifierGroups[$identifier][$groupKey] = true;
+            }
+            $firstInitial = mb_substr((string)$group['identity']['initials'], 0, 1, 'UTF-8');
+            foreach ($group['identity']['surname_aliases'] as $surnameAlias) {
+                $surnameInitialGroups[$surnameAlias . '|' . $firstInitial][$groupKey] = true;
+            }
+        }
+
+        foreach ($abbreviated as $key => $entry) {
+            $identity = $entry['identity'];
+            $candidates = [];
+            foreach (array_keys($entry['identifiers']) as $identifier) {
+                foreach ($identifierGroups[$identifier] ?? [] as $groupKey => $_) {
+                    $candidates[$groupKey] = true;
+                }
+            }
+            if (!$candidates && ($identity['surname'] ?? '') !== '' && ($identity['initials'] ?? '') !== '') {
+                $lookupKey = $identity['surname'] . '|' . mb_substr($identity['initials'], 0, 1, 'UTF-8');
+                $candidates = $surnameInitialGroups[$lookupKey] ?? [];
+            }
+            if (count($candidates) > 1 && mb_strlen((string)($identity['initials'] ?? ''), 'UTF-8') > 1) {
+                $scores = [];
+                foreach (array_keys($candidates) as $groupKey) {
+                    $scores[$groupKey] = self::authorInitialMatchScore($identity['initials'], array_keys($groups[$groupKey]['full_initials']));
+                }
+                $bestScore = max($scores);
+                $best = array_filter($scores, static fn(int $score): bool => $score === $bestScore);
+                if ($bestScore > 1 && count($best) === 1) {
+                    $candidates = [(string)array_key_first($best) => true];
+                }
+            }
+            if (count($candidates) === 1) {
+                $groupKey = (string)array_key_first($candidates);
+                self::mergeAuthorDirectoryEntry($groups[$groupKey], $entry);
+                continue;
+            }
+            $groupKey = 'unresolved|' . $key;
+            $groups[$groupKey] = self::emptyAuthorDirectoryGroup();
+            $groups[$groupKey]['identity'] = $identity;
+            self::mergeAuthorDirectoryEntry($groups[$groupKey], $entry);
+        }
+
+        $needle = mb_strtolower(trim((string)$query), 'UTF-8');
+        $needleKey = self::authorDirectoryKey((string)$query);
+        $out = [];
+        foreach ($groups as $group) {
+            if ($needle !== '') {
+                $matches = false;
+                foreach (array_keys($group['names']) as $alias) {
+                    if (str_contains(mb_strtolower($alias, 'UTF-8'), $needle)
+                        || ($needleKey !== '' && str_contains(self::authorDirectoryKey($alias), $needleKey))) {
+                        $matches = true;
+                        break;
+                    }
+                }
+                if (!$matches) {
+                    continue;
+                }
+            }
+            $names = $group['full_names'] ?: $group['names'];
+            uksort($names, static function (string $a, string $b) use ($names): int {
+                $aHasDiacritics = preg_match('/[^\x00-\x7F]/', $a) === 1;
+                $bHasDiacritics = preg_match('/[^\x00-\x7F]/', $b) === 1;
+                return ($bHasDiacritics <=> $aHasDiacritics)
+                    ?: ($names[$b] <=> $names[$a])
+                    ?: strcasecmp($a, $b);
+            });
+            $out[] = [
+                'name' => (string)array_key_first($names),
+                'count' => count($group['publications']),
+            ];
+        }
+        usort($out, static fn(array $a, array $b): int => ($b['count'] <=> $a['count']) ?: strcasecmp($a['name'], $b['name']));
+        return array_slice($out, 0, $limit);
+    }
+
+    private static function emptyAuthorDirectoryGroup(): array
+    {
+        return ['names' => [], 'full_names' => [], 'publications' => [], 'identifiers' => [], 'full_initials' => [], 'identity' => []];
+    }
+
+    private static function authorInitialMatchScore(string $abbreviated, array $fullInitialVariants): int
+    {
+        $best = 0;
+        foreach ($fullInitialVariants as $full) {
+            $length = min(mb_strlen($abbreviated, 'UTF-8'), mb_strlen($full, 'UTF-8'));
+            $score = 0;
+            for ($i = 0; $i < $length; $i++) {
+                if (mb_substr($abbreviated, $i, 1, 'UTF-8') !== mb_substr($full, $i, 1, 'UTF-8')) {
+                    break;
+                }
+                $score++;
+            }
+            $best = max($best, $score);
+        }
+        return $best;
+    }
+
+    private static function mergeAuthorDirectoryEntry(array &$group, array $entry): void
+    {
+        foreach (['names', 'publications', 'identifiers'] as $field) {
+            foreach ($entry[$field] as $key => $value) {
+                if ($field === 'names') {
+                    $group[$field][$key] = ($group[$field][$key] ?? 0) + $value;
+                } else {
+                    $group[$field][$key] = true;
+                }
+            }
+        }
+    }
+
+    private static function authorDirectoryIdentity(string $name): array
+    {
+        preg_match_all('/[\p{L}\p{N}\-]+\.?/u', clean_scientific_text($name), $matches);
+        $rawTokens = array_values(array_filter($matches[0] ?? []));
+        $tokens = array_map(static fn(string $token): string => self::authorDirectoryKey(rtrim($token, '.')), $rawTokens);
+        if (count($tokens) < 2) {
+            return ['kind' => 'other', 'surname' => self::authorDirectoryKey($name), 'surname_aliases' => [], 'initials' => '', 'first' => ''];
+        }
+
+        $isInitial = static function (string $rawToken): bool {
+            $letters = preg_replace('/[^\p{L}]/u', '', $rawToken) ?? '';
+            $length = mb_strlen($letters, 'UTF-8');
+            return $length === 1
+                || ($length <= 4 && ($rawToken !== rtrim($rawToken, '.') || $letters === strtoupper($letters)));
+        };
+
+        $lastIndex = count($tokens) - 1;
+        if ($isInitial($rawTokens[$lastIndex])) {
+            return [
+                'kind' => 'abbreviated',
+                'surname' => implode(' ', array_slice($tokens, 0, -1)),
+                'surname_aliases' => [],
+                'initials' => $tokens[$lastIndex],
+                'first' => '',
+            ];
+        }
+
+        $leadingInitials = [];
+        $surnameStart = 0;
+        while ($surnameStart < $lastIndex && $isInitial($rawTokens[$surnameStart])) {
+            $leadingInitials[] = $tokens[$surnameStart];
+            $surnameStart++;
+        }
+        if ($leadingInitials) {
+            return [
+                'kind' => 'abbreviated',
+                'surname' => implode(' ', array_slice($tokens, $surnameStart)),
+                'surname_aliases' => [],
+                'initials' => implode('', $leadingInitials),
+                'first' => '',
+            ];
+        }
+
+        $particles = ['da', 'de', 'del', 'der', 'dos', 'la', 'van', 'von'];
+        $fullSurnameStart = $lastIndex;
+        while ($fullSurnameStart > 1 && in_array($tokens[$fullSurnameStart - 1], $particles, true)) {
+            $fullSurnameStart--;
+        }
+        $surname = implode(' ', array_slice($tokens, $fullSurnameStart));
+        $surnameAliases = array_values(array_unique([$tokens[$lastIndex], $surname]));
+        $given = array_slice($tokens, 0, $fullSurnameStart);
+        $initials = implode('', array_map(static fn(string $token): string => mb_substr($token, 0, 1, 'UTF-8'), $given));
+        return [
+            'kind' => 'full',
+            'surname' => $surname,
+            'surname_aliases' => $surnameAliases,
+            'initials' => $initials,
+            'first' => $given[0] ?? '',
+        ];
+    }
+
+    private static function authorDirectoryKey(string $value): string
+    {
+        if (function_exists('iconv')) {
+            $folded = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+            if (is_string($folded) && $folded !== '') {
+                $value = $folded;
+            }
+        }
+        return self::metadataKey($value);
     }
 
     private function normalizedTableHasRows(string $table): bool

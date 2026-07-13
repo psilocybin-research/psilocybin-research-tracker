@@ -171,6 +171,12 @@ final class Config
         return is_string($name) && trim($name) !== '' ? trim($name) : 'Psilocybin Research Publication Tracker';
     }
 
+    public static function contactEmail(): string
+    {
+        $email = getenv('PUBLICATION_TRACKER_CONTACT_EMAIL');
+        return is_string($email) && filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : 'christopher-germann@uni-wh.de';
+    }
+
     public static function vapidSubject(): string
     {
         $subject = getenv('PUBLICATION_TRACKER_VAPID_SUBJECT');

@@ -3,12 +3,12 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/src/helpers.php';
 
-$assetVersion = '20260713-push-footer-v89';
+$assetVersion = '20260713-accordion-emphasis-v93';
 $baseUrl = Config::publicBaseUrl();
 $canonicalUrl = $baseUrl . 'data-protection.php';
-$shareImageUrl = $baseUrl . 'assets/pwa/icon-512.png?v=20260713-push-footer-v89';
+$shareImageUrl = $baseUrl . 'assets/pwa/icon-512.png?v=20260713-accordion-emphasis-v93';
 $description = 'Data protection notice for the Psilocybin Research Publication Tracker, including user data, source context, alerts, push notifications, logs, and automated updates.';
-$contactEmail = 'christopher-germann@uni-wh.de';
+$contactEmail = Config::contactEmail();
 ?>
 <!doctype html>
 <html lang="en">
@@ -34,11 +34,11 @@ $contactEmail = 'christopher-germann@uni-wh.de';
   <meta name="twitter:description" content="<?= h($description) ?>">
   <meta name="twitter:image" content="<?= h($shareImageUrl) ?>">
   <meta name="twitter:image:alt" content="Psilocybin Research Publication Tracker logo">
-  <link rel="icon" href="assets/logo.png?v=20260713-push-footer-v89">
-  <link rel="icon" type="image/png" sizes="192x192" href="assets/pwa/icon-192.png?v=20260713-push-footer-v89">
-  <link rel="icon" type="image/png" sizes="512x512" href="assets/pwa/icon-512.png?v=20260713-push-footer-v89">
-  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260713-push-footer-v89">
-  <link rel="manifest" href="manifest.webmanifest?v=20260713-push-footer-v89">
+  <link rel="icon" href="assets/logo.png?v=20260713-accordion-emphasis-v93">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/pwa/icon-192.png?v=20260713-accordion-emphasis-v93">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/pwa/icon-512.png?v=20260713-accordion-emphasis-v93">
+  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260713-accordion-emphasis-v93">
+  <link rel="manifest" href="manifest.webmanifest?v=20260713-accordion-emphasis-v93">
   <link rel="stylesheet" href="assets/styles.min.css?v=<?= h($assetVersion) ?>">
   <script>
     document.documentElement.classList.add('js');
@@ -108,18 +108,18 @@ $contactEmail = 'christopher-germann@uni-wh.de';
       This notice describes the data processing of the Psilocybin Research Publication Tracker.
       The app is designed as a self-contained PHP and SQLite research tool with local frontend
       assets, no third-party analytics scripts, no CDN JavaScript, no CDN CSS, and no tracking
-      pixels in alert emails. Last updated: July 10, 2026.
+      pixels in alert emails. Last updated: July 13, 2026.
     </p>
   </section>
 
   <section class="about-grid" aria-label="Data protection details">
     <article class="about-panel about-panel-wide">
-      <h2>Controller And Contact</h2>
+      <h2>Controller and contact</h2>
       <p>
         The publication tracker is operated for Psilocybin-Research.com by Dr. Christopher B.
         Germann. Data protection questions, access requests, correction requests, deletion
-        requests, and objections can be sent through the contact details provided by the website
-        operator. Alert emails use the configured sender address <a href="mailto:<?= h($contactEmail) ?>"><?= h($contactEmail) ?></a>.
+        requests, and objections can be sent to
+        <a href="mailto:<?= h($contactEmail) ?>"><?= h($contactEmail) ?></a>.
       </p>
       <p>
         The website imprint/legal notice provides the authoritative provider-identification
