@@ -3,10 +3,10 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/src/helpers.php';
 
-$assetVersion = '20260713-accordion-emphasis-v93';
+$assetVersion = '20260809-network-first-v94';
 $baseUrl = Config::publicBaseUrl();
 $canonicalUrl = $baseUrl . 'about.php';
-$shareImageUrl = $baseUrl . 'assets/pwa/icon-512.png?v=20260713-accordion-emphasis-v93';
+$shareImageUrl = $baseUrl . 'assets/pwa/icon-512.png?v=20260809-network-first-v94';
 $description = 'About the Psilocybin Research Publication Tracker: searchable literature database, analytics, exports, alerts, privacy, encryption, and source coverage.';
 $aboutStats = [
     'engine' => 'SQLite',
@@ -72,9 +72,9 @@ try {
   <meta name="twitter:description" content="<?= h($description) ?>">
   <meta name="twitter:image" content="<?= h($shareImageUrl) ?>">
   <meta name="twitter:image:alt" content="Psilocybin Research Publication Tracker logo">
-  <link rel="icon" href="assets/logo.png?v=20260713-accordion-emphasis-v93">
-  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260713-accordion-emphasis-v93">
-  <link rel="manifest" href="manifest.webmanifest?v=20260713-accordion-emphasis-v93">
+  <link rel="icon" href="assets/logo.png?v=20260809-network-first-v94">
+  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260809-network-first-v94">
+  <link rel="manifest" href="manifest.webmanifest?v=20260809-network-first-v94">
   <link rel="stylesheet" href="assets/styles.min.css?v=<?= h($assetVersion) ?>">
   <script>
     document.documentElement.classList.add('js');
@@ -129,7 +129,7 @@ try {
       <a href="export.php?format=json" target="_blank" rel="noopener"><i data-icon="download" aria-hidden="true"></i><span>Export data</span></a>
       <a href="api.php" target="_blank" rel="noopener"><i data-icon="braces" aria-hidden="true"></i><span>API</span></a>
       <a href="https://github.com/psilocybin-research/psilocybin-research-tracker" target="_blank" rel="noopener me"><i data-icon="github" aria-hidden="true"></i><span>GitHub</span></a>
-      <a href="https://doi.org/10.5281/zenodo.21293526" target="_blank" rel="noopener" title="Fixed citable dataset snapshot on Zenodo"><i data-icon="zenodo" aria-hidden="true"></i><span>Zenodo DOI</span></a>
+      <a href="https://doi.org/10.5281/zenodo.21293525" target="_blank" rel="noopener" title="Latest version of the citable dataset on Zenodo"><i data-icon="zenodo" aria-hidden="true"></i><span>Zenodo DOI</span></a>
       <a href="about.php" aria-current="location"><i data-icon="circle-alert" aria-hidden="true"></i><span>About</span></a>
       <a href="data-protection.php"><i data-icon="shield" aria-hidden="true"></i><span>Data protection</span></a>
     </nav>

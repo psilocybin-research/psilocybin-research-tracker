@@ -13,8 +13,8 @@
   "backgroundColor": "#F6F3EA",
   "enableNotifications": true,
   "startUrl": "/?source=pwa",
-  "iconUrl": "https://psilocybin-research.com/assets/pwa/icon-512.png?v=20260712-funding-footer-v88",
-  "maskableIconUrl": "https://psilocybin-research.com/assets/pwa/maskable-512.png?v=20260712-funding-footer-v88",
+  "iconUrl": "https://psilocybin-research.com/assets/pwa/icon-512.png?v=20260809-network-first-v94",
+  "maskableIconUrl": "https://psilocybin-research.com/assets/pwa/maskable-512.png?v=20260809-network-first-v94",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
     "path": "../keystore/psilocybin-research-upload.jks",

@@ -5,13 +5,25 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   php-tests:
+    name: PHP ${{ matrix.php }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.2', '8.4', '8.5']
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Audit public repository paths
         shell: bash
@@ -24,18 +36,11 @@ jobs:
           fi
 
       - name: Set up PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
-          php-version: '8.2'
+          php-version: ${{ matrix.php }}
           extensions: sqlite3, pdo_sqlite, mbstring, json
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-
-      - name: Install frontend build tool
-        run: npm install --global esbuild
+          coverage: none
 
       - name: Lint PHP files
         run: find . -name '*.php' -print0 | xargs -0 -n1 php -l
@@ -43,5 +48,49 @@ jobs:
       - name: Run regression tests
         run: php tests/run.php
 
-      - name: Build frontend assets
-        run: bash bin/build-assets.sh
+  project-quality:
+    name: Project quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install pinned frontend dependencies
+        run: npm ci
+
+      - name: Verify generated frontend assets
+        run: npm run check:generated
+
+      - name: Validate web manifest
+        run: php -r '$json = json_decode(file_get_contents("manifest.webmanifest"), true, 512, JSON_THROW_ON_ERROR); if (($json["start_url"] ?? null) !== "/?source=pwa") { throw new RuntimeException("Unexpected PWA start URL"); }'
+
+      - name: Validate citation metadata
+        run: |
+          python3 -m pip install --disable-pip-version-check cffconvert==2.0.0
+          cffconvert --validate -i CITATION.cff
+
+      - name: Validate shell scripts
+        run: bash -n bin/build-assets.sh android/build-release.sh
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
+
+      - name: Parse R bibliometrics toolkit
+        run: Rscript -e "invisible(parse(file='tools/psilocybin_bibliometrics_visnetwork.R')); cat('R syntax OK\n')"
+
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0

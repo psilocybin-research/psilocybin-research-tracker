@@ -2791,7 +2791,7 @@ function initCitationNetwork() {
   };
   const applySeedLimit = (value) => {
     const url = new URL(window.location.href);
-    url.searchParams.set("limit", value || "1");
+    url.searchParams.set("limit", value || "8");
     url.searchParams.set("layout", layoutMode());
     if (labelModeSelect?.value) url.searchParams.set("labels", labelModeSelect.value);
     url.searchParams.set("clusters", clusteringVisible() ? "1" : "0");
@@ -3450,7 +3450,7 @@ function initCitationNetwork() {
   });
   searchInput?.addEventListener("input", updateGraphState);
   seedLimitSelect?.addEventListener("change", () => {
-    applySeedLimit(seedLimitSelect.value || "1");
+    applySeedLimit(seedLimitSelect.value || "8");
   });
   copySelectedButton?.addEventListener("click", async () => {
     const text = selectedNodeText();

@@ -3,12 +3,14 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-if ! command -v esbuild >/dev/null 2>&1; then
-  echo "esbuild is required to build minified assets." >&2
+ESBUILD="./node_modules/.bin/esbuild"
+
+if [[ ! -x "$ESBUILD" ]]; then
+  echo "Pinned frontend dependencies are missing. Run: npm ci" >&2
   exit 1
 fi
 
-esbuild assets/styles.css \
+"$ESBUILD" assets/styles.css \
   --minify \
   --loader:.woff2=file \
   --loader:.webp=file \
@@ -16,7 +18,7 @@ esbuild assets/styles.css \
   --loader:.jpg=file \
   --outfile=assets/styles.min.css
 
-esbuild assets/app.js \
+"$ESBUILD" assets/app.js \
   --minify \
   --target=es2019 \
   --outfile=assets/app.min.js

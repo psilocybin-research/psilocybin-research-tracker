@@ -19,7 +19,7 @@ $selectedSources = request_array('sources');
 $selectedStatuses = request_array('publication_statuses');
 $selectedSubstances = request_array('substances') ?: ['psilocybin', 'psilocin'];
 $paperId = (int)request_value('paper', '0');
-$limit = max(1, min((int)request_value('limit', '1'), 48));
+$limit = max(1, min((int)request_value('limit', '8'), 48));
 
 if ($range !== 'custom') {
     $from = match ($range) {
@@ -62,7 +62,7 @@ if ($selectedSources) $activeFilterLabels[] = 'Sources: ' . implode(', ', $selec
 if ($selectedStatuses) $activeFilterLabels[] = 'Status: ' . implode(', ', array_map(static fn(string $status): string => $publicationStatuses[$status] ?? $status, $selectedStatuses));
 $hasActiveFilters = (bool)($activeFilterLabels || $paperId > 0 || $selectedSubstances !== ['psilocybin', 'psilocin']);
 $hasAdvancedFilters = (bool)($year !== '' || $range !== 'all' || $selectedSources || $selectedStatuses || $selectedSubstances !== ['psilocybin', 'psilocin']);
-$assetVersion = '20260713-accordion-emphasis-v93';
+$assetVersion = '20260809-network-first-v94';
 ?>
 <!doctype html>
 <html lang="en">
@@ -81,7 +81,7 @@ $assetVersion = '20260713-accordion-emphasis-v93';
     <div class="citation-network-hero-copy">
       <span class="eyebrow">Citation network</span>
       <h1>Explore the literature network</h1>
-      <p>Start with one or more papers, then follow citations and shared authors, topics, and journals. Select any node to inspect its evidence and open the underlying record.</p>
+      <p>Follow citations and shared authors, topics, and journals. Select any node to inspect its evidence, or refine the seed literature after exploring the current map.</p>
     </div>
     <div class="citation-network-hero-stats" aria-label="Current citation network summary">
       <div><strong><?= h(number_format((int)$graph['stats']['seed_papers'])) ?></strong><span>seed papers</span></div>
@@ -89,97 +89,6 @@ $assetVersion = '20260713-accordion-emphasis-v93';
       <div><strong><?= h(number_format((int)$graph['stats']['edges'])) ?></strong><span>connections</span></div>
       <div><strong><?= h(number_format((int)($nodeTypeCounts['journal'] ?? 0))) ?></strong><span>journals</span></div>
     </div>
-    <form class="citation-network-form" method="get">
-      <div class="citation-workflow-heading">
-        <span>1</span>
-        <div><strong>Choose the literature</strong><small>Search broadly or narrow the seed papers before exploring.</small></div>
-      </div>
-      <div class="citation-filter-primary">
-        <label class="field citation-search-field">
-          <span>Search terms, DOI, or PMID</span>
-          <input type="search" name="search" value="<?= h($q) ?>" placeholder="depression, telomere, Carhart-Harris, 10.1038/...">
-        </label>
-        <label class="field">
-          <span>Author</span>
-          <input type="search" name="author" value="<?= h($author) ?>" placeholder="Optional author">
-        </label>
-        <label class="field">
-          <span>Journal</span>
-          <select name="journal">
-            <option value="">All journals</option>
-            <?php foreach ($journals as $journalRow): ?>
-              <option value="<?= h((string)$journalRow['journal']) ?>" <?= $journal === (string)$journalRow['journal'] ? 'selected' : '' ?>><?= h((string)$journalRow['journal']) ?></option>
-            <?php endforeach; ?>
-          </select>
-        </label>
-        <label class="field">
-          <span>Topic</span>
-          <select name="topic">
-            <option value="">All topics</option>
-            <?php foreach ($topics as $topicRow): ?>
-              <option value="<?= h((string)$topicRow['name']) ?>" <?= $topic === (string)$topicRow['name'] ? 'selected' : '' ?>><?= h((string)$topicRow['name']) ?> (<?= h((string)$topicRow['count']) ?>)</option>
-            <?php endforeach; ?>
-          </select>
-        </label>
-      </div>
-      <details class="citation-filter-advanced" <?= $hasAdvancedFilters ? 'open' : '' ?>>
-        <summary><span><i data-icon="list-filter" aria-hidden="true"></i>More filters</span><em>Time, year, status, source, and substance</em></summary>
-        <div class="citation-filter-secondary">
-          <label class="field">
-            <span>Time window</span>
-            <select name="range">
-              <?php foreach (['all' => 'All years', 'month' => 'Last month', 'year' => 'Last year', '5y' => 'Last 5 years', 'custom' => 'Custom dates'] as $value => $label): ?>
-                <option value="<?= h($value) ?>" <?= $range === $value ? 'selected' : '' ?>><?= h($label) ?></option>
-              <?php endforeach; ?>
-            </select>
-          </label>
-          <label class="field">
-            <span>Year</span>
-            <select name="year">
-              <option value="">Any year</option>
-              <?php foreach ($years as $yearRow): ?>
-                <option value="<?= h((string)$yearRow['year']) ?>" <?= $year === (string)$yearRow['year'] ? 'selected' : '' ?>><?= h((string)$yearRow['year']) ?> (<?= h((string)$yearRow['count']) ?>)</option>
-              <?php endforeach; ?>
-            </select>
-          </label>
-          <label class="field">
-            <span>From</span>
-            <input type="date" name="from" value="<?= h($range === 'custom' ? $from : '') ?>">
-          </label>
-          <label class="field">
-            <span>To</span>
-            <input type="date" name="to" value="<?= h($range === 'custom' ? $to : '') ?>">
-          </label>
-        </div>
-        <div class="citation-filter-checks">
-          <fieldset>
-            <legend>Substances</legend>
-            <?php foreach (['psilocybin' => 'Psilocybin', 'psilocin' => 'Psilocin'] as $value => $label): ?>
-              <label><input type="checkbox" name="substances[]" value="<?= h($value) ?>" <?= in_array($value, $selectedSubstances, true) ? 'checked' : '' ?>><span><?= h($label) ?></span></label>
-            <?php endforeach; ?>
-          </fieldset>
-          <fieldset>
-            <legend>Publication status</legend>
-            <?php foreach ($publicationStatuses as $value => $label): ?>
-              <label><input type="checkbox" name="publication_statuses[]" value="<?= h($value) ?>" <?= in_array($value, $selectedStatuses, true) ? 'checked' : '' ?>><span><?= h($label) ?></span></label>
-            <?php endforeach; ?>
-          </fieldset>
-          <fieldset>
-            <legend>Source database</legend>
-            <?php foreach (array_slice($sources, 0, 8) as $sourceRow): $sourceName = (string)$sourceRow['source_name']; ?>
-              <label><input type="checkbox" name="sources[]" value="<?= h($sourceName) ?>" <?= in_array($sourceName, $selectedSources, true) ? 'checked' : '' ?>><span><?= h($sourceName) ?></span></label>
-            <?php endforeach; ?>
-          </fieldset>
-        </div>
-      </details>
-      <?php if ($paperId > 0): ?><input type="hidden" name="paper" value="<?= h((string)$paperId) ?>"><?php endif; ?>
-      <div class="citation-filter-actions">
-        <input type="hidden" name="limit" value="<?= h((string)$limit) ?>">
-        <button class="primary iconed" type="submit"><i data-icon="network" aria-hidden="true"></i><span>Update network</span></button>
-        <?php if ($hasActiveFilters): ?><a class="secondary iconed" href="citation-network.php"><i data-icon="x" aria-hidden="true"></i><span>Reset</span></a><?php endif; ?>
-        <a class="secondary iconed" href="./#papers"><i data-icon="book-marked" aria-hidden="true"></i><span>Back to papers</span></a>
-      </div>
-    </form>
     <?php if ($activeFilterLabels): ?>
       <div class="citation-active-filters" aria-label="Active citation network filters">
         <?php foreach ($activeFilterLabels as $label): ?><span><?= h($label) ?></span><?php endforeach; ?>
@@ -191,23 +100,29 @@ $assetVersion = '20260713-accordion-emphasis-v93';
     <div class="panel citation-network-card">
       <div class="section-head-row citation-network-toolbar">
         <div class="citation-network-title">
-          <span class="citation-step-number">2</span>
+          <span class="citation-step-number">1</span>
           <div>
             <h2>Explore the network</h2>
             <p><?= h(number_format((int)$graph['stats']['nodes'])) ?> nodes · <?= h(number_format((int)$graph['stats']['edges'])) ?> connections · <?= h(number_format((int)$graph['stats']['seed_papers'])) ?> seed papers · <?= h(number_format((int)$graph['stats']['external_references'])) ?> external references</p>
           </div>
         </div>
-        <div class="citation-network-controls" aria-label="Citation graph controls">
-          <button class="secondary" type="button" data-citation-fit><i data-icon="maximize" aria-hidden="true"></i><span>Fit</span></button>
+        <div class="citation-network-controls" aria-label="Essential graph controls">
+          <button class="secondary" type="button" data-citation-fit><i data-icon="maximize" aria-hidden="true"></i><span>Fit graph</span></button>
           <button class="secondary" type="button" data-citation-fullscreen hidden aria-pressed="false"><i data-icon="maximize" aria-hidden="true"></i><span>Fullscreen</span></button>
         </div>
       </div>
       <div class="citation-network-legend" aria-label="Graph legend">
-        <span><i class="legend-paper"></i> Papers</span>
-        <span><i class="legend-reference"></i> References</span>
-        <span><i class="legend-author"></i> Authors</span>
-        <span><i class="legend-topic"></i> Topics</span>
-        <span><i class="legend-journal"></i> Journals</span>
+        <span><i class="legend-paper"></i>Papers</span>
+        <span><i class="legend-reference"></i>References</span>
+        <span><i class="legend-author"></i>Authors</span>
+        <span><i class="legend-topic"></i>Topics</span>
+        <span><i class="legend-journal"></i>Journals</span>
+      </div>
+      <div class="citation-network-canvas" data-citation-network aria-label="Interactive citation network visualization" role="img">
+        <div class="citation-network-empty">Loading network...</div>
+      </div>
+      <div class="citation-network-insight" data-citation-insight aria-live="polite">
+        Showing the full graph. Search or filter to focus the network.
       </div>
       <div class="citation-network-workbench" aria-label="Network analysis controls">
         <div class="citation-view-controls">
@@ -228,7 +143,7 @@ $assetVersion = '20260713-accordion-emphasis-v93';
           <label class="citation-toggle-control"><span>Context nodes</span><input type="checkbox" data-citation-clusters checked><em>Authors, topics, journals</em></label>
         </div>
         <details class="citation-analysis-tools">
-          <summary><span><i data-icon="settings" aria-hidden="true"></i>Analysis, sharing, and export</span></summary>
+          <summary><span><i data-icon="settings" aria-hidden="true"></i>Selection, sharing, and export</span></summary>
           <div class="citation-network-utility-actions">
             <button class="secondary" type="button" data-citation-focus-selected>Focus selection</button>
             <button class="secondary" type="button" data-citation-copy-selected>Copy selection</button>
@@ -241,25 +156,105 @@ $assetVersion = '20260713-accordion-emphasis-v93';
           </div>
         </details>
       </div>
-      <div class="citation-network-insight" data-citation-insight aria-live="polite">
-        Showing the full graph. Search or filter to focus the network.
-      </div>
       <p class="citation-network-note"><strong>How to read this:</strong> arrows show citation direction; dashed links show shared authors, topics, or journals. Connections support discovery, not causal claims or formal bibliometric strength estimates.</p>
-      <div class="citation-network-canvas" data-citation-network aria-label="Interactive citation network visualization" role="img">
-        <div class="citation-network-empty">Loading network...</div>
-      </div>
     </div>
 
     <aside class="panel citation-network-detail" data-citation-detail>
-      <span class="eyebrow">3 · Inspect selection</span>
+      <span class="eyebrow">2 · Inspect selection</span>
       <h2>Choose a node</h2>
       <p>Tap or click a paper, author, topic, journal, or reference to inspect it. Drag nodes to untangle dense areas.</p>
       <dl class="detail-list">
-        <div><dt>Interaction</dt><dd>Drag nodes, use Fit to recenter, and open linked records from the detail panel.</dd></div>
+        <div><dt>Interaction</dt><dd>Drag nodes, use Fit graph to recenter, and open linked records from this panel.</dd></div>
       </dl>
       <div class="citation-node-relations" data-citation-relations></div>
     </aside>
   </section>
+
+  <section class="panel citation-literature-panel" id="refine-network">
+    <details class="citation-literature-filters" <?= $hasActiveFilters ? 'open' : '' ?>>
+      <summary>
+        <span class="citation-step-number">3</span>
+        <div><strong>Refine the seed literature</strong><small>Change the papers used to build the network by search, author, journal, topic, time, status, source, or substance.</small></div>
+        <em><?= $hasActiveFilters ? h((string)count($activeFilterLabels)) . ' active filters' : 'Optional' ?></em>
+      </summary>
+      <form class="citation-network-form" method="get">
+        <div class="citation-filter-primary">
+          <label class="field citation-search-field">
+            <span>Search terms, DOI, or PMID</span>
+            <input type="search" name="search" value="<?= h($q) ?>" placeholder="depression, telomere, Carhart-Harris, 10.1038/...">
+          </label>
+          <label class="field">
+            <span>Author</span>
+            <input type="search" name="author" value="<?= h($author) ?>" placeholder="Optional author">
+          </label>
+          <label class="field">
+            <span>Journal</span>
+            <select name="journal">
+              <option value="">All journals</option>
+              <?php foreach ($journals as $journalRow): ?>
+                <option value="<?= h((string)$journalRow['journal']) ?>" <?= $journal === (string)$journalRow['journal'] ? 'selected' : '' ?>><?= h((string)$journalRow['journal']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <label class="field">
+            <span>Topic</span>
+            <select name="topic">
+              <option value="">All topics</option>
+              <?php foreach ($topics as $topicRow): ?>
+                <option value="<?= h((string)$topicRow['name']) ?>" <?= $topic === (string)$topicRow['name'] ? 'selected' : '' ?>><?= h((string)$topicRow['name']) ?> (<?= h((string)$topicRow['count']) ?>)</option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+        </div>
+        <details class="citation-filter-advanced" <?= $hasAdvancedFilters ? 'open' : '' ?>>
+          <summary><span><i data-icon="list-filter" aria-hidden="true"></i>More filters</span><em>Time, year, status, source, and substance</em></summary>
+          <div class="citation-filter-secondary">
+            <label class="field"><span>Time window</span><select name="range">
+              <?php foreach (['all' => 'All years', 'month' => 'Last month', 'year' => 'Last year', '5y' => 'Last 5 years', 'custom' => 'Custom dates'] as $value => $label): ?>
+                <option value="<?= h($value) ?>" <?= $range === $value ? 'selected' : '' ?>><?= h($label) ?></option>
+              <?php endforeach; ?>
+            </select></label>
+            <label class="field"><span>Year</span><select name="year">
+              <option value="">Any year</option>
+              <?php foreach ($years as $yearRow): ?>
+                <option value="<?= h((string)$yearRow['year']) ?>" <?= $year === (string)$yearRow['year'] ? 'selected' : '' ?>><?= h((string)$yearRow['year']) ?> (<?= h((string)$yearRow['count']) ?>)</option>
+              <?php endforeach; ?>
+            </select></label>
+            <label class="field"><span>From</span><input type="date" name="from" value="<?= h($range === 'custom' ? $from : '') ?>"></label>
+            <label class="field"><span>To</span><input type="date" name="to" value="<?= h($range === 'custom' ? $to : '') ?>"></label>
+          </div>
+          <div class="citation-filter-checks">
+            <fieldset>
+              <legend>Substances</legend>
+              <?php foreach (['psilocybin' => 'Psilocybin', 'psilocin' => 'Psilocin'] as $value => $label): ?>
+                <label><input type="checkbox" name="substances[]" value="<?= h($value) ?>" <?= in_array($value, $selectedSubstances, true) ? 'checked' : '' ?>><span><?= h($label) ?></span></label>
+              <?php endforeach; ?>
+            </fieldset>
+            <fieldset>
+              <legend>Publication status</legend>
+              <?php foreach ($publicationStatuses as $value => $label): ?>
+                <label><input type="checkbox" name="publication_statuses[]" value="<?= h($value) ?>" <?= in_array($value, $selectedStatuses, true) ? 'checked' : '' ?>><span><?= h($label) ?></span></label>
+              <?php endforeach; ?>
+            </fieldset>
+            <fieldset>
+              <legend>Source database</legend>
+              <?php foreach (array_slice($sources, 0, 8) as $sourceRow): $sourceName = (string)$sourceRow['source_name']; ?>
+                <label><input type="checkbox" name="sources[]" value="<?= h($sourceName) ?>" <?= in_array($sourceName, $selectedSources, true) ? 'checked' : '' ?>><span><?= h($sourceName) ?></span></label>
+              <?php endforeach; ?>
+            </fieldset>
+          </div>
+        </details>
+        <?php if ($paperId > 0): ?><input type="hidden" name="paper" value="<?= h((string)$paperId) ?>"><?php endif; ?>
+        <div class="citation-filter-actions">
+          <input type="hidden" name="limit" value="<?= h((string)$limit) ?>">
+          <button class="primary iconed" type="submit"><i data-icon="network" aria-hidden="true"></i><span>Update network</span></button>
+          <?php if ($hasActiveFilters): ?><a class="secondary iconed" href="citation-network.php"><i data-icon="x" aria-hidden="true"></i><span>Reset filters</span></a><?php endif; ?>
+          <a class="secondary iconed" href="./#papers"><i data-icon="book-marked" aria-hidden="true"></i><span>Back to papers</span></a>
+        </div>
+      </form>
+    </details>
+  </section>
+
   <script id="citation-network-data" type="application/json"><?= json_encode($graph, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?></script>
 </main>
 <?= detail_scroll_top() ?>

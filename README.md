@@ -7,27 +7,28 @@
 <h1 align="center">Psilocybin Research Tracker</h1>
 
 <p align="center">
-  A self-contained research application for psilocybin and psilocin literature.
+  A self-contained research application for discovering, evaluating, and citing psilocybin and psilocin literature.
 </p>
 
 <p align="center">
-  <a href="https://psilocybin-research.com/">Live App</a>
+  <a href="https://psilocybin-research.com/">Live application</a>
   ·
   <a href="https://psilocybin-research.com/about.php">About</a>
   ·
   <a href="https://psilocybin-research.com/api.php">API</a>
   ·
-  <a href="android/README.md">Android / Google Play</a>
+  <a href="docs/getting-started.md">Documentation</a>
+  ·
+  <a href="https://doi.org/10.5281/zenodo.21293525">Dataset</a>
 </p>
 
 <p align="center">
   <a href="https://github.com/psilocybin-research/psilocybin-research-tracker/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/psilocybin-research/psilocybin-research-tracker/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-2f6f5e"></a>
   <a href="CITATION.cff"><img alt="Cite this software" src="https://img.shields.io/badge/citation-CFF-7a5c2e"></a>
-  <img alt="PHP 8+" src="https://img.shields.io/badge/PHP-8%2B-4f6f9f">
+  <img alt="PHP 8.2+" src="https://img.shields.io/badge/PHP-8.2%2B-4f6f9f">
   <img alt="SQLite" src="https://img.shields.io/badge/database-SQLite-366f91">
   <img alt="PWA" src="https://img.shields.io/badge/PWA-installable-7a5c2e">
-  <img alt="No CDN assets" src="https://img.shields.io/badge/assets-self--hosted-35584f">
 </p>
 
 <p align="center">
@@ -36,359 +37,63 @@
   <img src="android/play-store/screenshots/phone/03-citation-network.png" alt="Citation network explorer" width="220">
 </p>
 
-Self-contained PHP + SQLite research application for psilocybin and psilocin literature at `https://psilocybin-research.com/`.
-
-The tracker helps researchers, clinicians, journalists, policy analysts, and advanced public readers find, filter, evaluate, cite, export, monitor, and explore relevant publications while preserving scientific context: source database, publication status, preprint warnings, clinical-trial records, topics, substances, journals, dates, DOI/PubMed links, alerts, API access, offline-friendly PWA behavior, and Android app packaging.
-
-Production is deployed at the domain root only; do not use or recreate the former `/publication-tracker/` live URL.
+The tracker helps researchers, clinicians, journalists, policy analysts, and advanced public readers find and monitor relevant literature while retaining scientific context such as source database, publication status, persistent identifiers, journal, authors, date, study type, and provenance.
 
 ## Highlights
 
-| Area | What it provides |
+| Area | Capabilities |
 | --- | --- |
-| Literature discovery | Keyword, author, journal, topic, study type, substance, year, source, status, and date filters |
-| Scientific context | Source/status badges for peer-reviewed records, preprints, protocols, reviews, and clinical trials |
-| Citation workflow | BibTeX, RIS, CSV, JSON, LaTeX, copy-citation controls, DOI/PubMed links |
-| Research intelligence | Analytics, top journals/authors/topics, citation network, related evidence views |
-| Monitoring | Double opt-in email alerts and Web Push notifications for newly imported records |
-| Portability | Public API, widgets, SQLite download endpoint, R bibliometrics script, installable PWA, Android TWA wrapper |
-| Privacy posture | No CDN JavaScript/CSS/fonts, no tracking pixel in alert emails, runtime secrets excluded from git |
+| Discovery | Full-text metadata search with author, journal, topic, date, source, status, study-type, and substance filters |
+| Evidence context | Explicit labels for publications, preprints, protocols, reviews, and clinical-trial registrations |
+| Citation workflow | BibTeX, RIS, CSV, JSON, LaTeX, citation copying, DOI and PubMed links |
+| Research exploration | Analytics, author pages, evidence pages, related records, and an interactive citation network |
+| Monitoring | Double opt-in email alerts and Web Push notifications |
+| Reuse | Public API, embeddable widgets, rights-safe SQLite download, R toolkit, PWA, and Android TWA source |
 
-## What Is Included
+## Quick Start
 
-- Plain PHP 8+ application with SQLite storage.
-- Publication importers for PubMed, Crossref, Europe PMC, OpenAlex, medRxiv, bioRxiv, PsyArXiv, and ClinicalTrials.gov.
-- Search, advanced filters, citation copy, export formats, public JSON API, widgets, analytics, alerts, PWA offline fallback, and Web Push support.
-- R analysis script for live SQLite download, bibliometric tables, PDF figures, and interactive `visNetwork` citation maps.
-- Android Trusted Web Activity wrapper under `android/` for Google Play distribution.
-- GitHub CI, issue templates, pull request checklist, security policy, and `CITATION.cff` metadata.
-- Local frontend assets only: no CDN JavaScript, CSS, or fonts.
-
-## What Is Not Included
-
-Runtime state is intentionally excluded from the public repository:
-
-- live SQLite databases and backups
-- admin tokens, VAPID private keys, alert subscriptions, push subscriptions
-- logs, locks, heartbeat files, diagnostics
-- Android signing keystores, signing properties, APKs, and AABs
-- local notes and credential files
-
-Use `.env.example`, `schema.sql`, and the setup commands below to create a fresh local instance.
-
-## Setup
-
-The app runs on PHP 8+ with PDO SQLite enabled.
+Requirements: PHP 8.2 or newer with PDO SQLite, Node.js 20 or newer, and npm.
 
 ```bash
-cd psilocybin-research.com/publication-tracker
-php bin/update.php --backfill
+git clone https://github.com/psilocybin-research/psilocybin-research-tracker.git
+cd psilocybin-research-tracker
+npm ci
+npm run build
+php -S 127.0.0.1:8073 -t .
 ```
 
-The first request or command initializes `data/publications.sqlite` from `schema.sql`. The `data/` directory is blocked from web access by `.htaccess`.
-
-Optional environment variables:
-
-- `PUBLICATION_TRACKER_DATA_DIR`: writable directory for SQLite and token files.
-- `PUBLICATION_TRACKER_DSN`: PDO DSN. Defaults to `sqlite:data/publications.sqlite`.
-- `PUBLICATION_TRACKER_DB_USER` / `PUBLICATION_TRACKER_DB_PASSWORD`: used for PostgreSQL/MySQL later.
-- `PUBLICATION_TRACKER_ADMIN_TOKEN`: admin refresh token. If unset, a random token is generated in `data/admin_token.php`.
-- `PUBLICATION_TRACKER_NCBI_EMAIL`: recommended by NCBI for E-utilities usage.
-- `PUBLICATION_TRACKER_NCBI_API_KEY`: optional NCBI API key.
-
-Copy `.env.example` if you want a local environment file. Never commit a populated `.env`.
-
-## Database Schema
-
-`schema.sql` creates:
-
-- Runtime `publications`: bibliographic fields plus source text and importer payloads used privately for ingestion, relevance screening, search, classification, deduplication, and source tracing. Public pages, APIs, exports, widgets, and SQLite downloads apply a rights-safe projection that omits unverified abstracts, descriptions, keywords, and unrestricted payload text while retaining abstract-availability indicators and allowlisted factual provenance.
-- `fetch_runs`: status, imported/updated/skipped/error counts, timing, source.
-- `fetch_errors`: API/import error messages.
-- `alert_subscriptions`: email, frequency, keywords, substance settings, active flag.
-- `alert_deliveries`: duplicate-prevention table keyed by subscription, paper, and frequency.
-
-Publication rows also include automatic `topic_tags`, `study_type`, normalized `publication_status`, and admin curation fields: `hidden`, `false_positive`, `curation_notes`, and `merged_into_id`.
-
-Deduplication order is DOI, then PubMed ID, then normalized title only when DOI and PubMed ID are absent.
-
-## Updating Publications
-
-The public page reads from SQLite first. Visitors can optionally click **Refresh recent papers** to run a bounded recent-window import. This public refresh:
-
-- uses the same 7-day daily update window
-- is protected by a server-side lock file at `data/public_refresh.lock`
-- has a one-hour cooldown after the latest successful fetch
-- cannot run custom date ranges or historical backfills
-
-Admin/manual refresh remains available for custom ranges.
-
-Daily cron-compatible command:
+Open `http://127.0.0.1:8073/`. The first request initializes a local SQLite database from `schema.sql`. To retrieve records from the configured public sources, run:
 
 ```bash
-php /var/www/vhosts/h84632.host226.alfahosting-server.de/html/psilocybin-research.com/bin/update.php --daily
+php bin/update.php --daily
 ```
 
-The active production cron runs at 03:20 server time and appends output to `data/update.log`:
+Historical backfills can make many external API requests. Review [Getting Started](docs/getting-started.md) and [Data Sources](docs/data-sources.md) before running `php bin/update.php --backfill`.
 
-```cron
-20 3 * * * cd /var/www/vhosts/h84632.host226.alfahosting-server.de/html/psilocybin-research.com && php bin/update.php --daily >> data/update.log 2>&1
-```
+## Documentation
 
-Daily mode fetches a recent publication window, currently the last 7 days, and logs imported, updated, skipped, and error counts. Repeated runs are safe because DOI and PubMed ID uniqueness prevent duplicate inserts.
+- [Getting started and local configuration](docs/getting-started.md)
+- [Application architecture](docs/architecture.md)
+- [Sources, normalization, and deduplication](docs/data-sources.md)
+- [API, exports, widgets, and SQLite download](docs/api.md)
+- [Code and data rights](docs/data-rights.md)
+- [Deployment guidance](docs/deployment.md)
+- [Updates, backups, alerts, and health monitoring](docs/operations.md)
+- [Android / Google Play wrapper](android/README.md)
+- [Contributing](CONTRIBUTING.md), [support](SUPPORT.md), and [security](SECURITY.md)
 
-Historical backfill:
+## Public and Private Data Boundary
 
-```bash
-php bin/update.php --backfill
-```
+The private runtime database retains source text and importer payloads needed for matching, classification, deduplication, and curation. Public pages, APIs, exports, widgets, and downloadable SQLite files use a rights-safe projection that does not redistribute unverified abstracts, registry descriptions, source-derived keywords, or unrestricted payloads.
 
-Manual custom range:
+Runtime databases, logs, subscriptions, credentials, private keys, backups, signing material, and manuscript working files are intentionally excluded from this repository. See [Code and Data Rights](docs/data-rights.md) for the licensing boundary.
 
-```bash
-php bin/update.php --from=2024-01-01 --to=2024-12-31
-php bin/update.php --from=2019-01-01 --to=2020-12-31 --source=OpenAlex
-```
+## Citation
 
-Targeted identifier-based repair for visible records with missing core bibliographic fields:
+Use GitHub's **Cite this repository** control or [CITATION.cff](CITATION.cff) for the software.
 
-```bash
-php bin/repair-metadata.php --dry-run
-php bin/repair-metadata.php
-```
+The latest public dataset version is available through the Zenodo concept DOI: [10.5281/zenodo.21293525](https://doi.org/10.5281/zenodo.21293525). The fixed v1.0.6 dataset snapshot is [10.5281/zenodo.21333043](https://doi.org/10.5281/zenodo.21333043) and corresponds to software release v2.1.2. Later application releases do not replace that fixed snapshot's recorded software version.
 
-The repair command re-fetches only incomplete records that already have a PubMed ID or DOI. It uses exact PubMed and Crossref lookups, preserves existing nonblank metadata, and does not invent values when an authoritative source has no applicable field.
+## License
 
-Data sources currently implemented:
-
-- PubMed / NCBI E-utilities
-- Crossref
-- Europe PMC
-- OpenAlex
-- medRxiv
-- bioRxiv
-- PsyArXiv / OSF Preprints
-- ClinicalTrials.gov
-
-The fetcher service is isolated under `src/Fetchers/`; new sources should implement `FetcherInterface` and be registered in `PublicationService::create()`.
-
-Each source should set `source_name` and, where possible, `publication_status`. Supported statuses are:
-
-- `published`
-- `preprint`
-- `clinical trial`
-- `protocol`
-- `review`
-
-OpenAlex is part of the core source stack because it provides broad metadata, full author display names, ORCID/OpenAlex author IDs, citation counts, topics, DOI/PMID enrichment, and dedupe support. ScienceDirect/Elsevier API access should remain optional and publisher-specific because it is credential/licensing constrained and Crossref, PubMed, Europe PMC, and OpenAlex already cover most relevant bibliographic records.
-
-The recommended next expansion order is DOAJ, Semantic Scholar for later citation-graph enrichment, ISRCTN/WHO ICTRP, then subscription/optional sources such as Scopus, Web of Science, arXiv, SSRN, and ScienceDirect/Elsevier if stable permitted metadata access is confirmed. Preprints must remain visibly marked as `PREPRINT (not peer reviewed)` and clinical-trial records should not be blended into the peer-reviewed publication feed without a status/source badge.
-
-The visual layer uses local header/preloader imagery plus generated panel accent graphics. Keep decorative effects low-motion: prefer opacity, border, color, shadow, and blend-mode feedback over moving panels or buttons on hover/tap.
-
-## Frontend Assets
-
-Readable source files are kept in `assets/styles.css` and `assets/app.js`. Visitors are served generated minified files:
-
-```bash
-bash bin/build-assets.sh
-```
-
-The build requires `esbuild` locally and writes `assets/styles.min.css` and `assets/app.min.js`. Do not edit minified assets by hand.
-
-Backfill mode is not capped. PubMed paginates through all ESearch results with `retstart`; Crossref and OpenAlex paginate with cursors per query term. `--limit=` / `--max=` are optional debugging caps only.
-
-## Results and Status
-
-The homepage uses one canonical publication list. With no filters, it shows latest publications; after search or filtering, the same list becomes search results.
-
-```sql
-SELECT * FROM publications
-WHERE publication_date IS NOT NULL
-ORDER BY publication_date DESC, id DESC;
-```
-
-Each row includes title, journal, publication date, authors, DOI/PubMed links, source/status badges, and substance tags. This section updates automatically after successful imports because it reads directly from SQLite.
-
-The timestamp beside the latest papers comes from the most recent successful `fetch_runs` entry. On page load, `assets/app.js` calls `status.php`, which only checks SQLite and returns update freshness. While that lightweight request is pending, the page shows:
-
-```text
-Checking for newly published papers…
-```
-
-If the last successful automated update is older than 32 hours, the UI shows:
-
-```text
-Latest automated update is pending.
-```
-
-If the lightweight status request fails, the UI keeps showing stored papers and displays a friendly status error. This preloader indicates page/status loading only; it does not mean every visitor triggers a full scientific database import.
-
-## Research Features
-
-The public interface supports:
-
-- keyword search
-- dedicated author search
-- substance filter
-- year, journal, date range, topic, and study-type filters
-- citation copy buttons
-- paged latest-paper navigation in groups of 5
-- filtered export links
-- saved-search alerts by keyword, author, journal, substance, and topic
-
-Automatic classification is rule-based and runs on import/backfill:
-
-- `topic_tags`: clinical topics, neuroscience/biology, aging/longevity, wellbeing, research type, population, safety, and future omics categories.
-- Featured topics include Depression, Anxiety, Addiction, Microdosing, Neuroplasticity, Clinical Trial, Aging, Telomeres, Epigenetics, Longevity, Brain Imaging, Safety, Mystical Experience, Consciousness, and Biomarkers.
-- `study_type`: Randomized Controlled Trial, Clinical Trial, Meta-Analysis, Systematic Review, Review Article, Case Report, Observational Study, Animal Study, In Vitro Study, Qualitative Study, or Other.
-
-To classify existing rows after a schema upgrade:
-
-```bash
-php bin/classify-existing.php
-```
-
-## Exports, API, Widget
-
-Exports preserve the current filter query string:
-
-```text
-/export.php?format=bibtex
-/export.php?format=ris
-/export.php?format=csv
-/export.php?format=json
-/export.php?format=csv&limit=50000
-```
-
-Public JSON API:
-
-```text
-/api.php
-/api.php?resource=latest&limit=5&offset=5
-/api.php?resource=analytics
-/api.php?resource=authors&q=Carhart
-/api.php?resource=topics
-/api.php?resource=study_types
-/api.php?resource=journals
-/api.php?resource=paper&id=123
-/api.php?resource=citation&id=123
-```
-
-Embeddable latest-5 homepage widget:
-
-```text
-/widget.php
-<script src="/widget.js.php" data-target="publication-widget"></script>
-```
-
-The API and widget read SQLite only. They do not query upstream source APIs.
-
-## R Bibliometrics Toolkit
-
-The downloadable R script in `tools/psilocybin_bibliometrics_visnetwork.R` pulls the current public SQLite database from `database.php` and creates:
-
-- CSV tables for publications, authors, topics, citation edges, journals, sources, study types, and yearly counts
-- PDF figures for records by year, top journals, and top topics
-- an interactive `visNetwork` HTML citation map
-- optional PDF/PNG snapshots of the network via `webshot2`
-- a compact HTML bibliometric report
-
-Run it with:
-
-```bash
-Rscript tools/psilocybin_bibliometrics_visnetwork.R
-```
-
-Useful runtime filters:
-
-```bash
-PSILO_MAX_PAPERS=500 PSILO_FROM_YEAR=2020 Rscript tools/psilocybin_bibliometrics_visnetwork.R
-PSILO_STATUS="published,preprint" PSILO_TOPIC=depression Rscript tools/psilocybin_bibliometrics_visnetwork.R
-```
-
-## Analytics and Curation
-
-The admin/debug rail includes an analytics dashboard:
-
-- publication trends
-- dependency-free SVG publication timeline with preset and custom date ranges
-- top authors
-- top journals
-- topic distribution
-- study-type distribution
-
-Admin curation tools require the admin token and support:
-
-- editing substance/topic/study-type tags
-- hiding irrelevant papers
-- marking false positives
-- adding curation notes
-- merging duplicate records by marking a duplicate hidden and pointing it to a canonical record
-
-## Alerts
-
-Subscriptions live in `alert_subscriptions`. Generated delivery records live in `alert_deliveries`, which prevents duplicate alerts for the same subscriber and paper.
-
-Email-ready digest output:
-
-```bash
-php bin/alerts.php --frequency=daily
-php bin/alerts.php --frequency=weekly
-php bin/alerts.php --frequency=monthly
-```
-
-Preview without marking papers delivered:
-
-```bash
-php bin/alerts.php --frequency=daily --preview
-```
-
-The app supports double opt-in alert subscriptions and digest delivery. Keep sender identity, VAPID keys, and mail infrastructure configuration outside git.
-
-## Android / Google Play
-
-The `android/` directory contains the Trusted Web Activity wrapper and Play Store preparation docs.
-
-Release signing files and generated upload artifacts are local-only and ignored by git:
-
-- `android/keystore/`
-- `android/release/`
-- `android/twa/local.properties`
-
-Build locally with:
-
-```bash
-bash android/build-release.sh
-```
-
-After enrolling in Google Play App Signing, add the Play App Signing SHA-256 certificate fingerprint to `.well-known/assetlinks.json` before publishing production installs.
-
-## Admin / Debug
-
-Open `/#admin`. Custom manual refresh, curation, merging, and backfill workflows require the admin token. Fetch status and API errors are visible in the admin panel.
-
-If `PUBLICATION_TRACKER_ADMIN_TOKEN` is not set, read the generated token on the server:
-
-```bash
-php -r "echo include 'data/admin_token.php';"
-```
-
-## Migrating From SQLite
-
-The application uses PDO through `Database` plus repository classes, so request handlers do not hardcode SQLite calls. To migrate:
-
-1. Create equivalent tables in PostgreSQL/MySQL from `schema.sql`.
-2. Set `PUBLICATION_TRACKER_DSN`, `PUBLICATION_TRACKER_DB_USER`, and `PUBLICATION_TRACKER_DB_PASSWORD`.
-3. Replace SQLite-specific `INSERT OR IGNORE` statements in `AlertService` with the target database's upsert syntax.
-4. Keep repository method signatures unchanged.
-
-## Tests
-
-Run:
-
-```bash
-php tests/run.php
-```
-
-Tests cover deduplication, date filtering, latest 5 ordering, last successful update timestamp, preloader/status wiring, search/filter behavior, inserts, duplicate alert prevention, and daily/backfill update mode parsing.
+Source code is licensed under the [MIT License](LICENSE). That license does not relicense third-party bibliographic or registry metadata. Dataset-specific rights are described in [docs/data-rights.md](docs/data-rights.md) and in each Zenodo deposit.

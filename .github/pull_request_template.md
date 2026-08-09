@@ -22,7 +22,7 @@
 
 - [ ] No runtime database, logs, credentials, tokens, keystores, APK/AAB files, subscription data, or private notes are included.
 - [ ] Source/status distinctions for published records, preprints, protocols, reviews, and clinical trials are preserved.
-- [ ] Public copy and comments do not add tool/provenance branding unrelated to the project.
+- [ ] Public-facing copy follows the project voice and includes only relevant scientific or technical provenance.
 
 ## Notes for reviewers
 
