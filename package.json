@@ -8,6 +8,6 @@
     "check:generated": "npm run build && git diff --exit-code -- assets/styles.min.css assets/app.min.js"
   },
   "devDependencies": {
-    "esbuild": "0.25.8"
+    "esbuild": "0.28.1"
   }
 }
