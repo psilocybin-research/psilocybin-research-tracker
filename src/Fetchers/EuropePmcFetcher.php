@@ -43,6 +43,11 @@ final class EuropePmcFetcher implements FetcherInterface
                 if ($paper === null) {
                     continue;
                 }
+                if (trim((string)($paper['authors'] ?? '')) === ''
+                    && ($item['source'] ?? '') === 'PMC'
+                    && trim((string)($item['id'] ?? '')) !== '') {
+                    $paper['authors'] = $this->fetchPmcAuthors((string)$item['id']);
+                }
                 $key = strtolower((string)($paper['doi'] ?: $paper['pubmed_id'] ?: normalize_title((string)$paper['title'])));
                 if ($key !== '' && isset($seen[$key])) {
                     continue;
@@ -94,11 +99,17 @@ final class EuropePmcFetcher implements FetcherInterface
 
         $doi = normalize_doi($item['doi'] ?? null);
         $pmid = !empty($item['pmid']) ? (string)$item['pmid'] : null;
+        $journal = clean_scientific_text((string)(
+            $item['journalTitle']
+            ?? $item['journalInfo']['journal']['title']
+            ?? $item['bookOrReportDetails']['publisher']
+            ?? ''
+        ));
         return [
             'title' => $title,
             'authors' => clean_scientific_text((string)($item['authorString'] ?? '')),
             'abstract' => $abstract,
-            'journal' => $item['journalTitle'] ?? $item['bookOrReportDetails']['publisher'] ?? null,
+            'journal' => $journal !== '' ? $journal : null,
             'publication_date' => $item['firstPublicationDate'] ?? $item['pubYear'] ?? null,
             'doi' => $doi,
             'pubmed_id' => $pmid,
@@ -114,6 +125,45 @@ final class EuropePmcFetcher implements FetcherInterface
                 'importer' => 'Europe PMC',
             ],
         ];
+    }
+
+    public static function authorsFromFullTextXml(string $xml): string
+    {
+        $previous = libxml_use_internal_errors(true);
+        try {
+            $document = simplexml_load_string($xml);
+            if (!$document) {
+                return '';
+            }
+            $authors = [];
+            foreach ($document->xpath('//article-meta//contrib[@contrib-type="author" or ancestor::contrib-group[@content-type="author"]]') ?: [] as $contributor) {
+                $name = $contributor->name ?? null;
+                $given = $name ? clean_scientific_text((string)$name->children()->{'given-names'}) : '';
+                $surname = $name ? clean_scientific_text((string)$name->surname) : '';
+                $displayName = trim($given . ' ' . $surname);
+                if ($displayName === '') {
+                    $displayName = clean_scientific_text((string)($contributor->collab ?? ''));
+                }
+                $displayName = preg_replace('/^[^\p{L}\p{N}]+/u', '', $displayName) ?? $displayName;
+                if ($displayName !== '') {
+                    $authors[] = $displayName;
+                }
+            }
+            return implode(', ', array_values(array_unique($authors)));
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previous);
+        }
+    }
+
+    private function fetchPmcAuthors(string $pmcId): string
+    {
+        try {
+            $xml = $this->http->get('https://www.ebi.ac.uk/europepmc/webservices/rest/' . rawurlencode($pmcId) . '/fullTextXML');
+            return self::authorsFromFullTextXml($xml);
+        } catch (Throwable) {
+            return '';
+        }
     }
 
     private static function sourceNameForResult(string $source, string $publisher): string

@@ -72,6 +72,8 @@ final class OpenAlexFetcher implements FetcherInterface
                         'cited_by_count',
                         'authorships',
                         'primary_location',
+                        'best_oa_location',
+                        'locations',
                         'concepts',
                         'topics',
                         'keywords',
@@ -152,8 +154,8 @@ final class OpenAlexFetcher implements FetcherInterface
         $doi = normalize_doi($work['doi'] ?? ($work['ids']['doi'] ?? null));
         $pmid = self::pubmedIdFromOpenAlex($work['ids']['pmid'] ?? null);
         $openAlexId = PublicationRepository::normalizeOpenAlexId($work['id'] ?? null);
-        $primaryLocation = $work['primary_location'] ?? [];
-        $source = $primaryLocation['source'] ?? [];
+        $primaryLocation = is_array($work['primary_location'] ?? null) ? $work['primary_location'] : [];
+        $source = self::bestJournalSource($work);
         $journal = clean_scientific_text((string)($source['display_name'] ?? ''));
         $landingPage = $primaryLocation['landing_page_url'] ?? null;
         $sourceUrl = is_string($landingPage) && $landingPage !== ''
@@ -190,6 +192,33 @@ final class OpenAlexFetcher implements FetcherInterface
                 ],
             ],
         ];
+    }
+
+    private static function bestJournalSource(array $work): array
+    {
+        $locations = array_merge(
+            [(array)($work['primary_location'] ?? [])],
+            [(array)($work['best_oa_location'] ?? [])],
+            (array)($work['locations'] ?? [])
+        );
+        $untypedFallback = [];
+        foreach ($locations as $location) {
+            if (!is_array($location)) {
+                continue;
+            }
+            $source = $location['source'] ?? null;
+            if (!is_array($source) || trim((string)($source['display_name'] ?? '')) === '') {
+                continue;
+            }
+            $sourceType = mb_strtolower(trim((string)($source['type'] ?? '')), 'UTF-8');
+            if ($sourceType === 'journal') {
+                return $source;
+            }
+            if ($sourceType === '' && $untypedFallback === []) {
+                $untypedFallback = $source;
+            }
+        }
+        return $untypedFallback;
     }
 
     /** @return array{score:int,reasons:array<int,string>,direct_signal:bool} */

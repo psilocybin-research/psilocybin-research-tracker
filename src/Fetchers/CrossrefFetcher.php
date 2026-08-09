@@ -68,12 +68,36 @@ final class CrossrefFetcher implements FetcherInterface
         return $papers;
     }
 
-    private function paperFromItem(array $item): ?array
+    /** @param array<int,string> $dois */
+    public function fetchByDois(array $dois): array
+    {
+        $papers = [];
+        foreach (array_values(array_unique(array_filter(array_map('normalize_doi', $dois)))) as $doi) {
+            try {
+                $body = $this->http->get('https://api.crossref.org/works/' . rawurlencode((string)$doi));
+            } catch (RuntimeException) {
+                continue;
+            }
+            $data = json_decode($body, true);
+            $item = $data['message'] ?? null;
+            if (!is_array($item)) {
+                continue;
+            }
+            $paper = $this->paperFromItem($item, false);
+            if ($paper !== null) {
+                $papers[] = $paper;
+            }
+            usleep(150000);
+        }
+        return $papers;
+    }
+
+    public function paperFromItem(array $item, bool $requireRelevance = true): ?array
     {
             $title = clean_scientific_text((string)($item['title'][0] ?? ''));
             $abstract = isset($item['abstract']) ? clean_scientific_text((string)$item['abstract']) : '';
             $haystack = $title . ' ' . $abstract . ' ' . implode(' ', $item['subject'] ?? []);
-            if (PublicationRepository::detectSubstances($haystack) === '') {
+            if ($title === '' || ($requireRelevance && PublicationRepository::detectSubstances($haystack) === '')) {
                 return null;
             }
             $authors = [];

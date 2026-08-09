@@ -23,7 +23,8 @@ final class PsyArXivFetcher implements FetcherInterface
                 $url = self::BASE . '?' . http_build_query([
                     'filter[provider]' => 'psyarxiv',
                     'filter[' . $field . ']' => $term,
-                    'page[size]' => '100',
+                    'page[size]' => '25',
+                    'embed' => 'contributors',
                 ]);
                 do {
                     $data = json_decode($this->http->get($url), true);
@@ -72,9 +73,10 @@ final class PsyArXivFetcher implements FetcherInterface
         }
         $doi = normalize_doi($attributes['doi'] ?? null);
         $date = $attributes['date_published'] ?? $attributes['original_publication_date'] ?? $attributes['date_created'] ?? null;
+        $authors = self::authorsFromPreprint($item);
         return [
             'title' => $title,
-            'authors' => '',
+            'authors' => implode(', ', $authors),
             'abstract' => $abstract,
             'journal' => 'PsyArXiv',
             'publication_date' => $date ? substr((string)$date, 0, 10) : null,
@@ -90,6 +92,23 @@ final class PsyArXivFetcher implements FetcherInterface
                 'reviews_state' => $attributes['reviews_state'] ?? null,
             ],
         ];
+    }
+
+    /** @return array<int,string> */
+    public static function authorsFromPreprint(array $item): array
+    {
+        $authors = [];
+        foreach ((array)($item['embeds']['contributors']['data'] ?? []) as $contributor) {
+            $name = clean_scientific_text((string)(
+                $contributor['embeds']['users']['data']['attributes']['full_name']
+                ?? $contributor['attributes']['full_name']
+                ?? ''
+            ));
+            if ($name !== '') {
+                $authors[] = $name;
+            }
+        }
+        return array_values(array_unique($authors));
     }
 
     private function dateInRange(?string $date, ?string $from, ?string $to): bool

@@ -75,8 +75,11 @@ final class PublicationRepository
         ];
 
         if ($existing) {
+            $payload = $this->preserveExistingValuesWhenIncomingBlank($payload, $existing);
             if (($payload['source_name'] ?? null) === 'OpenAlex' && trim((string)($existing['source_name'] ?? '')) !== '' && $existing['source_name'] !== 'OpenAlex') {
                 $payload = $this->preservePrimaryRecordDuringOpenAlexEnrichment($payload, $existing);
+            } elseif (($payload['source_name'] ?? null) !== 'OpenAlex') {
+                $payload = $this->preserveStoredOpenAlexEnrichment($payload, $existing);
             }
             if (!empty($existing['curation_locked'])) {
                 foreach (['substance_tags', 'topic_tags', 'study_type'] as $curatedField) {
@@ -134,6 +137,127 @@ final class PublicationRepository
             return null;
         }
         return $this->one('SELECT * FROM openalex_quality_reviews WHERE openalex_id = :openalex_id', ['openalex_id' => $openAlexId]);
+    }
+
+    public function enrichMissingMetadataByIdentifier(array $paper): string
+    {
+        $doi = normalize_doi($paper['doi'] ?? null);
+        $pubmedId = trim((string)($paper['pubmed_id'] ?? '')) ?: null;
+        $existing = null;
+        if ($doi !== null) {
+            $existing = $this->one('SELECT * FROM publications WHERE doi = :doi ORDER BY hidden, false_positive, id LIMIT 1', ['doi' => $doi]);
+        }
+        if ($existing === null && $pubmedId !== null) {
+            $existing = $this->one('SELECT * FROM publications WHERE pubmed_id = :pubmed_id ORDER BY hidden, false_positive, id LIMIT 1', ['pubmed_id' => $pubmedId]);
+        }
+        if ($existing === null) {
+            return 'skipped';
+        }
+
+        $updates = [];
+        foreach (['authors', 'journal', 'source_url'] as $field) {
+            $incoming = clean_scientific_text((string)($paper[$field] ?? ''));
+            if (trim((string)($existing[$field] ?? '')) === '' && $incoming !== '') {
+                $updates[$field] = $incoming;
+            }
+        }
+
+        $publicationDate = parse_date_or_null($paper['publication_date'] ?? null);
+        if (trim((string)($existing['publication_date'] ?? '')) === '' && $publicationDate !== null) {
+            $updates['publication_date'] = $publicationDate;
+            $updates['publication_year'] = (int)substr($publicationDate, 0, 4);
+        }
+
+        if (trim((string)($existing['doi'] ?? '')) === '' && $doi !== null) {
+            $owner = $this->one('SELECT id FROM publications WHERE doi = :doi', ['doi' => $doi]);
+            if ($owner === null || (int)$owner['id'] === (int)$existing['id']) {
+                $updates['doi'] = $doi;
+            }
+        }
+        if (trim((string)($existing['pubmed_id'] ?? '')) === '' && $pubmedId !== null) {
+            $owner = $this->one('SELECT id FROM publications WHERE pubmed_id = :pubmed_id', ['pubmed_id' => $pubmedId]);
+            if ($owner === null || (int)$owner['id'] === (int)$existing['id']) {
+                $updates['pubmed_id'] = $pubmedId;
+            }
+        }
+
+        if ($updates === []) {
+            return 'skipped';
+        }
+        $updates['last_checked'] = current_utc();
+        $sets = [];
+        foreach ($updates as $field => $_) {
+            $sets[] = $field . ' = :' . $field;
+        }
+        $updates['id'] = (int)$existing['id'];
+        $this->db->pdo()->prepare('UPDATE publications SET ' . implode(', ', $sets) . ' WHERE id = :id')->execute($updates);
+        unset($updates['id']);
+        $this->syncNormalizedMetadata((int)$existing['id'], array_merge($existing, $updates));
+        return 'updated';
+    }
+
+    public function curateBibliographicMetadata(int $id, array $fields, string $note, array $replaceFields = []): bool
+    {
+        $existing = $this->one('SELECT * FROM publications WHERE id = :id', ['id' => $id]);
+        if ($existing === null) {
+            return false;
+        }
+
+        $allowed = ['title', 'authors', 'journal', 'publication_date', 'source_url', 'publication_status'];
+        $replaceFields = array_values(array_intersect($allowed, $replaceFields));
+        $updates = [];
+        foreach ($allowed as $field) {
+            if (!array_key_exists($field, $fields)) {
+                continue;
+            }
+            $replace = in_array($field, $replaceFields, true);
+            if (!$replace && trim((string)($existing[$field] ?? '')) !== '') {
+                continue;
+            }
+            if ($field === 'publication_date') {
+                $value = parse_date_or_null($fields[$field]);
+                if ($value !== null) {
+                    $updates[$field] = $value;
+                    $updates['publication_year'] = (int)substr($value, 0, 4);
+                }
+                continue;
+            }
+            if ($field === 'publication_status') {
+                $value = self::normalizePublicationStatus(
+                    (string)$fields[$field],
+                    (string)($existing['source_name'] ?? ''),
+                    (string)($existing['study_type'] ?? '')
+                );
+            } else {
+                $value = clean_scientific_text((string)$fields[$field]);
+            }
+            if ($value !== '') {
+                $updates[$field] = $value;
+                if ($field === 'title') {
+                    $updates['normalized_title'] = normalize_title($value);
+                }
+            }
+        }
+        if ($updates === []) {
+            return false;
+        }
+
+        $existingNote = trim((string)($existing['curation_notes'] ?? ''));
+        $note = clean_scientific_text($note);
+        $updates['curation_notes'] = $existingNote !== '' && !str_contains($existingNote, $note)
+            ? $existingNote . ' ' . $note
+            : $note;
+        $updates['curation_locked'] = 1;
+        $updates['last_checked'] = current_utc();
+        $sets = [];
+        foreach ($updates as $field => $_) {
+            $sets[] = $field . ' = :' . $field;
+        }
+        $updates['id'] = $id;
+        $this->db->pdo()->prepare('UPDATE publications SET ' . implode(', ', $sets) . ' WHERE id = :id')->execute($updates);
+        unset($updates['id']);
+        $this->syncNormalizedMetadata($id, array_merge($existing, $updates));
+        return true;
     }
 
     public function recordOpenAlexQualityReview(string $openAlexId, ?int $publicationId, string $decision, ?string $reason, string $reviewer = 'system'): void
@@ -400,6 +524,13 @@ final class PublicationRepository
         foreach ([
             'title',
             'normalized_title',
+            'source_name',
+            'publication_status',
+        ] as $field) {
+            $payload[$field] = $existing[$field] ?? $payload[$field] ?? null;
+        }
+
+        foreach ([
             'authors',
             'abstract',
             'journal',
@@ -412,10 +543,10 @@ final class PublicationRepository
             'substance_tags',
             'topic_tags',
             'study_type',
-            'source_name',
-            'publication_status',
         ] as $field) {
-            $payload[$field] = $existing[$field] ?? $payload[$field] ?? null;
+            if (trim((string)($existing[$field] ?? '')) !== '') {
+                $payload[$field] = $existing[$field];
+            }
         }
 
         if (!empty($existing['openalex_id'])) {
@@ -434,6 +565,45 @@ final class PublicationRepository
             ? json_encode($existingRaw, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
             : ($existing['raw_json'] ?? null);
 
+        return $payload;
+    }
+
+    private function preserveExistingValuesWhenIncomingBlank(array $payload, array $existing): array
+    {
+        foreach ([
+            'authors',
+            'abstract',
+            'journal',
+            'publication_date',
+            'publication_year',
+            'doi',
+            'pubmed_id',
+            'openalex_id',
+            'source_url',
+            'keywords',
+            'substance_tags',
+            'topic_tags',
+            'study_type',
+        ] as $field) {
+            if (trim((string)($payload[$field] ?? '')) === '' && trim((string)($existing[$field] ?? '')) !== '') {
+                $payload[$field] = $existing[$field];
+            }
+        }
+        return $payload;
+    }
+
+    private function preserveStoredOpenAlexEnrichment(array $payload, array $existing): array
+    {
+        $existingRaw = json_decode((string)($existing['raw_json'] ?? ''), true);
+        if (!is_array($existingRaw) || !isset($existingRaw['openalex_enrichment']) || !is_array($existingRaw['openalex_enrichment'])) {
+            return $payload;
+        }
+        $incomingRaw = json_decode((string)($payload['raw_json'] ?? ''), true);
+        if (!is_array($incomingRaw)) {
+            $incomingRaw = [];
+        }
+        $incomingRaw['openalex_enrichment'] = $existingRaw['openalex_enrichment'];
+        $payload['raw_json'] = json_encode($incomingRaw, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         return $payload;
     }
 
