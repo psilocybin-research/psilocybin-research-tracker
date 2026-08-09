@@ -32,6 +32,7 @@ $_GET = $originalGet;
 assert_true($defaultSearchFilters['from'] === null && $defaultSearchFilters['to'] === null, 'initial search without range should search all years');
 assert_true(is_string($explicitFiveYearFilters['from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $explicitFiveYearFilters['from']) === 1, 'explicit 5-year range should still apply a lower date bound');
 assert_true(str_contains(publication_recency_badge(gmdate('Y-m-d')), 'New this week') && str_contains(publication_recency_badge(gmdate('Y-m-d', strtotime('-14 days'))), 'New this month') && publication_recency_badge(gmdate('Y-m-d', strtotime('-40 days'))) === '', 'publication recency badge window failed');
+assert_true(parse_date_or_null('2024-01-01') === '2024-01-01' && parse_date_or_null('2024-02-30') === null, 'ISO publication dates should remain timezone-independent and valid');
 
 $legacyPdo = new PDO('sqlite::memory:', null, null, [
     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -161,6 +162,103 @@ $enriched = $repo->search(['q' => 'W9876543210', 'substances' => ['psilocybin'],
 assert_true($enriched['total'] === 1 && $enriched['rows'][0]['source_name'] === 'Europe PMC' && $enriched['rows'][0]['title'] === 'The Psilocybin-Telomere Hypothesis', 'OpenAlex enrichment should preserve primary source metadata');
 $germannProfile = $repo->authorProfile('Christopher B Germann');
 assert_true($germannProfile !== null && $germannProfile['orcid'] === '0000-0002-1573-4651' && $germannProfile['openalex_id'] === 'https://openalex.org/A5072900702', 'author profile should read OpenAlex identifiers from enrichment metadata');
+assert_true($repo->upsert(array_merge($base, [
+    'doi' => '10.1016/j.mehy.2019.109406',
+    'pubmed_id' => '31634774',
+    'openalex_id' => null,
+    'title' => 'The Psilocybin-Telomere Hypothesis',
+    'authors' => 'Germann CB.',
+    'abstract' => 'A psilocybin hypothesis about telomere length and genetic aging.',
+    'journal' => 'Medical Hypotheses',
+    'publication_date' => '2019-09-23',
+    'keywords' => 'psilocybin, telomere',
+    'source_name' => 'Europe PMC',
+    'raw' => ['europe_pmc_id' => '31634774', 'source' => 'MED'],
+])) === 'updated', 'primary-source refresh after OpenAlex enrichment failed');
+$reenriched = $repo->search(['q' => 'W9876543210', 'substances' => ['psilocybin'], 'range' => 'all', 'per_page' => 10]);
+$germannProfileAfterRefresh = $repo->authorProfile('Christopher B Germann');
+assert_true(
+    $reenriched['total'] === 1
+    && $germannProfileAfterRefresh !== null
+    && $germannProfileAfterRefresh['orcid'] === '0000-0002-1573-4651',
+    'primary-source refresh should preserve OpenAlex identifiers and author enrichment'
+);
+
+$missingMetadataFixture = array_merge($base, [
+    'title' => 'Psilocybin metadata enrichment fixture',
+    'authors' => '',
+    'journal' => null,
+    'publication_date' => '2024-01-01',
+    'doi' => '10.1000/missing-metadata-fixture',
+    'pubmed_id' => null,
+    'source_url' => null,
+    'source_name' => 'Europe PMC',
+]);
+assert_true($repo->upsert($missingMetadataFixture) === 'inserted', 'missing metadata fixture insert failed');
+assert_true($repo->upsert(array_merge($missingMetadataFixture, [
+    'title' => 'OpenAlex title should not replace the primary title',
+    'authors' => 'Complete Author',
+    'journal' => 'Complete Journal',
+    'publication_date' => '2024-01-02',
+    'pubmed_id' => '98765432',
+    'source_url' => 'https://doi.org/10.1000/missing-metadata-fixture',
+    'source_name' => 'OpenAlex',
+    'raw' => ['openalex_id' => 'https://openalex.org/W9876543211'],
+])) === 'updated', 'OpenAlex should enrich blank primary-source metadata');
+$filledMetadataFixture = $repo->search(['q' => '10.1000/missing-metadata-fixture', 'range' => 'all', 'per_page' => 10])['rows'][0] ?? [];
+assert_true(
+    ($filledMetadataFixture['title'] ?? '') === 'Psilocybin metadata enrichment fixture'
+    && ($filledMetadataFixture['authors'] ?? '') === 'Complete Author'
+    && ($filledMetadataFixture['journal'] ?? '') === 'Complete Journal'
+    && ($filledMetadataFixture['publication_date'] ?? '') === '2024-01-01'
+    && ($filledMetadataFixture['pubmed_id'] ?? '') === '98765432'
+    && ($filledMetadataFixture['source_url'] ?? '') === 'https://doi.org/10.1000/missing-metadata-fixture'
+    && ($filledMetadataFixture['source_name'] ?? '') === 'Europe PMC',
+    'OpenAlex enrichment should fill only blank primary-source fields: ' . json_encode($filledMetadataFixture, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+);
+$exactRepairFixture = array_merge($base, [
+    'title' => 'Stored curated psilocybin exact repair fixture',
+    'authors' => '',
+    'journal' => null,
+    'publication_date' => null,
+    'doi' => '10.1000/exact-repair-fixture',
+    'pubmed_id' => null,
+    'source_url' => null,
+    'source_name' => 'OpenAlex',
+    'raw' => ['openalex_id' => 'https://openalex.org/W9876543212'],
+]);
+assert_true($repo->upsert($exactRepairFixture) === 'inserted', 'exact metadata repair fixture insert failed');
+assert_true($repo->enrichMissingMetadataByIdentifier([
+    'title' => 'Current source title does not need to repeat the relevance terms',
+    'authors' => 'Exact Author',
+    'journal' => 'Exact Journal',
+    'publication_date' => '2020-02-03',
+    'doi' => '10.1000/exact-repair-fixture',
+    'source_url' => 'https://doi.org/10.1000/exact-repair-fixture',
+]) === 'updated', 'exact identifier repair should fill blank bibliographic metadata');
+$exactRepairResult = $repo->search(['q' => '10.1000/exact-repair-fixture', 'range' => 'all', 'per_page' => 10])['rows'][0] ?? [];
+assert_true(
+    ($exactRepairResult['title'] ?? '') === 'Stored curated psilocybin exact repair fixture'
+    && ($exactRepairResult['authors'] ?? '') === 'Exact Author'
+    && ($exactRepairResult['journal'] ?? '') === 'Exact Journal'
+    && ($exactRepairResult['publication_date'] ?? '') === '2020-02-03'
+    && ($exactRepairResult['source_name'] ?? '') === 'OpenAlex',
+    'exact identifier repair should not change the stored title or source provenance'
+);
+$exactRepairId = (int)($exactRepairResult['id'] ?? 0);
+assert_true($repo->curateBibliographicMetadata($exactRepairId, [
+    'title' => 'Stored curated psilocybin exact repair fixture corrected',
+    'authors' => 'Should Not Replace Exact Author',
+    'publication_status' => 'preprint',
+], 'Manual bibliographic verification fixture.', ['title', 'publication_status']), 'manual bibliographic curation should update approved fields');
+$manualRepairResult = $repo->search(['q' => '10.1000/exact-repair-fixture', 'range' => 'all', 'per_page' => 10])['rows'][0] ?? [];
+assert_true(
+    ($manualRepairResult['authors'] ?? '') === 'Exact Author'
+    && ($manualRepairResult['title'] ?? '') === 'Stored curated psilocybin exact repair fixture corrected'
+    && ($manualRepairResult['publication_status'] ?? '') === 'preprint'
+    && ($manualRepairResult['curation_locked'] ?? 0) == 1,
+    'manual bibliographic curation should preserve verified values unless replacement is explicitly authorized'
+);
 
 assert_true($repo->upsert(array_merge($base, [
     'doi' => null,
@@ -253,6 +351,7 @@ assert_true(PublicationRepository::detectSubstances('magic mushroom compost impr
 assert_true(str_contains(PublicationRepository::detectSubstances('psychedelic magic mushroom study'), 'psilocybin'), 'contextual magic mushroom match failed');
 assert_true(PublicationRepository::detectSubstances('Psilocybins and psilocins') === 'psilocybin,psilocin', 'inflected psilocybin and psilocin detection failed');
 assert_true(clean_scientific_text('Contribution of the Serotonin 5‐ <scp> HT <sub>2A</sub> </scp> Receptor') === 'Contribution of the Serotonin 5-HT2A Receptor', 'scientific title markup cleanup failed');
+assert_true(clean_scientific_text('A 2014 report on psilocybin') === 'A 2014 report on psilocybin', 'scientific title cleanup should preserve article-year spacing');
 
 for ($i = 0; $i < 6; $i++) {
     $repo->upsert([
@@ -541,6 +640,22 @@ $europePmcPaper = EuropePmcFetcher::paperFromResult([
     'pubType' => 'preprint',
 ]);
 assert_true($europePmcPaper !== null && $europePmcPaper['source_name'] === 'Europe PMC' && $europePmcPaper['publication_status'] === 'preprint', 'Europe PMC fetcher mapping failed');
+$europePmcNestedJournal = EuropePmcFetcher::paperFromResult([
+    'id' => '42566966',
+    'source' => 'MED',
+    'doi' => '10.1016/j.drugpo.2026.105459',
+    'pmid' => '42566966',
+    'title' => 'Psilocybin microdosing survey',
+    'abstractText' => 'A psilocybin survey.',
+    'authorString' => 'Example A.',
+    'firstPublicationDate' => '2026-08-07',
+    'journalInfo' => ['journal' => ['title' => 'International Journal of Drug Policy']],
+]);
+assert_true($europePmcNestedJournal !== null && $europePmcNestedJournal['journal'] === 'International Journal of Drug Policy', 'Europe PMC nested journal metadata should be mapped');
+$pmcAuthors = EuropePmcFetcher::authorsFromFullTextXml('<?xml version="1.0"?><article><front><article-meta><contrib-group><contrib contrib-type="author"><name><surname>Acevedo</surname><given-names>N</given-names></name></contrib><contrib contrib-type="author"><name><surname>Rossell</surname><given-names>S</given-names></name></contrib></contrib-group></article-meta></front></article>');
+assert_true($pmcAuthors === 'N Acevedo, S Rossell', 'PMC full-text contributor metadata should fill missing result authors');
+$pmcConferenceAuthors = EuropePmcFetcher::authorsFromFullTextXml('<?xml version="1.0"?><article><front><article-meta><contrib-group content-type="author"><contrib><name><surname>Kasper</surname><given-names>*S</given-names></name></contrib><contrib><collab>Research Consortium</collab></contrib></contrib-group></article-meta></front></article>');
+assert_true($pmcConferenceAuthors === 'S Kasper, Research Consortium', 'PMC full-text conference contributor groups should fill missing result authors');
 $europePmcBioRxivPaper = EuropePmcFetcher::paperFromResult([
     'id' => 'PPR124',
     'source' => 'PPR',
@@ -576,6 +691,16 @@ $biorxivPaper = (new BioMedRxivFetcher(new HttpClient(), 'biorxiv'))->paperFromI
 ]);
 assert_true($biorxivPaper !== null && $biorxivPaper['source_name'] === 'bioRxiv' && $biorxivPaper['publication_status'] === 'preprint', 'bioRxiv fetcher mapping failed');
 
+$crossrefDirectPaper = (new CrossrefFetcher(new HttpClient()))->paperFromItem([
+    'title' => ['Exact identifier metadata repair'],
+    'author' => [['given' => 'Direct', 'family' => 'Author']],
+    'container-title' => ['Direct Journal'],
+    'published' => ['date-parts' => [[2020, 2, 3]]],
+    'DOI' => '10.1000/direct-repair',
+    'URL' => 'https://doi.org/10.1000/direct-repair',
+], false);
+assert_true($crossrefDirectPaper !== null && $crossrefDirectPaper['authors'] === 'Author Direct' && $crossrefDirectPaper['journal'] === 'Direct Journal', 'exact-DOI Crossref metadata repair mapping failed');
+
 $psyarxivPaper = PsyArXivFetcher::paperFromPreprint([
     'id' => 'abcde_v1',
     'attributes' => [
@@ -587,8 +712,16 @@ $psyarxivPaper = PsyArXivFetcher::paperFromPreprint([
         'subjects' => [[['text' => 'Clinical Psychology']]],
         'version' => 1,
     ],
+    'embeds' => [
+        'contributors' => [
+            'data' => [
+                ['embeds' => ['users' => ['data' => ['attributes' => ['full_name' => 'Example Author']]]]],
+                ['embeds' => ['users' => ['data' => ['attributes' => ['full_name' => 'Second Author']]]]],
+            ],
+        ],
+    ],
 ]);
-assert_true($psyarxivPaper !== null && $psyarxivPaper['source_name'] === 'PsyArXiv' && $psyarxivPaper['publication_status'] === 'preprint', 'PsyArXiv fetcher mapping failed');
+assert_true($psyarxivPaper !== null && $psyarxivPaper['source_name'] === 'PsyArXiv' && $psyarxivPaper['publication_status'] === 'preprint' && $psyarxivPaper['authors'] === 'Example Author, Second Author', 'PsyArXiv fetcher mapping failed');
 
 $clinicalTrialPaper = ClinicalTrialsFetcher::paperFromStudy([
     'protocolSection' => [
@@ -632,6 +765,17 @@ $openAlexPaper = OpenAlexFetcher::paperFromWork([
     'concepts' => [['display_name' => 'Psilocybin'], ['display_name' => 'Telomeres']],
 ]);
 assert_true($openAlexPaper !== null && $openAlexPaper['source_name'] === 'OpenAlex' && $openAlexPaper['authors'] === 'Christopher B. Germann' && $openAlexPaper['pubmed_id'] === '31634774' && ($openAlexPaper['raw']['cited_by_count'] ?? 0) === 18, 'OpenAlex fetcher mapping failed');
+$openAlexFallbackJournal = OpenAlexFetcher::paperFromWork([
+    'id' => 'https://openalex.org/W124',
+    'display_name' => 'Psilocybin journal location fallback',
+    'abstract_inverted_index' => ['psilocybin' => [0]],
+    'publication_date' => '2026-01-02',
+    'authorships' => [['author' => ['display_name' => 'Example Author']]],
+    'primary_location' => ['landing_page_url' => 'https://example.org/work', 'source' => null],
+    'locations' => [['source' => ['display_name' => 'Fallback Journal', 'type' => 'journal']]],
+    'concepts' => [['display_name' => 'Psilocybin']],
+]);
+assert_true($openAlexFallbackJournal !== null && $openAlexFallbackJournal['journal'] === 'Fallback Journal', 'OpenAlex journal-type location fallback should be mapped');
 
 $index = file_get_contents(__DIR__ . '/../index.php');
 $js = file_get_contents(__DIR__ . '/../assets/app.js');

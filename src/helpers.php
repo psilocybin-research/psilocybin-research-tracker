@@ -55,7 +55,6 @@ function clean_scientific_text(?string $text): string
     $text = str_replace(["\xC2\xA0", '‐', '‑', '‒', '–', '—'], [' ', '-', '-', '-', '-', '-'], $text);
     $text = preg_replace('/\s+/u', ' ', $text) ?? $text;
     $text = preg_replace('/\b5\s*-\s*HT\s*([0-9]+[A-Z]?)\b/iu', '5-HT$1', $text) ?? $text;
-    $text = preg_replace('/\b([A-Z]{1,4})\s+([0-9]+[A-Z]?)\b/u', '$1$2', $text) ?? $text;
     $text = preg_replace('/\s+([,.;:!?])/u', '$1', $text) ?? $text;
     return trim($text);
 }
@@ -166,11 +165,19 @@ function parse_date_or_null(?string $date): ?string
         return null;
     }
     $date = trim($date);
-    if (preg_match('/^\d{4}$/', $date)) {
-        return $date . '-01-01';
+    if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $date, $match)) {
+        $year = (int)$match[1];
+        $month = (int)$match[2];
+        $day = (int)$match[3];
+        return $year >= 1800 && checkdate($month, $day, $year) ? $date : null;
     }
-    if (preg_match('/^\d{4}-\d{2}$/', $date)) {
-        return $date . '-01';
+    if (preg_match('/^\d{4}$/', $date)) {
+        return (int)$date >= 1800 ? $date . '-01-01' : null;
+    }
+    if (preg_match('/^(\d{4})-(\d{2})$/', $date, $match)) {
+        $year = (int)$match[1];
+        $month = (int)$match[2];
+        return $year >= 1800 && $month >= 1 && $month <= 12 ? $date . '-01' : null;
     }
     $ts = strtotime($date);
     return $ts === false ? null : gmdate('Y-m-d', $ts);

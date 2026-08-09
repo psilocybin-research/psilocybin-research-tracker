@@ -150,6 +150,15 @@ php bin/update.php --from=2024-01-01 --to=2024-12-31
 php bin/update.php --from=2019-01-01 --to=2020-12-31 --source=OpenAlex
 ```
 
+Targeted identifier-based repair for visible records with missing core bibliographic fields:
+
+```bash
+php bin/repair-metadata.php --dry-run
+php bin/repair-metadata.php
+```
+
+The repair command re-fetches only incomplete records that already have a PubMed ID or DOI. It uses exact PubMed and Crossref lookups, preserves existing nonblank metadata, and does not invent values when an authoritative source has no applicable field.
+
 Data sources currently implemented:
 
 - PubMed / NCBI E-utilities
