@@ -1,0 +1,5 @@
+Contact: mailto:info@psilocybin-research.com
+Expires: 2027-08-09T23:59:59Z
+Preferred-Languages: en, de
+Canonical: https://psilocybin-research.com/.well-known/security.txt
+Policy: https://github.com/psilocybin-research/psilocybin-research-tracker/security/policy

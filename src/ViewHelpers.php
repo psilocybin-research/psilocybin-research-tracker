@@ -73,7 +73,7 @@ function detail_page_header(string $current = ''): string
         ['key' => 'export', 'href' => 'export.php?format=json', 'icon' => 'download', 'label' => 'Export data', 'disabled' => true, 'disabled_title' => 'Use export from a publication results list so current filters can be included.'],
         ['key' => 'api', 'href' => 'api.php', 'icon' => 'braces', 'label' => 'API', 'disabled' => true, 'disabled_title' => 'Use API links from a publication results list so current filters can be included.'],
         ['key' => 'github', 'href' => 'https://github.com/psilocybin-research/psilocybin-research-tracker', 'icon' => 'github', 'label' => 'GitHub', 'external' => true, 'rel' => 'noopener me'],
-        ['key' => 'zenodo-doi', 'href' => 'https://doi.org/10.5281/zenodo.21293526', 'icon' => 'zenodo', 'label' => 'Zenodo DOI', 'external' => true, 'title' => 'Fixed citable dataset snapshot on Zenodo'],
+        ['key' => 'zenodo-doi', 'href' => 'https://doi.org/10.5281/zenodo.21293525', 'icon' => 'zenodo', 'label' => 'Zenodo DOI', 'external' => true, 'title' => 'Latest version of the citable dataset on Zenodo'],
         ['key' => 'about', 'href' => 'about.php', 'icon' => 'circle-alert', 'label' => 'About'],
         ['key' => 'data-protection', 'href' => 'data-protection.php', 'icon' => 'shield', 'label' => 'Data protection'],
     ];

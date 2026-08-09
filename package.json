@@ -1,0 +1,13 @@
+{
+  "name": "psilocybin-research-tracker-assets",
+  "version": "2.1.6",
+  "private": true,
+  "description": "Reproducible frontend asset build for the Psilocybin Research Tracker.",
+  "scripts": {
+    "build": "bash bin/build-assets.sh",
+    "check:generated": "npm run build && git diff --exit-code -- assets/styles.min.css assets/app.min.js"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.8"
+  }
+}

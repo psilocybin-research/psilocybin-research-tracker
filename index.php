@@ -209,8 +209,8 @@ $publicationGrowthTotal = array_sum(array_column($publicationGrowthYears, 'count
 $publicationGrowthLatest = $publicationGrowthYears ? (int)end($publicationGrowthYears)['count'] : 0;
 $publicationGrowthLatestYear = $publicationGrowthYears ? (int)end($publicationGrowthYears)['year'] : null;
 $publicationGrowthFirstYear = $publicationGrowthYears ? (int)$publicationGrowthYears[0]['year'] : null;
-$assetVersion = '20260713-accordion-emphasis-v93';
-$appVersion = '2.1.5';
+$assetVersion = '20260809-network-first-v94';
+$appVersion = '2.1.6';
 $formatBytes = static function (int $bytes): string {
     if ($bytes >= 1073741824) {
         return number_format($bytes / 1073741824, 2) . ' GB';
@@ -245,7 +245,7 @@ $latestAddedDoi = $latestAddedWithDoi ? normalize_doi((string)($latestAddedWithD
 $latestAddedAt = $latestAddedWithDoi ? (string)($latestAddedWithDoi['date_added'] ?? '') : '';
 $baseUrl = Config::publicBaseUrl();
 $canonicalUrl = $baseUrl;
-$shareImageUrl = $baseUrl . 'assets/pwa/icon-512.png?v=20260713-accordion-emphasis-v93';
+$shareImageUrl = $baseUrl . 'assets/pwa/icon-512.png?v=20260809-network-first-v94';
 $shareImageAlt = 'Psilocybin Research Publication Tracker logo';
 $latestJsonLdItems = [];
 foreach (array_slice($latestPapers, 0, 10) as $index => $paper) {
@@ -346,11 +346,11 @@ $jsonLd = [
   <meta name="twitter:image" content="<?= h($shareImageUrl) ?>">
   <meta name="twitter:image:alt" content="<?= h($shareImageAlt) ?>">
   <title>Publication Tracker | Psilocybin Research</title>
-  <link rel="icon" href="assets/logo.png?v=20260713-accordion-emphasis-v93">
-  <link rel="icon" type="image/png" sizes="192x192" href="assets/pwa/icon-192.png?v=20260713-accordion-emphasis-v93">
-  <link rel="icon" type="image/png" sizes="512x512" href="assets/pwa/icon-512.png?v=20260713-accordion-emphasis-v93">
-  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260713-accordion-emphasis-v93">
-  <link rel="manifest" href="manifest.webmanifest?v=20260713-accordion-emphasis-v93">
+  <link rel="icon" href="assets/logo.png?v=20260809-network-first-v94">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/pwa/icon-192.png?v=20260809-network-first-v94">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/pwa/icon-512.png?v=20260809-network-first-v94">
+  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260809-network-first-v94">
+  <link rel="manifest" href="manifest.webmanifest?v=20260809-network-first-v94">
   <link rel="preload" href="assets/preloader-mushroom-desktop.webp" as="image" media="(min-width: 701px)" fetchpriority="high">
   <link rel="preload" href="assets/preloader-mushroom-mobile.webp" as="image" media="(max-width: 700px)" fetchpriority="high">
   <link rel="preload" href="assets/fonts/roboto-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -401,7 +401,7 @@ $jsonLd = [
     <a href="export.php?<?= h(http_build_query(array_merge(canonical_query_params($_GET), ['format' => 'json']))) ?>" target="_blank" rel="noopener" data-sidebar-export><i data-icon="download" aria-hidden="true"></i><span>Export data</span></a>
     <a href="api.php?<?= h(http_build_query(array_merge(canonical_query_params($_GET), ['resource' => 'papers', 'per_page' => 'all', 'page' => 1]))) ?>" target="_blank" rel="noopener"><i data-icon="braces" aria-hidden="true"></i><span>API</span></a>
     <a href="https://github.com/psilocybin-research/psilocybin-research-tracker" target="_blank" rel="noopener me"><i data-icon="github" aria-hidden="true"></i><span>GitHub</span></a>
-    <a href="https://doi.org/10.5281/zenodo.21293526" target="_blank" rel="noopener" title="Fixed citable dataset snapshot on Zenodo"><i data-icon="zenodo" aria-hidden="true"></i><span>Zenodo DOI</span></a>
+    <a href="https://doi.org/10.5281/zenodo.21293525" target="_blank" rel="noopener" title="Latest version of the citable dataset on Zenodo"><i data-icon="zenodo" aria-hidden="true"></i><span>Zenodo DOI</span></a>
     <a href="about.php"><i data-icon="circle-alert" aria-hidden="true"></i><span>About</span></a>
     <a href="data-protection.php"><i data-icon="shield" aria-hidden="true"></i><span>Data protection</span></a>
   </nav>

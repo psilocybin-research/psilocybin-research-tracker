@@ -8,14 +8,14 @@ final class ExportService
     public static function csv(array $papers): string
     {
         $stream = fopen('php://temp', 'r+');
-        fputcsv($stream, ['id', 'title', 'authors', 'journal', 'publication_date', 'publication_year', 'doi', 'pubmed_id', 'source_url', 'source_record_id', 'source_name', 'publication_status', 'substance_tags', 'topic_tags', 'study_type', 'abstract_available', 'abstract_source', 'abstract_source_url', 'abstract_redistributed', 'text_rights_status', 'text_license_uri', 'tracker_site_url']);
+        fputcsv($stream, ['id', 'title', 'authors', 'journal', 'publication_date', 'publication_year', 'doi', 'pubmed_id', 'source_url', 'source_record_id', 'source_name', 'publication_status', 'substance_tags', 'topic_tags', 'study_type', 'abstract_available', 'abstract_source', 'abstract_source_url', 'abstract_redistributed', 'text_rights_status', 'text_license_uri', 'tracker_site_url'], ',', '"', '');
         foreach ($papers as $paper) {
             $paper = public_paper($paper);
             fputcsv($stream, [
                 $paper['id'], $paper['title'], $paper['authors'], $paper['journal'], $paper['publication_date'], $paper['publication_year'], $paper['doi'], $paper['pubmed_id'],
                 $paper['source_url'], $paper['source_record_id'], $paper['source_name'] ?? '', $paper['publication_status'] ?? 'published', $paper['substance_tags'], $paper['topic_tags'] ?? '', $paper['study_type'] ?? '',
                 !empty($paper['abstract_available']) ? 'true' : 'false', $paper['abstract_source'], $paper['abstract_source_url'], 'false', $paper['text_rights_status'], $paper['text_license_uri'], self::TRACKER_SITE_URL,
-            ]);
+            ], ',', '"', '');
         }
         rewind($stream);
         return stream_get_contents($stream) ?: '';
