@@ -32,9 +32,9 @@
 </p>
 
 <p align="center">
-  <img src="android/play-store/screenshots/phone/01-home-latest.png" alt="Mobile homepage showing latest psilocybin research records" width="220">
-  <img src="android/play-store/screenshots/phone/02-search-results.png" alt="Mobile search results with publication records" width="220">
-  <img src="android/play-store/screenshots/phone/03-citation-network.png" alt="Citation network explorer" width="220">
+  <img src="docs/screenshots/01-home-latest.png" alt="Mobile homepage showing latest psilocybin research records" width="220">
+  <img src="docs/screenshots/02-search-results.png" alt="Mobile search results with publication records" width="220">
+  <img src="docs/screenshots/03-citation-network.png" alt="Citation network explorer" width="220">
 </p>
 
 The tracker helps researchers, clinicians, journalists, policy analysts, and advanced public readers find and monitor relevant literature while retaining scientific context such as source database, publication status, persistent identifiers, journal, authors, date, study type, and provenance.
@@ -48,7 +48,7 @@ The tracker helps researchers, clinicians, journalists, policy analysts, and adv
 | Citation workflow | BibTeX, RIS, CSV, JSON, LaTeX, citation copying, DOI and PubMed links |
 | Research exploration | Analytics, author pages, evidence pages, related records, and an interactive citation network |
 | Monitoring | Double opt-in email alerts and Web Push notifications |
-| Reuse | Public API, embeddable widgets, rights-safe SQLite download, R toolkit, PWA, and Android TWA source |
+| Reuse | Public API, embeddable widgets, rights-safe SQLite download, R toolkit, PWA |
 
 ## Quick Start
 
@@ -79,7 +79,6 @@ Historical backfills can make many external API requests. Review [Getting Starte
 - [Code and data rights](docs/data-rights.md)
 - [Deployment guidance](docs/deployment.md)
 - [Updates, backups, alerts, and health monitoring](docs/operations.md)
-- [Android / Google Play wrapper](android/README.md)
 - [Contributing](CONTRIBUTING.md), [support](SUPPORT.md), and [security](SECURITY.md)
 
 ## Public and Private Data Boundary

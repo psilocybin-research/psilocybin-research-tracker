@@ -13,10 +13,3 @@ updates:
       interval: monthly
     labels: [dependencies, frontend]
     open-pull-requests-limit: 5
-
-  - package-ecosystem: gradle
-    directory: /android/twa
-    schedule:
-      interval: monthly
-    labels: [dependencies, android]
-    open-pull-requests-limit: 5
