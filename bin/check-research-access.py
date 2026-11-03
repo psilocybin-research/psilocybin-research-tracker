@@ -213,6 +213,16 @@ def check(base):
     for name, expected_type in [('for-ai.html', 'text/html'), ('for-ai.txt', 'text/plain'), ('llms.txt', 'text/plain'), ('docs/research-api.openapi.json', 'application/json')]:
         with open_public(urljoin(base, name)) as response:
             require(response.headers.get_content_type() == expected_type and response.read(1024), f'Documentation MIME/body check failed: {name}')
+    for name, expected_type in [('annual_counts.py', 'text/plain'), ('annual_counts.R', 'text/plain'), ('annual-counts.sql', 'text/plain'), ('annual_counts.ipynb', 'application/x-ipynb+json')]:
+        relative = Path('tools/reproducible') / name
+        with open_public(urljoin(base, relative.as_posix())) as response:
+            require(response.headers.get_content_type() == expected_type, 'Worked example MIME differs: ' + name)
+            body = response.read(1024 * 1024 + 1)
+            require(body == (Path(__file__).resolve().parents[1] / relative).read_bytes(), 'Published example bytes differ from reviewed source: ' + name)
+    with open_public(urljoin(base, 'docs/research-task-benchmark.json')) as response:
+        require(response.headers.get_content_type() == 'application/json', 'Benchmark report MIME differs')
+        require(json.loads(response.read(1024 * 1024))['schema_version'] == 'research-task-benchmark-v1', 'Benchmark report schema differs')
+    report['worked_example_downloads'] = 'all four public source files and dated benchmark report verified'
     report['status'] = 'passed'
     return report
 
