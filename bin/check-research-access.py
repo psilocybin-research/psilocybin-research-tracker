@@ -213,7 +213,7 @@ def check(base):
     for name, expected_type in [('for-ai.html', 'text/html'), ('for-ai.txt', 'text/plain'), ('llms.txt', 'text/plain'), ('docs/research-api.openapi.json', 'application/json')]:
         with open_public(urljoin(base, name)) as response:
             require(response.headers.get_content_type() == expected_type and response.read(1024), f'Documentation MIME/body check failed: {name}')
-    for name, expected_type in [('annual_counts.py', 'text/plain'), ('annual_counts.R', 'text/plain'), ('annual-counts.sql', 'text/plain'), ('annual_counts.ipynb', 'application/x-ipynb+json')]:
+    for name, expected_type in [('annual_counts.py', 'text/plain'), ('annual_counts.R', 'text/plain'), ('annual-counts.sql.txt', 'text/plain'), ('annual_counts.ipynb', 'application/x-ipynb+json')]:
         relative = Path('tools/reproducible') / name
         with open_public(urljoin(base, relative.as_posix())) as response:
             require(response.headers.get_content_type() == expected_type, 'Worked example MIME differs: ' + name)

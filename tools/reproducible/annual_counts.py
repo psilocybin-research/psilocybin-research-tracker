@@ -79,7 +79,10 @@ def reproduce(output, manifest_path=None):
     (output / 'dataset-manifest.json').write_bytes(raw)
     database = artifact(manifest, 'sqlite', output)
     expected = json.loads(artifact(manifest, 'statistics-json', output).read_bytes())
-    sql = (Path(__file__).parent / 'annual-counts.sql').read_text(encoding='utf-8')
+    query = Path(__file__).parent / 'annual-counts.sql.txt'
+    if not query.exists():
+        query = Path(__file__).parent / 'annual-counts.sql'
+    sql = query.read_text(encoding='utf-8')
     with sqlite3.connect(database.resolve().as_uri() + '?mode=ro', uri=True) as connection:
         if connection.execute('PRAGMA quick_check').fetchone()[0] != 'ok':
             raise ValueError('SQLite integrity check failed')
