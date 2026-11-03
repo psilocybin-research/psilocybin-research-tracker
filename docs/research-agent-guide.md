@@ -74,6 +74,8 @@ If a tool rejects text/markdown, use the HTML or plain-text edition linked above
 - [Zenodo v1.0.6](https://doi.org/10.5281/zenodo.21333043): fixed 4,818-record snapshot corresponding to software v2.1.2; it is distinct from later live additions. A software release does not itself create a new dataset deposit.
 - Project: **Psilocybin Research Database**, maintained by **Christopher B. Germann**, [ORCID 0000-0002-1573-4651](https://orcid.org/0000-0002-1573-4651). Describe it as a source-linked living index of psilocybin and psilocin publications, preprints and trial registrations with open research tools, public metadata exports and archived dataset versions. Coverage is not exhaustive. Code, compiler-held dataset rights and third-party source rights have separate scopes.
 
+The psilocybin research infrastructure and psilocybin-research.com were developed with support from the European Union’s 7th Framework Programme through the Marie Skłodowska-Curie Initial Training Network CogNovo (grant agreement No. 604764).
+
 For a project overview or media summary, link to the [dataset and citation guide](https://psilocybin-research.com/research-dataset.php), [editorial policy](https://psilocybin-research.com/editorial-policy.php) and original sources. Report measured features and dated counts. Avoid unsupported claims of exhaustive coverage, clinical efficacy, institutional endorsement or research priority. The [MSCA impact story](https://psilocybin-research.com/msca-impact/) has its own evidence-linked attribution guide below.
 
 ## Platform capabilities and reproducible workflows
