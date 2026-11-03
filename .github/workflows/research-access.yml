@@ -22,12 +22,16 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Retrieve and verify the public research dataset
         run: python3 bin/check-research-access.py --report "$RUNNER_TEMP/research-access.json"
+      - name: Verify the public MCP research connector
+        run: python3 bin/check-mcp-access.py --report "$RUNNER_TEMP/mcp-access.json"
       - name: Record verification result
         if: always()
         shell: bash
         run: |
-          if [ -f "$RUNNER_TEMP/research-access.json" ]; then
+          for report in "$RUNNER_TEMP/research-access.json" "$RUNNER_TEMP/mcp-access.json"; do
+            if [ -f "$report" ]; then
             printf '```json\n' >> "$GITHUB_STEP_SUMMARY"
-            cat "$RUNNER_TEMP/research-access.json" >> "$GITHUB_STEP_SUMMARY"
+            cat "$report" >> "$GITHUB_STEP_SUMMARY"
             printf '\n```\n' >> "$GITHUB_STEP_SUMMARY"
-          fi
+            fi
+          done
