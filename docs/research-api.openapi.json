@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Psilocybin Research public read-only API",
-    "version": "1.3.0",
-    "description": "Existing anonymous GET endpoints for source-labeled bibliographic and trial metadata. No subscription, messaging, curation or private-source operations. Source abstracts and full texts are excluded. Read-only GET access needs no key. Use an identifiable client User-Agent; generic library user-agents may be rejected by the host.",
+    "version": "1.4.0",
+    "description": "Anonymous public GET endpoints plus read-only MCP JSON-RPC POST for source-labeled bibliographic and trial metadata. No subscription, messaging, curation or private-source operations. Source abstracts and full texts are excluded. Read-only GET access needs no key. Use an identifiable client User-Agent; generic library user-agents may be rejected by the host.",
     "termsOfService": "https://psilocybin-research.com/editorial-policy.php"
   },
   "servers": [
@@ -1508,6 +1508,116 @@
           },
           "503": {
             "description": "Artifact file unavailable."
+          }
+        }
+      }
+    },
+    "/mcp": {
+      "post": {
+        "operationId": "callPublicResearchMcp",
+        "summary": "Read-only MCP Streamable HTTP connector",
+        "description": "MCP JSON-RPC transport, not a REST search route. Initialize, notify initialized, list/call tools, list/read resources and ping. Eight tools expose existing public metadata only. No sessions, subscriptions, writes, arbitrary outbound URLs or publisher full texts. See /for-ai.html#connect-using-mcp and discover actual tool input/output schemas with tools/list.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "MCP-Protocol-Version",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "2025-11-25",
+                "2025-06-18",
+                "2025-03-26"
+              ]
+            },
+            "description": "Negotiated protocol on post-initialize requests; absent header defaults to 2025-03-26."
+          },
+          {
+            "name": "Accept",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "application/json, text/event-stream"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "jsonrpc",
+                  "method"
+                ],
+                "properties": {
+                  "jsonrpc": {
+                    "type": "string",
+                    "const": "2.0"
+                  },
+                  "id": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "method": {
+                    "type": "string"
+                  },
+                  "params": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "One JSON-RPC result or protocol error; tool execution errors use result.isError.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Accepted notification; empty body."
+          },
+          "400": {
+            "description": "Malformed JSON/RPC or unsupported protocol header."
+          },
+          "403": {
+            "description": "Browser Origin is not allowed."
+          },
+          "406": {
+            "description": "Client does not accept JSON responses."
+          },
+          "413": {
+            "description": "Request exceeds 32 KiB."
+          },
+          "415": {
+            "description": "application/json required."
+          },
+          "429": {
+            "description": "Request/workload limit; respect Retry-After."
+          }
+        }
+      },
+      "get": {
+        "operationId": "mcpStandaloneStreamNotSupported",
+        "summary": "No standalone SSE stream",
+        "responses": {
+          "405": {
+            "description": "Use MCP POST; no standalone SSE stream or session deletion."
           }
         }
       }
