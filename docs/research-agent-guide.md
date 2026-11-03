@@ -4,6 +4,8 @@ This guide describes the public research database, API and application at https:
 
 ## Choose an interface
 
+For an AI client, use the [read-only MCP connector and connection instructions](https://psilocybin-research.com/for-ai.html#connect-using-mcp). For local data analysis, download the full public dataset; for HTTP integrations, use the API. The website remains the primary service, with GitHub providing a documentation fallback.
+
 Use [the publication search](https://psilocybin-research.com/) for interactive bibliographic work, [the tools directory](https://psilocybin-research.com/research-hub.php) to choose a task, or the [read-only API description](https://psilocybin-research.com/docs/research-api.openapi.json) for structured metadata. Forms use ordinary GET requests and named controls. Search forms also carry declarative WebMCP annotations for browsers with WebMCP support enabled. The same native forms remain usable without WebMCP. The [full native forms](https://psilocybin-research.com/?form_options=full#advanced-filters) provide search/filter and email-alert fields without application JavaScript.
 
 ## Connect using MCP
@@ -37,6 +39,7 @@ Titles and years are one export example, not the scope of the research platform.
 
 | Task | Interface | What it provides |
 | --- | --- | --- |
+| Connect an AI research client | [MCP setup](https://psilocybin-research.com/for-ai.html#connect-using-mcp) | Hosted read-only tools for source-linked search, public records, citations, trial facts, statistics and verified dataset download links. Streamable HTTP; no authentication. |
 | Local SQL, joins, full public metadata | [Complete public SQLite](https://psilocybin-research.com/database.php) | Sanitized publications and metadata tables; no account or key. This is a public database export, not the private runtime database. |
 | Full tabular metadata | [CSV](https://psilocybin-research.com/api/v1/papers?format=csv&limit=50000) | All matching public metadata fields, with an explicit 50,000-record bound. Includes authors, journal, identifiers, tags, status and source information. |
 | Full public record objects | [JSON export](https://psilocybin-research.com/export.php?format=json&limit=50000) | A meta envelope and papers array using the public metadata projection. This is broader than the compact catalogue. |
