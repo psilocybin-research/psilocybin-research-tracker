@@ -28,6 +28,28 @@ For filtered JSON requests, increment `page` through the returned `pages`; numer
 
 All access described here is read-only and uses public metadata. No login or API key is required for these endpoints. Respect 429/503 responses and Retry-After, use a descriptive User-Agent, avoid parallel bulk requests, and preserve downloaded inputs instead of repeatedly requesting them. A 5,000-record default applies to legacy exports unless `limit` is supplied; a reached bound can truncate an export. SQLite is available for datasets larger than that bound. A public database download does not include subscriber data, credentials, raw importer payloads, source-derived abstracts or full texts.
 
+## Retrieve verified, reproducible download files
+
+Use the [dataset manifest](https://psilocybin-research.com/dataset-manifest.json) when you need authoritative file sizes, checksums and one consistent input across formats. It describes a completed public metadata snapshot: `schema_version`, `snapshot_id`, `catalogue_revision`, `generated_at_utc`, `source_last_checked_utc`, `record_count`, `complete`, `is_current` and `artifacts`. Each artifact supplies its exact `url`, `filename`, `mime_type`, `bytes`, `sha256` and the number of public records represented.
+
+1. Retrieve the manifest and require `complete=true`. Check `is_current` before calling the snapshot the latest live catalogue. If false, it is still a completed historical snapshot; live search/exports may contain later changes.
+2. Follow the artifact URL supplied by the manifest. Do not substitute the dynamically generated legacy export URL when verifying its hash. Every artifact URL includes the same snapshot identity.
+3. Verify the actual downloaded, uncompressed bytes against `bytes` and `sha256`. HTTP HEAD on these versioned artifact URLs returns their real file size and checksum without generating a new export. The older `database.php` HEAD route does not generate a file and cannot establish its byte size.
+4. Compare record IDs/counts for SQLite, full CSV, full JSON and compact JSON. The TXT has one line per record; statistics files summarize the represented records rather than having one row per record.
+5. Preserve the files and the versioned `manifest_url`. The latest three completed snapshots are retained on the website, so these URLs are not permanent archival deposits. Use an actual Zenodo version when you need a deposited archive.
+
+A build failure retains the previous completed snapshot. New snapshots are prepared after ingestion and during the existing daily prewarm recovery job, not in response to a visitor's download. The manifest generation timestamp describes that frozen snapshot; it is not the HTTP retrieval time. Sizes are file bytes before optional HTTP transfer compression. Snapshot metadata uses `rights-safe-core-v1`; public metadata exclusions remain the same as other exports.
+
+Available frozen formats are SQLite, full CSV/JSON, BibTeX, RIS, LaTeX, a reproducible ZIP bundle, compact JSON, titles/years TXT and annual-statistics JSON/CSV. Use the JSON/text alternatives when an AI browser tool rejects binary SQLite or ZIP. The public SQLite download is distinct from the private runtime database; never infer download size from server storage figures.
+
+## Query annual research statistics
+
+Use [GET /api/v1/statistics/publications-by-year](https://psilocybin-research.com/api/v1/statistics/publications-by-year) for the same visible-record counts as the trends page without parsing HTML or downloading the full database. [CSV](https://psilocybin-research.com/api/v1/statistics/publications-by-year?format=csv) is also available. This endpoint takes no search filters, country filters or pagination.
+
+The response includes `catalogue_revision`, `generated_at_utc`, `record_count`, `dated_records`, `missing_year_records`, `status_totals`, `missing_year`, `current_year` and `years`. Each year row has `year`, `total`, `published`, `preprints`, `trial_registrations`, `other` and `is_current_year`. Unknown years remain in the separate missing-year category. The CSV always includes one explicit missing-year row with a blank year, even if its total is zero. The current calendar year is incomplete; past-year counts can also change as records are added or corrected.
+
+Verify that every row's status counts sum to its total, and that all year totals plus missing-year records equal `record_count`. Published is the site's normalized status, not an independent peer-review check; other includes protocols, reviews and residual statuses. Match `catalogue_revision` to the manifest before comparing a live aggregate to a frozen download. Frozen annual-statistics files from that manifest are available when you require exact snapshot consistency.
+
 ## Data dictionary and interpretation
 
 | Field or concept | Meaning and cautions |
