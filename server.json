@@ -1,0 +1,23 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "com.psilocybin-research/research",
+  "title": "Psilocybin Research MCP — Papers, Trials and Research Data",
+  "description": "Free, read-only psilocybin/psilocin papers, trials, citations and verified research datasets.",
+  "version": "1.0.0",
+  "websiteUrl": "https://psilocybin-research.com/",
+  "icons": [
+    {
+      "src": "https://psilocybin-research.com/assets/pwa/icon-192.png",
+      "mimeType": "image/png",
+      "sizes": [
+        "192x192"
+      ]
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://psilocybin-research.com/mcp"
+    }
+  ]
+}
