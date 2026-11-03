@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Psilocybin Research public read-only API",
-    "version": "1.5.0",
+    "version": "1.6.0",
     "description": "Anonymous public GET endpoints plus read-only MCP JSON-RPC POST for source-labeled bibliographic and trial metadata. No subscription, messaging, curation or private-source operations. Source abstracts and full texts are excluded. Read-only GET access needs no key. Use an identifiable client User-Agent; generic library user-agents may be rejected by the host.",
     "termsOfService": "https://psilocybin-research.com/editorial-policy.php"
   },
@@ -1482,6 +1482,7 @@
                 "txt",
                 "statistics-json",
                 "statistics-csv",
+                "study-links",
                 "manifest"
               ]
             }
@@ -1671,6 +1672,62 @@
         "responses": {
           "405": {
             "description": "Use MCP POST; no standalone SSE stream or session deletion."
+          }
+        }
+      }
+    },
+    "/api/v1/study-links": {
+      "get": {
+        "operationId": "getReviewedStudyRelationships",
+        "summary": "Selected source-checked study families and report roles",
+        "description": "Exact DOI/NCT identities, evidence URLs and check dates. Selected reviewed coverage only; missing links are unknown and members are not independent cohorts. Optional visible record id. Frozen relationships are available as manifest artifact study-links.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reviewed family catalogue or memberships for a visible record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "schema_version",
+                    "coverage",
+                    "family_count",
+                    "families"
+                  ],
+                  "properties": {
+                    "coverage": {
+                      "type": "string"
+                    },
+                    "families": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported format or arguments"
+          },
+          "404": {
+            "description": "Record is not public"
+          },
+          "405": {
+            "description": "Use GET or HEAD"
           }
         }
       }

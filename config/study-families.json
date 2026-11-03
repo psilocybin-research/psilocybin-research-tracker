@@ -1,0 +1,95 @@
+{
+  "schema_version": "reviewed-study-families-v1",
+  "checked_at": "2026-11-03",
+  "scope": "Selected source-checked study families; incomplete coverage. No automatic title, author or citation-based clustering. A shared study identity does not make every report the same analysis or participant subset.",
+  "families": [
+    {
+      "id": "jhu-mdd-nct03181529",
+      "label": "Johns Hopkins MDD waiting-list trial",
+      "nct_id": "NCT03181529",
+      "note": "The primary report and 12-month follow-up describe the same trial cohort. Follow-up does not provide a new randomized comparison.",
+      "members": [
+        {
+          "doi": "10.1001/jamapsychiatry.2020.3285",
+          "role": "primary_report",
+          "evidence": [
+            {
+              "url": "https://clinicaltrials.gov/study/NCT03181529",
+              "basis": "Registry references identify PMID 33146667."
+            },
+            {
+              "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7643046/",
+              "basis": "Primary report identifies NCT03181529."
+            }
+          ]
+        },
+        {
+          "doi": "10.1177/02698811211073759",
+          "role": "follow_up",
+          "evidence": [
+            {
+              "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8864328/",
+              "basis": "Methods and introduction identify follow-up of the previously reported Davis trial."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "jhu-smoking-pilot-2014",
+      "label": "Johns Hopkins smoking cessation pilot cohort",
+      "nct_id": null,
+      "note": "The 2017 report follows the original 15-person pilot. Do not combine their sample sizes as independent cohorts. The later randomized smoking trial is separate.",
+      "members": [
+        {
+          "doi": "10.1177/0269881114548296",
+          "role": "primary_report",
+          "evidence": [
+            {
+              "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5641975/",
+              "basis": "Introduction identifies the original 2014 pilot report and cohort."
+            }
+          ]
+        },
+        {
+          "doi": "10.3109/00952990.2016.1170135",
+          "role": "follow_up",
+          "evidence": [
+            {
+              "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5641975/",
+              "basis": "Methods explicitly describe longer follow-up of that pilot cohort."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "embrace-nct06072898",
+      "label": "EMBRACE depression neuroimaging trial",
+      "nct_id": "NCT06072898",
+      "note": "These are protocol documents, including an earlier preprint. The preprint and published protocol describe different design versions; preserve the version-specific details. Neither is a completed results report.",
+      "members": [
+        {
+          "doi": "10.21203/rs.3.rs-3474764/v1",
+          "role": "protocol_preprint",
+          "evidence": [
+            {
+              "url": "https://api.crossref.org/works/10.21203/rs.3.rs-3474764/v1",
+              "basis": "Publisher-deposited preprint metadata explicitly identifies NCT06072898."
+            }
+          ]
+        },
+        {
+          "doi": "10.1186/s13063-024-08268-6",
+          "role": "protocol",
+          "evidence": [
+            {
+              "url": "https://link.springer.com/article/10.1186/s13063-024-08268-6",
+              "basis": "Trial registration and administrative information identify NCT06072898 and protocol version 5."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

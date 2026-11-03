@@ -23,7 +23,7 @@ import zipfile
 
 MAX_FILE_BYTES = 128 * 1024 * 1024
 FIELDS = ('total', 'published', 'preprints', 'trial_registrations', 'other')
-REQUIRED = {'sqlite', 'sqlite-xz', 'rds', 'csv', 'json', 'bibtex', 'ris', 'latex', 'bundle', 'compact-json', 'txt', 'statistics-json', 'statistics-csv'}
+REQUIRED = {'sqlite', 'sqlite-xz', 'rds', 'csv', 'json', 'bibtex', 'ris', 'latex', 'bundle', 'compact-json', 'txt', 'statistics-json', 'statistics-csv', 'study-links'}
 
 
 def require(condition, message):
@@ -174,6 +174,12 @@ def check(base):
             require(row['year'] == by_id[row['id']]['publication_year'], 'Compact year differs from public SQLite')
         expected_lines = [f"{row['year'] if row['year'] is not None else 'n.d.'} — {row['title']}" for row in compact['records']]
         require(paths['txt'].read_text(encoding='utf-8').splitlines() == expected_lines, 'TXT is incomplete or differs from the compact directory')
+        study_links = json.loads(paths['study-links'].read_bytes())
+        require(study_links['record_count'] == len(records) and study_links['catalogue_revision'] == manifest['catalogue_revision'] and study_links['generated_at_utc'] == manifest['generated_at_utc'], 'Frozen study relationship snapshot mismatch')
+        require(study_links['coverage'] == 'selected reviewed families; not exhaustive', 'Study links coverage missing')
+        for family in study_links['families']:
+            for member in family['members']:
+                require(member['id'] in ids and member['title'] == by_id[member['id']]['title'] and member['evidence'], 'Study link is not a visible source-backed record')
         annual = json.loads(paths['statistics-json'].read_bytes())
         require(annual['catalogue_revision'] == manifest['catalogue_revision'], 'Frozen annual statistics use a different source revision')
         verify_statistics(annual, records)
@@ -207,6 +213,16 @@ def check(base):
     for name, expected_type in [('for-ai.html', 'text/html'), ('for-ai.txt', 'text/plain'), ('llms.txt', 'text/plain'), ('docs/research-api.openapi.json', 'application/json')]:
         with open_public(urljoin(base, name)) as response:
             require(response.headers.get_content_type() == expected_type and response.read(1024), f'Documentation MIME/body check failed: {name}')
+    for name, expected_type in [('annual_counts.py', 'text/plain'), ('annual_counts.R', 'text/plain'), ('annual-counts.sql.txt', 'text/plain'), ('annual_counts.ipynb', 'application/x-ipynb+json')]:
+        relative = Path('tools/reproducible') / name
+        with open_public(urljoin(base, relative.as_posix())) as response:
+            require(response.headers.get_content_type() == expected_type, 'Worked example MIME differs: ' + name)
+            body = response.read(1024 * 1024 + 1)
+            require(body == (Path(__file__).resolve().parents[1] / relative).read_bytes(), 'Published example bytes differ from reviewed source: ' + name)
+    with open_public(urljoin(base, 'docs/research-task-benchmark.json')) as response:
+        require(response.headers.get_content_type() == 'application/json', 'Benchmark report MIME differs')
+        require(json.loads(response.read(1024 * 1024))['schema_version'] == 'research-task-benchmark-v1', 'Benchmark report schema differs')
+    report['worked_example_downloads'] = 'all four public source files and dated benchmark report verified'
     report['status'] = 'passed'
     return report
 

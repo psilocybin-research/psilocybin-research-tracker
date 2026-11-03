@@ -16,7 +16,7 @@ jobs:
   verify:
     name: Verify live public downloads and statistics
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -28,6 +28,10 @@ jobs:
         run: python3 -m unittest discover -s tests -p test_r_dataset.py -v
       - name: Retrieve and verify the public research dataset
         run: python3 bin/check-research-access.py --report "$RUNNER_TEMP/research-access.json"
+      - name: Install small R example dependencies
+        run: Rscript -e 'install.packages(c("jsonlite", "digest"), repos="https://cloud.r-project.org")'
+      - name: Reproduce one snapshot in R, Python, notebook and SQL
+        run: python3 tools/reproducible/check_examples.py --output "$RUNNER_TEMP/research-examples"
       - name: Verify the public MCP research connector
         run: python3 bin/check-mcp-access.py --report "$RUNNER_TEMP/mcp-access.json"
       - name: Record verification result
