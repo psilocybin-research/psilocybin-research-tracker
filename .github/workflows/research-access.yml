@@ -20,6 +20,12 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up base R for independent RDS checks
+        uses: r-lib/actions/setup-r@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
+        with:
+          r-version: release
+      - name: Verify compressed exports and R serialization edge cases
+        run: python3 -m unittest discover -s tests -p test_r_dataset.py -v
       - name: Retrieve and verify the public research dataset
         run: python3 bin/check-research-access.py --report "$RUNNER_TEMP/research-access.json"
       - name: Verify the public MCP research connector
