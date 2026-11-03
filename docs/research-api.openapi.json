@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Psilocybin Research public read-only API",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "description": "Anonymous public GET endpoints plus read-only MCP JSON-RPC POST for source-labeled bibliographic and trial metadata. No subscription, messaging, curation or private-source operations. Source abstracts and full texts are excluded. Read-only GET access needs no key. Use an identifiable client User-Agent; generic library user-agents may be rejected by the host.",
     "termsOfService": "https://psilocybin-research.com/editorial-policy.php"
   },
@@ -1378,7 +1378,7 @@
                           "bytes": {
                             "type": "integer",
                             "minimum": 0,
-                            "description": "Exact uncompressed file bytes before HTTP transfer compression."
+                            "description": "Exact downloaded file bytes after HTTP transfer decoding; compressed XZ/RDS files are hashed before decompression."
                           },
                           "sha256": {
                             "type": "string",
@@ -1387,6 +1387,45 @@
                           "record_count": {
                             "type": "integer",
                             "minimum": 0
+                          },
+                          "compression": {
+                            "type": "string",
+                            "enum": [
+                              "xz"
+                            ]
+                          },
+                          "uncompressed_filename": {
+                            "type": "string"
+                          },
+                          "uncompressed_bytes": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "uncompressed_sha256": {
+                            "type": "string",
+                            "pattern": "^[a-f0-9]{64}$"
+                          },
+                          "source_sha256": {
+                            "type": "string",
+                            "pattern": "^[a-f0-9]{64}$"
+                          },
+                          "r_serialization_version": {
+                            "type": "integer",
+                            "enum": [
+                              2
+                            ]
+                          },
+                          "r_object": {
+                            "type": "string"
+                          },
+                          "source_format": {
+                            "type": "string",
+                            "enum": [
+                              "sqlite"
+                            ]
+                          },
+                          "scope": {
+                            "type": "string"
                           }
                         }
                       }
@@ -1412,7 +1451,7 @@
       "get": {
         "operationId": "downloadVerifiedDatasetArtifact",
         "summary": "Retrieve exact existing file bytes for a published snapshot",
-        "description": "Use the URLs in dataset-manifest.json. GET serves the exact completed file; HEAD gives its real size and SHA-256 without rebuilding. SHA-256 and byte counts describe uncompressed file bytes. A retired/missing snapshot returns 404; no replacement snapshot is silently substituted. The manifest format returns the frozen manifest without the current endpoint’s is_current field.",
+        "description": "Use the URLs in dataset-manifest.json. GET serves the exact completed file; HEAD gives its real size and SHA-256 without rebuilding. SHA-256 and byte counts describe the downloaded file bytes after HTTP transfer decoding. For XZ/RDS, verify the compressed file before opening it. SQLite-XZ additionally records the underlying SQLite size/hash; RDS contains publications and metadata data frames from that SQLite. A retired/missing snapshot returns 404; no replacement snapshot is silently substituted. The manifest format returns the frozen manifest without the current endpoint’s is_current field.",
         "parameters": [
           {
             "name": "snapshot",
@@ -1431,6 +1470,8 @@
               "type": "string",
               "enum": [
                 "sqlite",
+                "sqlite-xz",
+                "rds",
                 "csv",
                 "json",
                 "bibtex",
@@ -1490,6 +1531,18 @@
               "application/x-tex": {
                 "schema": {
                   "type": "string"
+                }
+              },
+              "application/x-xz": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
                 }
               }
             }

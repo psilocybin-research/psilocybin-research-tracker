@@ -25,7 +25,7 @@ In an MCP-compatible client, add that URL as a remote Streamable HTTP server. In
 | `get_citation(id)` | Citation text, BibTeX and RIS while retaining the record's status. |
 | `get_citation_relationships(id, limit)` | Up to 50 explicit reference DOIs and indexed citing records per direction. Coverage is incomplete; a link is not evidence of support, criticism or trial/result identity. |
 | `get_annual_statistics()` | Catalogue-wide year/status totals, missing years, UTC and source revision; current-year coverage is partial. |
-| `get_dataset_downloads()` | The completed manifest's eleven exact URLs, file sizes, SHA-256 values, count and UTC. Use this for the complete public database. Check complete/is_current and preserve the actual files. |
+| `get_dataset_downloads()` | The completed manifest's exact URLs, file sizes, SHA-256 values, count and UTC. Use this for the complete public database. Check complete/is_current and preserve the actual files. |
 
 For example: “Use Psilocybin Research to find preprints on depression, retrieve their public records and cite the original sources. Keep trial registrations separate.” For the whole dataset: “Use get_dataset_downloads, choose the full SQLite or JSON metadata file, verify its count and checksum, and give me the download link. If your environment can retrieve and attach the actual file, do so; otherwise state that limit.” The connector returns public data and download links; it cannot grant a client file-system/network permission or manufacture a chat attachment.
 
@@ -64,13 +64,30 @@ Use the [dataset manifest](https://psilocybin-research.com/dataset-manifest.json
 
 1. Retrieve the manifest and require `complete=true`. Check `is_current` before calling the snapshot the latest live catalogue. If false, it is still a completed historical snapshot; live search/exports may contain later changes.
 2. Follow the artifact URL supplied by the manifest. Do not substitute the dynamically generated legacy export URL when verifying its hash. Every artifact URL includes the same snapshot identity.
-3. Verify the actual downloaded, uncompressed bytes against `bytes` and `sha256`. HTTP HEAD on these versioned artifact URLs returns their real file size and checksum without generating a new export. The older `database.php` HEAD route does not generate a file and cannot establish its byte size.
+3. Verify the downloaded file bytes after HTTP transfer decoding against `bytes` and `sha256`. For XZ/RDS, hash the compressed file before decompressing or reading it. HTTP HEAD on these versioned artifact URLs returns their real file size and checksum without generating a new export. The older `database.php` HEAD route does not generate a file and cannot establish its byte size.
 4. Compare record IDs/counts for SQLite, full CSV, full JSON and compact JSON. The TXT has one line per record; statistics files summarize the represented records rather than having one row per record.
 5. Preserve the files and the versioned `manifest_url`. The latest three completed snapshots are retained on the website, so these URLs are not permanent archival deposits. Use an actual Zenodo version when you need a deposited archive.
 
 A build failure retains the previous completed snapshot. New snapshots are prepared after ingestion and during the existing daily prewarm recovery job, not in response to a visitor's download. The manifest generation timestamp describes that frozen snapshot; it is not the HTTP retrieval time. Sizes are file bytes before optional HTTP transfer compression. Snapshot metadata uses `rights-safe-core-v1`; public metadata exclusions remain the same as other exports.
 
-Available frozen formats are SQLite, full CSV/JSON, BibTeX, RIS, LaTeX, a reproducible ZIP bundle, compact JSON, titles/years TXT and annual-statistics JSON/CSV. Use the JSON/text alternatives when an AI browser tool rejects binary SQLite or ZIP. The public SQLite download is distinct from the private runtime database; never infer download size from server storage figures.
+Available frozen formats are SQLite, SQLite-XZ, RDS-XZ, full CSV/JSON, BibTeX, RIS, LaTeX, a reproducible ZIP bundle, compact JSON, titles/years TXT and annual-statistics JSON/CSV. Use the JSON/text alternatives when an AI browser tool rejects binary SQLite or ZIP. The public SQLite download is distinct from the private runtime database; never infer download size from server storage figures.
+
+## Compressed SQLite and R data frames
+
+The [verified manifest](https://psilocybin-research.com/dataset-manifest.json) includes `artifacts["sqlite-xz"]` and `artifacts["rds"]`, alongside the existing SQLite, full CSV/JSON, citation and statistics files. Follow their exact URLs; both are prebuilt from the same public SQLite snapshot. Earlier retained snapshots may predate these additional formats.
+
+- **SQLite-XZ** decompresses to the exact `sqlite` artifact, including indexes. Its `uncompressed_bytes` and `uncompressed_sha256` identify that SQLite file. Verify the compressed file first, then the extracted SQLite.
+- **RDS-XZ** is a named list of base-R data frames: `publications` (all public SQLite columns) and `metadata` (the SQLite key/value table). `readRDS()` handles the XZ compression directly. UTF-8, empty strings, missing values and distinct IDs are preserved. SQL NULL becomes R `NA`; dates stay source strings. Integer columns use R integers where representable, otherwise exact numeric values; unrepresentable integers fail publication. This is table data, not SQLite indexes or a replacement for the language-neutral exports. The manifest identifies serialization version 2 and the source SQLite SHA-256.
+
+After downloading and verifying the RDS file:
+
+```r
+research <- readRDS("publications.rds")
+papers <- research$publications
+metadata <- research$metadata
+```
+
+Builds run after ingestion and during scheduled prewarming, never on a visitor request. Downloaded-file sizes and checksums describe each artifact's actual bytes; compression does not change the represented record count or data scope. RDS is an optional R convenience format; use SQLite/CSV/JSON for other clients. Parquet and Feather are not currently published.
 
 ## Query annual research statistics
 

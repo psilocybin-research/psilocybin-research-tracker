@@ -8,6 +8,8 @@ import hashlib
 import hmac
 import io
 import json
+import lzma
+import importlib.util
 import os
 from pathlib import Path
 import re
@@ -21,7 +23,7 @@ import zipfile
 
 MAX_FILE_BYTES = 128 * 1024 * 1024
 FIELDS = ('total', 'published', 'preprints', 'trial_registrations', 'other')
-REQUIRED = {'sqlite', 'csv', 'json', 'bibtex', 'ris', 'latex', 'bundle', 'compact-json', 'txt', 'statistics-json', 'statistics-csv'}
+REQUIRED = {'sqlite', 'sqlite-xz', 'rds', 'csv', 'json', 'bibtex', 'ris', 'latex', 'bundle', 'compact-json', 'txt', 'statistics-json', 'statistics-csv'}
 
 
 def require(condition, message):
@@ -139,6 +141,16 @@ def check(base):
             require(not {'abstract', 'keywords', 'raw_json', 'email', 'full_text'} & columns, 'Public SQLite exposes forbidden source/private columns')
             records = [dict(row) for row in db.execute('SELECT id,title,publication_year,publication_status FROM publications ORDER BY id')]
             metadata = dict(db.execute('SELECT key,value FROM metadata'))
+        compressed = manifest['artifacts']['sqlite-xz']
+        require(compressed['uncompressed_bytes'] == manifest['artifacts']['sqlite']['bytes'] and compressed['uncompressed_sha256'] == manifest['artifacts']['sqlite']['sha256'], 'Compressed SQLite provenance differs')
+        decoder = lzma.LZMADecompressor(memlimit=128 * 1024 * 1024)
+        restored = decoder.decompress(paths['sqlite-xz'].read_bytes(), max_length=MAX_FILE_BYTES + 1)
+        require(decoder.eof and not decoder.unused_data and len(restored) <= MAX_FILE_BYTES and restored == paths['sqlite'].read_bytes(), 'SQLite XZ does not decompress to the exact public SQLite bytes')
+        require(manifest['artifacts']['rds']['source_sha256'] == manifest['artifacts']['sqlite']['sha256'] and manifest['artifacts']['rds']['r_serialization_version'] == 2, 'RDS provenance/serialization metadata mismatch')
+        spec = importlib.util.spec_from_file_location('verify_public_rds', Path(__file__).resolve().parents[1] / 'tools/verify-r-dataset.py')
+        verifier = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(verifier)
+        report['rds_interoperability'] = verifier.verify(paths['sqlite'], paths['rds'])
         require(len(records) == manifest['record_count'] and int(metadata['record_count']) == len(records), 'Public SQLite count differs from manifest')
         require(metadata['generated_at_utc'] == manifest['generated_at_utc'], 'SQLite generation time differs from manifest')
         ids = {row['id'] for row in records}
