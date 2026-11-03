@@ -1,0 +1,1587 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Psilocybin Research public read-only API",
+    "version": "1.3.0",
+    "description": "Existing anonymous GET endpoints for source-labeled bibliographic and trial metadata. No subscription, messaging, curation or private-source operations. Source abstracts and full texts are excluded. Read-only GET access needs no key. Use an identifiable client User-Agent; generic library user-agents may be rejected by the host.",
+    "termsOfService": "https://psilocybin-research.com/editorial-policy.php"
+  },
+  "servers": [
+    {
+      "url": "https://psilocybin-research.com"
+    }
+  ],
+  "paths": {
+    "/api/v1/papers": {
+      "get": {
+        "operationId": "searchPublications",
+        "summary": "Search public bibliographic metadata",
+        "description": "Returns rows, total, page, pages, per_page, resource and filters. Search source-linked bibliographic metadata, then verify original reports. CSV exports are separately bounded by limit.",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Title, author, DOI, PMID, or topic text.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "description": "Bounded page size; start with 20.",
+            "schema": {
+              "type": "integer",
+              "minimum": 5,
+              "maximum": 200,
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Publication order.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "newly_added",
+                "newest",
+                "oldest"
+              ],
+              "default": "newly_added"
+            }
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "description": "Publication year.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "compound",
+            "in": "query",
+            "description": "Filter the indexed substance.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "psilocybin",
+                "psilocin"
+              ]
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "description": "JSON by default; CSV is available for publications and trial collections.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "json",
+                "csv"
+              ],
+              "default": "json"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "CSV export bound; a reached bound may truncate the output. JSON clients should use per_page.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50000,
+              "default": 5000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public metadata; classifications and registry records do not establish clinical outcomes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "rows": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PublicRecord"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "page": {
+                      "type": "integer"
+                    },
+                    "pages": {
+                      "type": "integer"
+                    },
+                    "per_page": {
+                      "type": [
+                        "integer",
+                        "string"
+                      ]
+                    }
+                  }
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported format or invalid parameters."
+          },
+          "404": {
+            "description": "Resource or country absent from indexed data."
+          },
+          "429": {
+            "description": "Service busy. Respect Retry-After before retrying.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/trials": {
+      "get": {
+        "operationId": "findIndexedTrials",
+        "summary": "Filter indexed registry records",
+        "description": "Registry status and milestone dates are descriptive, not evidence of efficacy or guaranteed result dates. Returns trials and facet/summary metadata.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Trial title, condition, or registry identifier.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "description": "Registry location country, for example Germany.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sponsor",
+            "in": "query",
+            "description": "Sponsor name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "phase",
+            "in": "query",
+            "description": "Registry phase token, for example PHASE2.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Registry status token, for example RECRUITING.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "condition",
+            "in": "query",
+            "description": "Registry condition text.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "description": "JSON by default; CSV is available for publications and trial collections.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "json",
+                "csv"
+              ],
+              "default": "json"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public metadata; classifications and registry records do not establish clinical outcomes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "trials": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    },
+                    "facets": {
+                      "type": "object"
+                    },
+                    "registry_checked_at_utc": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported format or invalid parameters."
+          },
+          "404": {
+            "description": "Resource or country absent from indexed data."
+          },
+          "429": {
+            "description": "Service busy. Respect Retry-After before retrying.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api.php": {
+      "get": {
+        "operationId": "readRecordOrCitation",
+        "summary": "Read one public record or its citation",
+        "parameters": [
+          {
+            "name": "resource",
+            "in": "query",
+            "description": "Choose a public record or citation.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "paper",
+                "citation"
+              ]
+            },
+            "required": true
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Positive catalogue record identifier.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public source-labeled metadata. Shape follows the existing endpoint; source abstracts/full texts are not included.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request limit reached; retry later and respect Retry-After if provided."
+          },
+          "400": {
+            "description": "Invalid query parameters."
+          }
+        }
+      }
+    },
+    "/api/v1/countries": {
+      "get": {
+        "operationId": "listIndexedCountries",
+        "summary": "List indexed registry countries",
+        "description": "Country counts describe indexed trial location metadata, not national totals.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Public metadata; classifications and registry records do not establish clinical outcomes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "countries": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported format or invalid parameters."
+          },
+          "404": {
+            "description": "Resource or country absent from indexed data."
+          },
+          "429": {
+            "description": "Service busy. Respect Retry-After before retrying.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/countries/{slug}": {
+      "get": {
+        "operationId": "getCountryTrials",
+        "summary": "Read one country trial collection",
+        "description": "Use a slug from the country directory. Registry locations and dates may be incomplete.",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Directory slug, for example germany."
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "description": "JSON by default; CSV is available for publications and trial collections.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "json",
+                "csv"
+              ],
+              "default": "json"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public metadata; classifications and registry records do not establish clinical outcomes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "trials": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    },
+                    "facets": {
+                      "type": "object"
+                    }
+                  }
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported format or invalid parameters."
+          },
+          "404": {
+            "description": "Resource or country absent from indexed data."
+          },
+          "429": {
+            "description": "Service busy. Respect Retry-After before retrying.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/network": {
+      "get": {
+        "operationId": "getResearchNetwork",
+        "summary": "Explore or export co-authorship connections",
+        "description": "Nodes represent name-based researcher entities. Edges describe shared indexed records, not citation influence, identity certainty or endorsement. In full exports edges use compact [source, target, shared_record_ids] triples. Graph IDs are local to the export.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Researcher or publication text.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "topic",
+            "in": "query",
+            "description": "Derived topic filter.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Bounded visual view.",
+            "schema": {
+              "type": "integer",
+              "minimum": 10,
+              "maximum": 300,
+              "default": 25
+            }
+          },
+          {
+            "name": "full",
+            "in": "query",
+            "description": "Use 1 to export the full matching network; avoid repeated bulk requests.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "0",
+                "1"
+              ],
+              "default": "0"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public metadata; classifications and registry records do not establish clinical outcomes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "schema_version": {
+                      "type": "integer"
+                    },
+                    "nodes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    },
+                    "edges": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "papers": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PublicRecord"
+                      }
+                    },
+                    "summary": {
+                      "type": "object"
+                    },
+                    "edge_encoding": {
+                      "type": [
+                        "string",
+                        "array"
+                      ],
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "limitations": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported format or invalid parameters."
+          },
+          "404": {
+            "description": "Resource or country absent from indexed data."
+          },
+          "429": {
+            "description": "Service busy. Respect Retry-After before retrying.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/changes": {
+      "get": {
+        "operationId": "getObservedResearchChanges",
+        "summary": "Read observed registry changes",
+        "description": "Observation time is when the tracker detected the change, not necessarily the source event date or a publication date.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum returned observations.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public metadata; classifications and registry records do not establish clinical outcomes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "changes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported format or invalid parameters."
+          },
+          "404": {
+            "description": "Resource or country absent from indexed data."
+          },
+          "429": {
+            "description": "Service busy. Respect Retry-After before retrying.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/results": {
+      "get": {
+        "operationId": "getSelectedReportAnnotations",
+        "summary": "Read selected report comparisons",
+        "description": "Selected original-report annotations, not an exhaustive systematic review or clinical guideline.",
+        "parameters": [
+          {
+            "name": "topic",
+            "in": "query",
+            "description": "Selected evidence topic, such as depression or alcohol-use-disorder.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public metadata; classifications and registry records do not establish clinical outcomes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "studies": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported format or invalid parameters."
+          },
+          "404": {
+            "description": "Resource or country absent from indexed data."
+          },
+          "429": {
+            "description": "Service busy. Respect Retry-After before retrying.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/topics": {
+      "get": {
+        "operationId": "listResearchTopics",
+        "summary": "List derived topic labels",
+        "description": "Labels are overlapping navigation aids; do not add their counts as unique studies.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Public metadata; classifications and registry records do not establish clinical outcomes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "topics": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported format or invalid parameters."
+          },
+          "404": {
+            "description": "Resource or country absent from indexed data."
+          },
+          "429": {
+            "description": "Service busy. Respect Retry-After before retrying.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/authors": {
+      "get": {
+        "operationId": "findResearchAuthors",
+        "summary": "Find indexed author-name labels",
+        "description": "Name-based grouping can merge namesakes or split spelling variants; it is not verified author identity.",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Author-name text.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Requested result bound.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 25
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public metadata; classifications and registry records do not establish clinical outcomes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "authors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported format or invalid parameters."
+          },
+          "404": {
+            "description": "Resource or country absent from indexed data."
+          },
+          "429": {
+            "description": "Service busy. Respect Retry-After before retrying.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/export.php": {
+      "get": {
+        "operationId": "downloadResearchBundle",
+        "summary": "Download a reproducible public-record bundle",
+        "description": "ZIP contains matching CSV, JSON, BibTeX, manifest and SHA-256 checksums. Preserve the actual archive; it is not a new Zenodo deposit or DOI. A reached record limit is flagged in the manifest. Request selected IDs or bounded filters.",
+        "parameters": [
+          {
+            "name": "format",
+            "in": "query",
+            "description": "Bundle download format.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "bundle"
+              ],
+              "default": "bundle"
+            },
+            "required": true
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Publication metadata query.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum matching records.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50000,
+              "default": 5000
+            }
+          },
+          {
+            "name": "ids[]",
+            "in": "query",
+            "description": "Explicit public record IDs; selection takes precedence over filters.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "style": "form",
+            "explode": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ZIP archive of the exact public records exported, with provenance and hashes.",
+            "headers": {
+              "X-Publication-Tracker-SHA256": {
+                "schema": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                }
+              }
+            },
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported format or invalid parameters."
+          },
+          "404": {
+            "description": "Resource or country absent from indexed data."
+          },
+          "429": {
+            "description": "Service busy. Respect Retry-After before retrying.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/catalogue.php": {
+      "get": {
+        "operationId": "downloadCompleteCatalogue",
+        "summary": "Download the complete public catalogue as compact JSON or titles-and-years TXT",
+        "description": "No pagination or filtering. All visible psilocybin/psilocin publications, preprints and trial registrations, including missing years. Uses one database snapshot. Check complete and record_count == total_records == records.length. Explicit error above 50000 records; never a silently truncated success. TXT contains one YEAR — TITLE line per record, with n.d. for missing years. Response SHA-256 describes uncompressed UTF-8 body bytes. This is a complete directory of records with a compact field set, not all database fields. Use /database.php for public SQL metadata or /export.php?format=json&limit=50000 for broader public record objects.",
+        "parameters": [
+          {
+            "name": "format",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "json",
+                "txt"
+              ],
+              "default": "json"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Complete public catalogue; current count and retrieval time are returned, not fixed in documentation.",
+            "headers": {
+              "X-Publication-Tracker-Export-Count": {
+                "description": "Number of exported records",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-Publication-Tracker-Total": {
+                "description": "Total visible catalogue records in this database snapshot",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-Publication-Tracker-Complete": {
+                "description": "true",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-Publication-Tracker-Generated-At": {
+                "description": "UTC response generation time",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-Publication-Tracker-SHA256": {
+                "description": "SHA-256 of uncompressed response body bytes",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "schema_version",
+                    "generated_at_utc",
+                    "record_count",
+                    "total_records",
+                    "complete",
+                    "records"
+                  ],
+                  "properties": {
+                    "schema_version": {
+                      "type": "string",
+                      "const": "public-catalogue-v1"
+                    },
+                    "generated_at_utc": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "record_count": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "total_records": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "complete": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "records": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "title",
+                          "year",
+                          "publication_status",
+                          "source_name",
+                          "doi",
+                          "source_url",
+                          "record_url"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "year": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ]
+                          },
+                          "publication_status": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "source_name": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "doi": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "source_url": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "record_url": {
+                            "type": "string",
+                            "format": "uri"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported format or query filters; use the paginated papers API for searches."
+          },
+          "413": {
+            "description": "Catalogue exceeds 50000 records; use the full public SQLite download."
+          },
+          "429": {
+            "description": "Downloads busy; respect Retry-After."
+          },
+          "503": {
+            "description": "Complete snapshot temporarily unavailable; respect Retry-After."
+          }
+        }
+      }
+    },
+    "/database.php": {
+      "get": {
+        "operationId": "downloadPublicDatabase",
+        "summary": "Download the complete sanitized public SQLite database",
+        "description": "Local SQL and full public bibliographic metadata with provenance and rights fields. Contains publications and metadata tables. Excludes private runtime data, raw importer payloads, source-derived abstracts and full texts. Save and inspect the database metadata for reproducibility. Does not accept the catalogue format or pagination parameters. This dynamic HEAD route does not generate a file or advertise its size. For verified exact sizes/checksums and inexpensive HEAD requests, use the SQLite artifact URL from /dataset-manifest.json.",
+        "responses": {
+          "200": {
+            "description": "Public SQLite database download. HEAD probes do not generate the database.",
+            "content": {
+              "application/vnd.sqlite3": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Downloads busy; respect Retry-After."
+          }
+        }
+      }
+    },
+    "/api/v1/statistics/publications-by-year": {
+      "get": {
+        "operationId": "getAnnualPublicationStatistics",
+        "summary": "Get complete public year/status counts and explicit unknown-year counts",
+        "description": "Uses the same visible-record aggregate as the research trends table. No filters/pagination. All year totals plus missing-year records must equal record_count. Published is a site-normalized status, not an independent peer-review assessment. CSV adds one blank-year missing_year row. Match catalogue_revision when comparing to a frozen snapshot.",
+        "parameters": [
+          {
+            "name": "format",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "json",
+                "csv"
+              ],
+              "default": "json"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reconciled counts for all public records, including missing years.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "schema_version",
+                    "catalogue_revision",
+                    "record_count",
+                    "dated_records",
+                    "missing_year_records",
+                    "status_totals",
+                    "missing_year",
+                    "years"
+                  ],
+                  "properties": {
+                    "schema_version": {
+                      "type": "string",
+                      "const": "publication-statistics-v1"
+                    },
+                    "catalogue_revision": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    },
+                    "generated_at_utc": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "record_count": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "dated_records": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "missing_year_records": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "current_year": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "status_totals": {
+                      "type": "object",
+                      "required": [
+                        "total",
+                        "published",
+                        "preprints",
+                        "trial_registrations",
+                        "other"
+                      ],
+                      "properties": {
+                        "total": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "published": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "preprints": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "trial_registrations": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "other": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      }
+                    },
+                    "missing_year": {
+                      "type": "object",
+                      "required": [
+                        "total",
+                        "published",
+                        "preprints",
+                        "trial_registrations",
+                        "other"
+                      ],
+                      "properties": {
+                        "total": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "published": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "preprints": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "trial_registrations": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "other": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      }
+                    },
+                    "years": {
+                      "type": "array",
+                      "items": {
+                        "allOf": [
+                          {
+                            "type": "object",
+                            "required": [
+                              "total",
+                              "published",
+                              "preprints",
+                              "trial_registrations",
+                              "other"
+                            ],
+                            "properties": {
+                              "total": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "published": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "preprints": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "trial_registrations": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "other": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "required": [
+                              "year",
+                              "is_current_year"
+                            ],
+                            "properties": {
+                              "year": {
+                                "type": "integer"
+                              },
+                              "is_current_year": {
+                                "type": "boolean"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported filters, pagination or format."
+          },
+          "405": {
+            "description": "Only GET and HEAD supported."
+          },
+          "429": {
+            "description": "API busy; respect Retry-After."
+          }
+        }
+      }
+    },
+    "/dataset-manifest.json": {
+      "get": {
+        "operationId": "getVerifiedDatasetManifest",
+        "summary": "Get authoritative byte sizes, SHA-256 checksums and URLs of completed public downloads",
+        "description": "No visitor-triggered building. Atomic CLI publication retains the previous completed snapshot on failure. Check is_current before calling this the latest live data. Follow exact artifact URLs for checksum verification; do not substitute dynamic export routes. Latest three completed snapshots retained; preserve actual files for reproducibility.",
+        "responses": {
+          "200": {
+            "description": "Completed public dataset snapshot with exact artifacts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "schema_version",
+                    "snapshot_id",
+                    "catalogue_revision",
+                    "generated_at_utc",
+                    "record_count",
+                    "complete",
+                    "is_current",
+                    "artifacts"
+                  ],
+                  "properties": {
+                    "schema_version": {
+                      "type": "string",
+                      "const": "public-dataset-manifest-v1"
+                    },
+                    "snapshot_id": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    },
+                    "catalogue_revision": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    },
+                    "generated_at_utc": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "source_last_checked_utc": {
+                      "type": "string"
+                    },
+                    "record_count": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "complete": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "is_current": {
+                      "type": "boolean",
+                      "description": "Whether this completed snapshot still matches the live catalogue and export builders."
+                    },
+                    "retained_snapshots": {
+                      "type": "integer",
+                      "const": 3
+                    },
+                    "manifest_url": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "Versioned frozen manifest, without the live is_current field."
+                    },
+                    "artifacts": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "url",
+                          "filename",
+                          "mime_type",
+                          "bytes",
+                          "sha256",
+                          "record_count"
+                        ],
+                        "properties": {
+                          "url": {
+                            "type": "string",
+                            "format": "uri"
+                          },
+                          "filename": {
+                            "type": "string"
+                          },
+                          "mime_type": {
+                            "type": "string"
+                          },
+                          "bytes": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Exact uncompressed file bytes before HTTP transfer compression."
+                          },
+                          "sha256": {
+                            "type": "string",
+                            "pattern": "^[a-f0-9]{64}$"
+                          },
+                          "record_count": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No filters/format parameters accepted."
+          },
+          "503": {
+            "description": "No completed snapshot available yet; live exports remain available. Respect Retry-After."
+          },
+          "429": {
+            "description": "API busy; respect Retry-After."
+          }
+        }
+      }
+    },
+    "/dataset-download.php": {
+      "get": {
+        "operationId": "downloadVerifiedDatasetArtifact",
+        "summary": "Retrieve exact existing file bytes for a published snapshot",
+        "description": "Use the URLs in dataset-manifest.json. GET serves the exact completed file; HEAD gives its real size and SHA-256 without rebuilding. SHA-256 and byte counts describe uncompressed file bytes. A retired/missing snapshot returns 404; no replacement snapshot is silently substituted. The manifest format returns the frozen manifest without the current endpoint’s is_current field.",
+        "parameters": [
+          {
+            "name": "snapshot",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "sqlite",
+                "csv",
+                "json",
+                "bibtex",
+                "ris",
+                "latex",
+                "bundle",
+                "compact-json",
+                "txt",
+                "statistics-json",
+                "statistics-csv",
+                "manifest"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Exact published file with Content-Length, X-Publication-Tracker-SHA256, X-Publication-Tracker-Snapshot and represented-record count.",
+            "content": {
+              "application/vnd.sqlite3": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/zip": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/x-bibtex": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/x-research-info-systems": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/x-tex": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid snapshot/format/query."
+          },
+          "404": {
+            "description": "Snapshot unavailable or retired; request latest manifest."
+          },
+          "405": {
+            "description": "Only GET and HEAD supported."
+          },
+          "429": {
+            "description": "Downloads busy; respect Retry-After."
+          },
+          "503": {
+            "description": "Artifact file unavailable."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PublicRecord": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "publication_status"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "publication_status": {
+            "type": "string"
+          },
+          "doi": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pubmed_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "abstract_available": {
+            "type": "boolean"
+          },
+          "abstract_redistributed": {
+            "type": "boolean",
+            "const": false
+          },
+          "topic_tags": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "substance_tags": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "externalDocs": {
+    "description": "Research database, data dictionary and API workflows (HTML; plain-text edition at /for-ai.txt)",
+    "url": "https://psilocybin-research.com/for-ai.html"
+  }
+}

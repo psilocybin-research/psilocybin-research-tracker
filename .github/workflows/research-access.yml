@@ -1,0 +1,33 @@
+name: Public research access
+
+on:
+  schedule:
+    - cron: '20 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-research-access
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify live public downloads and statistics
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Retrieve and verify the public research dataset
+        run: python3 bin/check-research-access.py --report "$RUNNER_TEMP/research-access.json"
+      - name: Record verification result
+        if: always()
+        shell: bash
+        run: |
+          if [ -f "$RUNNER_TEMP/research-access.json" ]; then
+            printf '```json\n' >> "$GITHUB_STEP_SUMMARY"
+            cat "$RUNNER_TEMP/research-access.json" >> "$GITHUB_STEP_SUMMARY"
+            printf '\n```\n' >> "$GITHUB_STEP_SUMMARY"
+          fi
