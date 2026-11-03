@@ -212,7 +212,7 @@ Inspect HTTP status and error messages. For a rate-limit response, respect Retry
 
 ## Fresh connected research-task benchmark
 
-A [dated benchmark report](https://psilocybin-research.com/docs/research-task-benchmark.json) records fresh ephemeral Codex CLI conversations on 3 November 2026. The tested tasks were paper search/read/citation, exact trial filtering, annual/status counts and complete SQLite download with independent size/hash/count verification. These used actual connected MCP tools, rather than simulated tool responses. The network-enabled download produced a verified 5,142-record file; an earlier restricted session failed DNS and reported that limitation accurately.
+A [dated benchmark report](https://psilocybin-research.com/docs/research-task-benchmark.json) records fresh ephemeral Codex CLI conversations on 3 November 2026. The tested tasks were paper search/read/citation, exact trial filtering, annual/status counts, complete SQLite download with independent size/hash/count verification, and source-backed study-family interpretation. These used actual connected MCP tools, rather than simulated tool responses. The network-enabled download produced a verified 5,142-record file; an earlier restricted session failed DNS and reported that limitation accurately.
 
 This is a small task check with the authenticated client's default model, not a model ranking, a ChatGPT-web/Claude test, or proof of automatic discovery. Prompts explicitly requested the research tools. Reuse the report's prompts in a fresh connected client and check actual sources, dates, IDs and completeness. Network restrictions can still prevent file delivery even when MCP queries work. Do not label a manifest URL alone as a completed local download.
 

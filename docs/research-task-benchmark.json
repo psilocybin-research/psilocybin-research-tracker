@@ -22,8 +22,8 @@
       ],
       "result": "passed",
       "checks": [
-        "Exact DOI and source PMID33146667 returned.",
-        "Recorded bibliographic year2021 preserved rather than guessed from DOI2020.",
+        "Exact DOI and source PMID 33146667 returned.",
+        "Recorded bibliographic year 2021 preserved rather than guessed from DOI 2020.",
         "Correctly described metadata/abstract/full-text boundary."
       ]
     },
@@ -42,14 +42,14 @@
     },
     {
       "task": "Calculate annual record counts",
-      "prompt": "Give annual/status counts for2020–2026, whole-catalogue total, missing years, revision and generation time. Explain the counting unit and current-year limitation.",
+      "prompt": "Give annual/status counts for 2020–2026, whole-catalogue total, missing years, revision and generation time. Explain the counting unit and current-year limitation.",
       "tools_used": [
         "get_annual_statistics"
       ],
       "result": "passed",
       "checks": [
         "Every reported annual/status count reconciled with the verified SQLite snapshot.",
-        "Whole-catalogue total5142; missing-year count0.",
+        "Whole-catalogue total 5,142; missing-year count 0.",
         "Described records, not independent studies or participants;2026 partial."
       ]
     },
@@ -61,13 +61,29 @@
       ],
       "result": "passed_with_network_access",
       "checks": [
-        "Actual local file independently checked:5472256bytes,5142records, SQLite integrity ok.",
-        "SHA-256 matched manifest:52566615d6b7f97ba1cadd932e9c21bdda6b8abf426935c0be5f9bdb0fa49f9a.",
-        "Snapshot65bd7be67fecd6fe24708ea0c3a666b9b060f31bffad4c3535bd26df76d76327; generated2026-11-03T19:32:17Z.",
+        "Actual local file independently checked: 5,472,256 bytes, 5,142 records, SQLite integrity ok.",
+        "SHA-256 matched manifest: 52566615d6b7f97ba1cadd932e9c21bdda6b8abf426935c0be5f9bdb0fa49f9a.",
+        "Snapshot 65bd7be67fecd6fe24708ea0c3a666b9b060f31bffad4c3535bd26df76d76327; generated 2026-11-03T19:32:17Z.",
         "One earlier network-restricted conversation failed DNS and correctly disclosed that no database was verified.",
-        "In the network-enabled test Python received403; curl succeeded."
+        "In the network-enabled test Python received HTTP 403; curl succeeded."
+      ]
+    },
+    {
+      "task": "Distinguish reports, cohorts and protocol versions",
+      "prompt": "Should the 2014 smoking pilot and 2017 follow-up be counted as independent cohorts? Are the EMBRACE preprint and published protocol completed treatment-result studies? Give evidence, roles, record/source links and coverage limits.",
+      "tools_used": [
+        "search",
+        "fetch",
+        "get_study_relationships"
+      ],
+      "result": "passed",
+      "checks": [
+        "Correctly identified two smoking reports from one original cohort, without adding sample sizes.",
+        "Distinguished protocol_preprint, protocol and registration from completed treatment results.",
+        "Preserved EMBRACE crossover versus delayed-start design versions.",
+        "Cited the exact source evidence and disclosed selected, incomplete study-family coverage."
       ]
     }
   ],
-  "assessment": "The four task types succeeded in contexts with the required network access. The restricted download failure is retained as a limitation, not counted as a successful file retrieval."
+  "assessment": "Five research-task types succeeded in fresh connected conversations with required network access. Six conversations were run, including one DNS-restricted download failure and its successful network-enabled retry. The restricted failure is retained as a limitation, not counted as successful retrieval."
 }
