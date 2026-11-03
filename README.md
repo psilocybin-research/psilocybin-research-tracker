@@ -50,6 +50,19 @@ The tracker helps researchers, clinicians, journalists, policy analysts, and adv
 | Monitoring | Double opt-in email alerts and Web Push notifications |
 | Reuse | Public API, embeddable widgets, rights-safe SQLite download, R toolkit, PWA |
 
+## Public database and AI access
+
+The [live research application](https://psilocybin-research.com/) provides full public metadata, search/filter APIs, trial facts, citations, research networks and reproducible exports. Titles and years are one export example, not the platform's scope.
+
+- [Access guide (HTML)](https://psilocybin-research.com/for-ai.html), [plain text](https://psilocybin-research.com/for-ai.txt), and [versioned Markdown guidance](docs/research-agent-guide.md).
+- [Full public SQLite database](https://psilocybin-research.com/database.php), [full metadata CSV](https://psilocybin-research.com/api/v1/papers?format=csv&limit=50000), and [full public metadata JSON](https://psilocybin-research.com/export.php?format=json&limit=50000).
+- [Search API](https://psilocybin-research.com/api/v1/papers?per_page=100&page=1) and [OpenAPI specification](https://psilocybin-research.com/docs/research-api.openapi.json).
+- [Complete compact directory](https://psilocybin-research.com/catalogue.php) and [titles/years TXT](https://psilocybin-research.com/catalogue.php?format=txt). The directory contains every visible record with a smaller field set, not all database columns.
+
+These URLs describe the current deployed service; a repository checkout or earlier release may have a different endpoint set. Both `/api/v1/papers` and the existing `/api.php?resource=papers` are valid live routes. Keep publication status, source identifiers and provenance; unknown years stay unknown. Verify returned totals before claiming completeness. The compact JSON supplies `complete`, `record_count`, `total_records` and UTC generation time.
+
+If a tool rejects Markdown, use HTML or plain text. If Python cannot resolve the host, try an available browser tool or a user-attached download. Do not reconstruct an exhaustive catalogue from snippets. Public metadata access excludes private runtime state, source-derived abstracts and full texts.
+
 ## Quick Start
 
 Requirements: PHP 8.2 or newer with PDO SQLite, Node.js 20 or newer, and npm.
