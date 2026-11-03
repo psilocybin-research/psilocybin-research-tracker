@@ -54,7 +54,7 @@ The tracker helps researchers, clinicians, journalists, policy analysts, and adv
 
 The [live research application](https://psilocybin-research.com/) provides full public metadata, search/filter APIs, trial facts, citations, research networks and reproducible exports. Titles and years are one export example, not the platform's scope.
 
-- [Access guide (HTML)](https://psilocybin-research.com/for-ai.html), [plain text](https://psilocybin-research.com/for-ai.txt), and [versioned Markdown guidance](docs/research-agent-guide.md).
+- [Access guide (HTML)](https://psilocybin-research.com/for-ai.html), [plain text](https://psilocybin-research.com/for-ai.txt), [versioned Markdown guidance](docs/research-agent-guide.md), and [raw GitHub guide fallback](https://raw.githubusercontent.com/psilocybin-research/psilocybin-research-tracker/main/docs/research-agent-guide.md). The raw mirror is served as plain text for tools that cannot fetch the website guides or consume Markdown content types.
 - [Full public SQLite database](https://psilocybin-research.com/database.php), [full metadata CSV](https://psilocybin-research.com/api/v1/papers?format=csv&limit=50000), and [full public metadata JSON](https://psilocybin-research.com/export.php?format=json&limit=50000).
 - [Search API](https://psilocybin-research.com/api/v1/papers?per_page=100&page=1) and [OpenAPI specification](https://psilocybin-research.com/docs/research-api.openapi.json).
 - [Complete compact directory](https://psilocybin-research.com/catalogue.php) and [titles/years TXT](https://psilocybin-research.com/catalogue.php?format=txt). The directory contains every visible record with a smaller field set, not all database columns.
