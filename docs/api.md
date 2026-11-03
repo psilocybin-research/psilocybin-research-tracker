@@ -16,6 +16,8 @@ For the deployed service, start with the [HTML access guide](https://psilocybin-
 
 ## Read-only MCP connector
 
+The server is published as `com.psilocybin-research/research` in the [official MCP Registry](https://registry.modelcontextprotocol.io/v0.1/servers/com.psilocybin-research%2Fresearch/versions/latest). Its [server.json metadata](../server.json) describe the remote endpoint; no npm package is required for this remote-only service. Registry publication does not install a ChatGPT/Claude plugin. If custom connections are unavailable on your account, the public HTTP API and dataset files remain accessible.
+
 The live service exposes **`https://psilocybin-research.com/mcp`** using **Streamable HTTP** with **no authentication**. This is a remote connector hosted by the research website; optional browser WebMCP forms and GitHub documentation mirrors are separate interfaces.
 
 Eight tools: `search`, `fetch`, `search_publications`, `search_trials`, `get_citation`, `get_citation_relationships`, `get_annual_statistics`, and `get_dataset_downloads`. Search returns up to twenty `{id,title,url}` records. Fetch resolves a numeric string ID to a citable public metadata document with `id,title,text,url,metadata`; it does not supply the publisher abstract/full text. Filtered publication/trial pages are capped at fifty records and explicitly report totals/pages; they are live rather than pinned multi-request snapshots. Use the verified download manifest for whole-catalogue analysis. DOI relationships are bounded source-derived links, not evidence of scientific support or trial/result identity.
