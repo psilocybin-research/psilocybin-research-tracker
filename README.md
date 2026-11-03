@@ -48,7 +48,7 @@ The tracker helps researchers, clinicians, journalists, policy analysts, and adv
 | Citation workflow | BibTeX, RIS, CSV, JSON, LaTeX, citation copying, DOI and PubMed links |
 | Research exploration | Analytics, author pages, evidence pages, related records, and an interactive citation network |
 | Monitoring | Double opt-in email alerts and Web Push notifications |
-| Reuse | Public API, embeddable widgets, rights-safe SQLite download, R toolkit, PWA |
+| Reuse | Public API and read-only MCP connector, embeddable widgets, rights-safe SQLite download, R toolkit, PWA |
 
 ## Public database and AI access
 

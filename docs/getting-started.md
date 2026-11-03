@@ -1,5 +1,13 @@
 # Getting Started
 
+## Use the hosted research service
+
+You can use the [live research database](https://psilocybin-research.com/), [API and AI access page](https://psilocybin-research.com/research-api.php), and [verified public dataset downloads](https://psilocybin-research.com/research-dataset.php#verified-downloads) without installing the application.
+
+To connect an MCP-compatible AI client, add **`https://psilocybin-research.com/mcp`** as a remote **Streamable HTTP** server with **no authentication**. The connector supplies public read-only searches, source-linked records, trial facts, citations, annual statistics and dataset download links. Follow the [connection guide and tool reference](https://psilocybin-research.com/for-ai.html#connect-using-mcp), or use the [raw guide fallback](https://raw.githubusercontent.com/psilocybin-research/psilocybin-research-tracker/main/docs/research-agent-guide.md) if your tool cannot read the website guide. A direct browser GET to `/mcp` returns 405 by design; connect through your MCP client. Client/workspace permissions still apply.
+
+The hosted endpoint describes the deployed service; an older repository checkout may expose a different endpoint set. To run your own application instance, continue with the installation instructions below. GitHub provides software and documentation; Zenodo archives fixed datasets; the website hosts the changing research catalogue.
+
 ## Requirements
 
 - PHP 8.2 or newer with PDO SQLite, SQLite3, JSON, and mbstring
