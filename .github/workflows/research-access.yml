@@ -26,6 +26,8 @@ jobs:
           r-version: release
       - name: Verify compressed exports and R serialization edge cases
         run: python3 -m unittest discover -s tests -p test_r_dataset.py -v
+      - name: Check download discovery and snapshot consistency
+        run: python3 -m unittest discover -s tests -p test_dataset_discovery.py -v
       - name: Retrieve and verify the public research dataset
         run: python3 bin/check-research-access.py --report "$RUNNER_TEMP/research-access.json"
       - name: Install small R example dependencies

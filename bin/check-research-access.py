@@ -6,6 +6,7 @@ import csv
 from datetime import datetime, timezone
 import hashlib
 import hmac
+from html.parser import HTMLParser
 import io
 import json
 import lzma
@@ -69,6 +70,81 @@ def safe_artifact_url(url, base, snapshot, expected_format):
     return url
 
 
+class DownloadPage(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.links, self.schemas = [], []
+        self.schema_parts = None
+
+    def handle_starttag(self, tag, attributes):
+        attributes = dict(attributes)
+        if tag == 'a' and 'href' in attributes:
+            self.links.append(attributes)
+        if tag == 'script' and attributes.get('type') == 'application/ld+json':
+            self.schema_parts = []
+
+    def handle_data(self, value):
+        if self.schema_parts is not None:
+            self.schema_parts.append(value)
+
+    def handle_endtag(self, tag):
+        if tag == 'script' and self.schema_parts is not None:
+            self.schemas.append(json.loads(''.join(self.schema_parts)))
+            self.schema_parts = None
+
+
+def verify_download_page(page, manifest, base):
+    """Check human download links and SEO distributions against their frozen manifest."""
+    snapshot = manifest['snapshot_id']
+    require(REQUIRED <= manifest['artifacts'].keys(), 'Download page snapshot is missing a required format, including RDS')
+    expected = {safe_artifact_url(entry['url'], base, snapshot, name): entry
+                for name, entry in manifest['artifacts'].items()}
+    frozen_url = safe_artifact_url(manifest['manifest_url'], base, snapshot, 'manifest')
+    origin = urlsplit(urljoin(base, 'dataset-download.php'))
+    artifact_links = {urljoin(base, link['href']) for link in page.links
+                      if urlsplit(urljoin(base, link['href']))._replace(query='', fragment='') == origin}
+    require(artifact_links == set(expected) | {frozen_url}, 'Human download links mix snapshots or differ from the frozen manifest')
+    rds = manifest['artifacts']['rds']
+    require(any(urljoin(base, link['href']) == rds['url'] and link.get('download') == rds['filename'] for link in page.links), 'RDS is not advertised as a downloadable file')
+    distributions = {}
+    for schema in page.schemas:
+        for entity in schema.get('@graph', [schema]):
+            if entity.get('@type') == 'Dataset':
+                distributions.update({entry.get('contentUrl'): entry for entry in entity.get('distribution', [])})
+    for url, entry in expected.items():
+        advertised = distributions.get(url, {})
+        require(advertised.get('encodingFormat') == entry['mime_type']
+                and advertised.get('contentSize') == str(entry['bytes']) + ' bytes'
+                and advertised.get('sha256') == entry['sha256'],
+                'SEO download metadata differs from the frozen manifest: ' + entry['filename'])
+
+
+def check_download_page(base, initial_manifest):
+    with open_public(urljoin(base, 'research-dataset.php')) as response:
+        require(response.headers.get_content_type() == 'text/html', 'Dataset download page is not HTML')
+        body = response.read(2 * 1024 * 1024 + 1)
+        require(len(body) <= 2 * 1024 * 1024, 'Dataset download page is unexpectedly large')
+    page = DownloadPage()
+    page.feed(body.decode('utf-8'))
+    origin = urlsplit(urljoin(base, 'dataset-download.php'))
+    frozen_links = {urljoin(base, link['href']) for link in page.links
+                    if urlsplit(urljoin(base, link['href']))._replace(query='', fragment='') == origin
+                    and parse_qs(urlsplit(link['href']).query).get('format') == ['manifest']}
+    require(len(frozen_links) == 1, 'Download page does not identify one exact snapshot manifest')
+    frozen_url = frozen_links.pop()
+    snapshot = parse_qs(urlsplit(frozen_url).query).get('snapshot', [''])[0]
+    safe_artifact_url(frozen_url, base, snapshot, 'manifest')
+    frozen = json_response(frozen_url)
+    require(frozen['snapshot_id'] == snapshot, 'Page-linked manifest has a different snapshot identity')
+    verify_download_page(page, frozen, base)
+    if snapshot != initial_manifest['snapshot_id']:
+        # A scheduled refresh may legitimately publish between the two requests.
+        latest = json_response(urljoin(base, 'dataset-manifest.json'))
+        require(latest['snapshot_id'] != initial_manifest['snapshot_id'], 'Download page and stable current manifest disagree')
+    return {'snapshot_id': snapshot, 'formats': len(frozen['artifacts']),
+            'status': 'human links and SEO metadata match the frozen manifest, including RDS'}
+
+
 def download(entry, target, snapshot):
     require(type(entry.get('bytes')) is int and 0 <= entry['bytes'] <= MAX_FILE_BYTES, 'Artifact byte size is outside the verification bound')
     require(re.fullmatch('[a-f0-9]{64}', entry.get('sha256', '')) is not None, 'Malformed artifact SHA-256')
@@ -126,6 +202,7 @@ def check(base):
     require(re.fullmatch('[a-f0-9]{64}', snapshot) is not None, 'Invalid snapshot identity')
     require(REQUIRED <= manifest['artifacts'].keys(), 'Manifest is missing a required public download format')
     report = {'observed_at_utc': datetime.now(timezone.utc).isoformat(), 'base_url': base, 'snapshot_id': snapshot, 'generated_at_utc': manifest['generated_at_utc'], 'record_count': manifest['record_count'], 'artifacts': {}}
+    report['download_page'] = check_download_page(base, manifest)
     with tempfile.TemporaryDirectory(prefix='research-access-') as directory:
         paths = {}
         for name in sorted(REQUIRED):
@@ -255,7 +332,7 @@ def main():
         raise SystemExit('Research access check failed: ' + str(error))
     if args.report:
         write_report(args.report, report)
-    print(f"Verified {report['record_count']} public records, {len(report['artifacts'])} exact download files, annual statistics and documentation. Snapshot: {report['snapshot_id']}")
+    print(f"Verified {report['record_count']} public records, {len(report['artifacts'])} exact download files, annual statistics, human/SEO download links and documentation. Snapshot: {report['snapshot_id']}")
 
 
 if __name__ == '__main__':
