@@ -1,0 +1,73 @@
+{
+  "schema_version": "research-task-benchmark-v1",
+  "observed_on": "2026-11-03",
+  "client": "Codex CLI 0.162.0-alpha.17.2",
+  "model": "Authenticated client default; not pinned",
+  "method": "Each task started a fresh ephemeral MCP-connected conversation with no inherited research conversation. Actual MCP calls were captured privately. No ChatGPT-web or Claude-account test is claimed.",
+  "endpoint": "https://psilocybin-research.com/mcp",
+  "limitations": [
+    "Small task-oriented evaluation, not a model ranking or statistical reliability estimate.",
+    "Prompts explicitly requested the connected research tools; this does not prove unprompted tool discovery.",
+    "Live totals and trial statuses may change; these observations describe the dated source snapshot.",
+    "Host network permissions materially affect file download; access to MCP does not imply arbitrary outbound file retrieval."
+  ],
+  "tasks": [
+    {
+      "task": "Find, read and cite a known paper",
+      "prompt": "Find the Davis psilocybin depression trial with DOI 10.1001/jamapsychiatry.2020.3285, read its public record, and give title, year, DOI, source URL and citation. Explain whether it is full paper text.",
+      "tools_used": [
+        "search",
+        "fetch",
+        "get_citation"
+      ],
+      "result": "passed",
+      "checks": [
+        "Exact DOI and source PMID33146667 returned.",
+        "Recorded bibliographic year2021 preserved rather than guessed from DOI2020.",
+        "Correctly described metadata/abstract/full-text boundary."
+      ]
+    },
+    {
+      "task": "Filter trial registrations",
+      "prompt": "Find recruiting trials in Germany, show up to five NCT identifiers and registry links, observation date, matching total and pagination.",
+      "tools_used": [
+        "search_trials"
+      ],
+      "result": "passed",
+      "checks": [
+        "Reported zero matches rather than fabricating recruiting trials.",
+        "Cross-checked three German registry records with other statuses.",
+        "Preserved registry observation time and pagination semantics."
+      ]
+    },
+    {
+      "task": "Calculate annual record counts",
+      "prompt": "Give annual/status counts for2020–2026, whole-catalogue total, missing years, revision and generation time. Explain the counting unit and current-year limitation.",
+      "tools_used": [
+        "get_annual_statistics"
+      ],
+      "result": "passed",
+      "checks": [
+        "Every reported annual/status count reconciled with the verified SQLite snapshot.",
+        "Whole-catalogue total5142; missing-year count0.",
+        "Described records, not independent studies or participants;2026 partial."
+      ]
+    },
+    {
+      "task": "Download and verify the full database",
+      "prompt": "Use connected research tools to discover, download and verify the complete public SQLite; preserve manifest and report paths, size, SHA-256, actual count, snapshot and generation time.",
+      "tools_used": [
+        "get_dataset_downloads"
+      ],
+      "result": "passed_with_network_access",
+      "checks": [
+        "Actual local file independently checked:5472256bytes,5142records, SQLite integrity ok.",
+        "SHA-256 matched manifest:52566615d6b7f97ba1cadd932e9c21bdda6b8abf426935c0be5f9bdb0fa49f9a.",
+        "Snapshot65bd7be67fecd6fe24708ea0c3a666b9b060f31bffad4c3535bd26df76d76327; generated2026-11-03T19:32:17Z.",
+        "One earlier network-restricted conversation failed DNS and correctly disclosed that no database was verified.",
+        "In the network-enabled test Python received403; curl succeeded."
+      ]
+    }
+  ],
+  "assessment": "The four task types succeeded in contexts with the required network access. The restricted download failure is retained as a limitation, not counted as a successful file retrieval."
+}

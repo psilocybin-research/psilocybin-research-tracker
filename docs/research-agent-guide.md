@@ -24,6 +24,7 @@ In an MCP-compatible client, add that URL as a remote Streamable HTTP server. In
 | `search_trials(...)` | Keywords and exact country, sponsor, phase, status or condition filters; bounded pages and registry observation dates. Registrations overlap the publication catalogue, so do not add the two totals together. |
 | `get_citation(id)` | Citation text, BibTeX and RIS while retaining the record's status. |
 | `get_citation_relationships(id, limit)` | Up to 50 explicit reference DOIs and indexed citing records per direction. Coverage is incomplete; a link is not evidence of support, criticism or trial/result identity. |
+| `get_study_relationships(id?)` | Selected reviewed study families, report roles, exact identifiers, evidence URLs and check dates. Optional record ID; missing links are unknown, not proof of independence. |
 | `get_annual_statistics()` | Catalogue-wide year/status totals, missing years, UTC and source revision; current-year coverage is partial. |
 | `get_dataset_downloads()` | The completed manifest's exact URLs, file sizes, SHA-256 values, count and UTC. Use this for the complete public database. Check complete/is_current and preserve the actual files. |
 
@@ -96,6 +97,20 @@ Use [GET /api/v1/statistics/publications-by-year](https://psilocybin-research.co
 The response includes `catalogue_revision`, `generated_at_utc`, `record_count`, `dated_records`, `missing_year_records`, `status_totals`, `missing_year`, `current_year` and `years`. Each year row has `year`, `total`, `published`, `preprints`, `trial_registrations`, `other` and `is_current_year`. Unknown years remain in the separate missing-year category. The CSV always includes one explicit missing-year row with a blank year, even if its total is zero. The current calendar year is incomplete; past-year counts can also change as records are added or corrected.
 
 Verify that every row's status counts sum to its total, and that all year totals plus missing-year records equal `record_count`. Published is the site's normalized status, not an independent peer-review check; other includes protocols, reviews and residual statuses. Match `catalogue_revision` to the manifest before comparing a live aggregate to a frozen download. Frozen annual-statistics files from that manifest are available when you require exact snapshot consistency.
+
+## Reports from the same study
+
+Use [study links JSON](https://psilocybin-research.com/api/v1/study-links) or `get_study_relationships()`. Add `?id=RECORD_ID` / pass the returned string ID to inspect a visible record. Fetch also includes its reviewed relationships. The publication page shows the same links and source evidence. The manifest's `study-links` artifact freezes them with the dataset snapshot.
+
+Initial coverage is three reviewed families: the Davis/Gukasyan MDD trial and follow-up, the smoking-cessation pilot and follow-up, and EMBRACE protocol/preprint versions. Exact DOI and registry identities establish the links; shared titles, authors and citation proximity do not. Roles distinguish registrations, primary reports, follow-ups and protocols/preprints. EMBRACE's design changed between versions; neither protocol is a completed result.
+
+Coverage is incomplete. Preserve all record IDs and original publication statuses, and never infer a global independent-study or participant count from these selected links. Missing or ambiguous relationships remain unknown. Each reviewed membership has source evidence and a check date; no publisher abstracts or unrestricted source payloads are redistributed.
+
+## Reproduce the same table in R, Python and SQL
+
+The [download page](https://psilocybin-research.com/research-dataset.php#worked-examples) links a self-contained [Python notebook](https://psilocybin-research.com/tools/reproducible/annual_counts.ipynb), [Python script](https://psilocybin-research.com/tools/reproducible/annual_counts.py), [R script](https://psilocybin-research.com/tools/reproducible/annual_counts.R) and [SQL query](https://psilocybin-research.com/tools/reproducible/annual-counts.sql). They reproduce year/status counts from one exact verified snapshot, preserving an explicit missing-year row even when zero.
+
+Python uses the standard library, public SQLite and the SQL query (save both files together). R uses the public RDS, jsonlite and digest. Download verification checks SHA-256, file size, source revision, generation time and record totals against that snapshot's frozen statistics. Both save `annual-counts.csv`, the input files, manifest and `analysis-provenance.json` into a new output directory; existing folders are never overwritten. Share the same saved manifest between languages. Current-year data are partial, classifications are screening aids, and catalogue records are not independent experiments or participants. Save inputs permanently if you need to rerun them after website snapshot retention expires.
 
 ## Data dictionary and interpretation
 
@@ -194,6 +209,12 @@ Email and push subscriptions require the user's explicit choices and existing co
 
 Inspect HTTP status and error messages. For a rate-limit response, respect Retry-After when provided, then retry later. Current counts and registry status can change; frozen Research in Motion data retain their labelled 11 October 2026 snapshot. Include the observation date when reporting a live count and preserve the source's own dates.
 
+
+## Fresh connected research-task benchmark
+
+A [dated benchmark report](https://psilocybin-research.com/docs/research-task-benchmark.json) records fresh ephemeral Codex CLI conversations on 3 November 2026. The tested tasks were paper search/read/citation, exact trial filtering, annual/status counts and complete SQLite download with independent size/hash/count verification. These used actual connected MCP tools, rather than simulated tool responses. The network-enabled download produced a verified 5,142-record file; an earlier restricted session failed DNS and reported that limitation accurately.
+
+This is a small task check with the authenticated client's default model, not a model ranking, a ChatGPT-web/Claude test, or proof of automatic discovery. Prompts explicitly requested the research tools. Reuse the report's prompts in a fresh connected client and check actual sources, dates, IDs and completeness. Network restrictions can still prevent file delivery even when MCP queries work. Do not label a manifest URL alone as a completed local download.
 
 ## Evidence and reporting conventions
 

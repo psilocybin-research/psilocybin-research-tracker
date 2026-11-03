@@ -12,7 +12,7 @@ _spec = spec_from_file_location('research_access', Path(__file__).with_name('che
 _http = module_from_spec(_spec)
 _spec.loader.exec_module(_http)
 require = _http.require
-TOOLS = {'search', 'fetch', 'search_publications', 'search_trials', 'get_citation', 'get_citation_relationships', 'get_annual_statistics', 'get_dataset_downloads'}
+TOOLS = {'search', 'fetch', 'search_publications', 'search_trials', 'get_citation', 'get_citation_relationships', 'get_annual_statistics', 'get_dataset_downloads', 'get_study_relationships'}
 VERSION = '2025-11-25'
 
 
@@ -94,6 +94,10 @@ def check(base):
     require(client.tool('get_citation', {'id': record_id})['citation'], 'Citation missing')
     relationships = client.tool('get_citation_relationships', {'id': record_id, 'limit': 5})
     require(len(relationships['reference_dois']) <= 5 and len(relationships['indexed_citing_records']) <= 5, 'Citation relationship bounds failed')
+    families = client.tool('get_study_relationships')
+    require(families['coverage'] == 'selected reviewed families; not exhaustive', 'Study relationships must describe incomplete coverage')
+    single = client.tool('get_study_relationships', {'id': record_id})
+    require(single['record_id'] == int(record_id), 'Study relationship identity mismatch')
     stats = client.tool('get_annual_statistics')
     require(stats['record_count'] == stats['dated_records'] + stats['missing_year_records'], 'Annual totals do not reconcile')
     manifest = client.tool('get_dataset_downloads')
