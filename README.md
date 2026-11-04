@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://psilocybin-research.com/">
-    <img src="assets/pwa/icon-192.png?v=20261104-small-brand" alt="Psilocybin Research Tracker logo" width="112" height="112">
+    <img src="assets/pwa/icon-192.png?v=20261104-original-brand" alt="Psilocybin Research Tracker logo" width="112" height="112">
   </a>
 </p>
 
@@ -117,3 +117,7 @@ The latest public dataset version is available through the Zenodo concept DOI: [
 Source code is licensed under the [MIT License](LICENSE). That license does not relicense third-party bibliographic or registry metadata. Dataset-specific rights are described in [docs/data-rights.md](docs/data-rights.md) and in each Zenodo deposit.
 
 [Reviewed study-family links](https://psilocybin-research.com/api/v1/study-links) distinguish selected protocols, registrations, primary reports and follow-ups using exact source evidence; coverage is incomplete. The [dated fresh-session benchmark](docs/research-task-benchmark.json) records real model-tool task results and network limitations.
+
+## Image credit
+
+Mushroom photograph: **Jürgen Liebherr (jggrz), used with permission**. [Original photograph](https://pixabay.com/photos/mushroom-helmling-moss-tap-forest-8512804/) · [Photographer](https://pixabay.com/users/jggrz-7998824/). Cropped/resized for the project’s logo, app icons and backgrounds. The software MIT licence does not relicense this photograph.

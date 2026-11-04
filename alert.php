@@ -96,8 +96,7 @@ $statusLabel = $subscription ? ($isActive ? 'Active' : ($isConfirmed ? 'Paused' 
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Manage Publication Alert | Psilocybin Research</title>
-  <link rel="icon" href="favicon.ico?v=20261104-small-brand">
-  <link rel="icon" type="image/svg+xml" href="assets/pwa/favicon.svg?v=20261104-small-brand">
+  <link rel="icon" href="favicon.ico?v=20261104-original-brand">
   <link rel="stylesheet" href="assets/styles.min.css?v=<?= h($assetVersion) ?>">
   <script>
     document.documentElement.classList.add('js');
