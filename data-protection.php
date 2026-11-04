@@ -34,7 +34,8 @@ $contactEmail = Config::contactEmail();
   <meta name="twitter:description" content="<?= h($description) ?>">
   <meta name="twitter:image" content="<?= h($shareImageUrl) ?>">
   <meta name="twitter:image:alt" content="Psilocybin Research Publication Tracker logo">
-  <link rel="icon" href="assets/logo.png?v=20260809-network-first-v94">
+  <link rel="icon" href="favicon.ico?v=20261104-small-brand">
+  <link rel="icon" type="image/svg+xml" href="assets/pwa/favicon.svg?v=20261104-small-brand">
   <link rel="icon" type="image/png" sizes="192x192" href="assets/pwa/icon-192.png?v=20260809-network-first-v94">
   <link rel="icon" type="image/png" sizes="512x512" href="assets/pwa/icon-512.png?v=20260809-network-first-v94">
   <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260809-network-first-v94">

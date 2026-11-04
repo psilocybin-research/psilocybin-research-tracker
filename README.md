@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://psilocybin-research.com/">
-    <img src="assets/pwa/icon-192.png?v=20261104-owner-image" alt="Psilocybin Research Tracker logo" width="112" height="112">
+    <img src="assets/pwa/icon-192.png?v=20261104-small-brand" alt="Psilocybin Research Tracker logo" width="112" height="112">
   </a>
 </p>
 
