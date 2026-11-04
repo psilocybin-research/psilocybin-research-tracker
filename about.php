@@ -72,8 +72,7 @@ try {
   <meta name="twitter:description" content="<?= h($description) ?>">
   <meta name="twitter:image" content="<?= h($shareImageUrl) ?>">
   <meta name="twitter:image:alt" content="Psilocybin Research Publication Tracker logo">
-  <link rel="icon" href="favicon.ico?v=20261104-small-brand">
-  <link rel="icon" type="image/svg+xml" href="assets/pwa/favicon.svg?v=20261104-small-brand">
+  <link rel="icon" href="favicon.ico?v=20261104-original-brand">
   <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260809-network-first-v94">
   <link rel="manifest" href="manifest.webmanifest?v=20260809-network-first-v94">
   <link rel="stylesheet" href="assets/styles.min.css?v=<?= h($assetVersion) ?>">
