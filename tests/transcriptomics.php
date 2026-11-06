@@ -3,8 +3,14 @@ declare(strict_types=1);
 require_once __DIR__ . '/../src/helpers.php';
 (static function (): void {
     $check = static function (bool $ok, string $message): void { if (!$ok) throw new RuntimeException($message); };
-    $server = class_exists('ResearchMcpServer') ? new ResearchMcpServer() : null;
+    $server = class_exists('ResearchMcpServer') ? new ResearchMcpServer(null, 'transcriptomics') : null;
     $snapshot = new TranscriptomicsSnapshot();
+    if ($server) {
+        $tools=$server->dispatch(json_decode('{"jsonrpc":"2.0","id":1,"method":"tools/list"}'))['result']['tools'];
+        $check(count($tools)===5, 'Transcriptomics endpoint must expose exactly its five tools');
+        $rejected=$server->dispatch(json_decode('{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"search","arguments":{"query":"psilocybin"}}}'));
+        $check(isset($rejected['error']), 'Transcriptomics endpoint must reject bibliographic search');
+    }
     $call = static function (string $name, array $args = []) use ($server,$snapshot): array {
         if ($server === null) {
             try { $payload=$snapshot->execute($name,$args);return ['isError'=>false,'structuredContent'=>$payload,'content'=>[['type'=>'text','text'=>json_encode($payload)]]]; }
@@ -61,7 +67,7 @@ require_once __DIR__ . '/../src/helpers.php';
     $check($empty['total']===0,'SQL input was not literal');
     if ($server !== null) {
     $resources = $server->dispatch(json_decode('{"jsonrpc":"2.0","id":1,"method":"resources/list"}'))['result']['resources'];
-    $check(count($resources)===4,'Snapshot resource must be discoverable');
+    $check(count($resources)===2,'Snapshot resource must be discoverable');
     }
     echo "Transcriptomics: source values, complete sensitivity families, design, attribution, bounds and invalid inputs passed.\n";
 })();

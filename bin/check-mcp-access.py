@@ -12,7 +12,9 @@ _spec = spec_from_file_location('research_access', Path(__file__).with_name('che
 _http = module_from_spec(_spec)
 _spec.loader.exec_module(_http)
 require = _http.require
-TOOLS = {'search', 'fetch', 'search_publications', 'search_trials', 'get_citation', 'get_citation_relationships', 'get_annual_statistics', 'get_dataset_downloads', 'get_study_relationships', 'search_transcriptomic_genes', 'get_transcriptomic_gene', 'get_transcriptomic_pathways', 'get_transcriptomic_robustness', 'get_transcriptomic_provenance'}
+ALL_TOOLS = {'search', 'fetch', 'search_publications', 'search_trials', 'get_citation', 'get_citation_relationships', 'get_annual_statistics', 'get_dataset_downloads', 'get_study_relationships', 'search_transcriptomic_genes', 'get_transcriptomic_gene', 'get_transcriptomic_pathways', 'get_transcriptomic_robustness', 'get_transcriptomic_provenance'}
+TRANSCRIPTOMICS_TOOLS = {t for t in ALL_TOOLS if 'transcriptomic' in t}
+TOOLS = ALL_TOOLS - TRANSCRIPTOMICS_TOOLS
 VERSION = '2025-11-25'
 
 
@@ -105,22 +107,8 @@ def check(base):
     require(manifest['snapshot_id'] == http_manifest['snapshot_id'] and manifest['artifacts'] == http_manifest['artifacts'] and manifest['complete'] is True, 'MCP download manifest differs from public HTTP')
     if manifest['catalogue_revision'] == stats['catalogue_revision']:
         require(manifest['record_count'] == stats['record_count'], 'Same-revision MCP statistics and dataset counts differ')
-    transcript = client.tool('get_transcriptomic_provenance')
-    transcript_manifest = _http.json_response(urljoin(base,'transcriptomics-manifest.php'))
-    require(transcript['atlas_links']['methods'].endswith('#view=methods'), 'Atlas methods link missing')
-    require(transcript['data']['manifest'] == transcript_manifest, 'Transcriptomics resource and provenance differ')
-    require(transcript_manifest['source']['doi'] == '10.5281/zenodo.23283595', 'Unexpected transcriptomics release')
-    require(client.tool('search_transcriptomic_genes', {'query':'GPX4','limit':1})['data']['genes'][0]['symbol'] == 'GPX4', 'Gene search failed')
-    require(len(client.tool('get_transcriptomic_gene', {'gene':'GPX4'})['data']['results']) == 3, 'Gene contrasts missing')
-    pathway = client.tool('get_transcriptomic_pathways', {'query':'oxidative phosphorylation'})['data']['pathways'][0]
-    require(set(pathway['atlas_links_by_contrast']) == {'day1_vs_control','day3_vs_control','day3_vs_day1'}, 'Contrast-specific atlas links missing')
-    require(len(pathway['camera_both_settings']) == 6, 'Both CAMERA settings and all contrasts required')
-    require({r['mode'] for r in pathway['camera_both_settings']} == {'estimated','fixed_0.01'}, 'CAMERA setting lost')
-    robust = client.tool('get_transcriptomic_robustness')['data']['results']
-    require(len(robust['camera']) == 30, 'Complete CAMERA families missing')
-    require(len({r['fit'] for r in robust['bayesian'] if r['source_table'].endswith('posterior_summary.csv')}) == 10, 'Bayesian model omitted')
     resources = client.rpc('resources/list')['resources']
-    require(len(resources) == 4, 'Finite MCP resource list changed')
+    require(len(resources) == 3, 'Finite MCP resource list changed')
     for resource in resources:
         require(resource['uri'].startswith(base), 'Unexpected MCP resource origin')
         content = client.rpc('resources/read', {'uri': resource['uri']})['contents'][0]
@@ -134,9 +122,35 @@ def check(base):
         raise ValueError('MCP GET must return 405 rather than a fake landing page')
     except HTTPError as error:
         require(error.code == 405, 'MCP GET must describe unsupported standalone SSE transport')
+    transcript_client = Client(urljoin(base, 'mcp/transcriptomics'))
+    ti = transcript_client.rpc('initialize', {'protocolVersion':VERSION,'capabilities':{},'clientInfo':{'name':'transcriptomics-check','version':'1.0'}})
+    require(ti['serverInfo']['name'] == 'psilocin-human-neuron-transcriptomics', 'Transcriptomics identity mismatch')
+    transcript_tools = transcript_client.rpc('tools/list')['tools']
+    require({t['name'] for t in transcript_tools} == TRANSCRIPTOMICS_TOOLS, 'Transcriptomics tools must be separate')
+    require('error' in client.post({'jsonrpc':'2.0','id':900,'method':'tools/call','params':{'name':'get_transcriptomic_provenance','arguments':{}}}), 'Bibliographic server accepted transcriptomics tool')
+    require('error' in transcript_client.post({'jsonrpc':'2.0','id':901,'method':'tools/call','params':{'name':'search','arguments':{'query':'psilocybin'}}}), 'Transcriptomics server accepted literature search')
+    transcript = transcript_client.tool('get_transcriptomic_provenance')
+    transcript_manifest = _http.json_response(urljoin(base,'transcriptomics-manifest.php'))
+    require(transcript['atlas_links']['methods'].endswith('#view=methods'), 'Atlas methods link missing')
+    require(transcript['data']['manifest'] == transcript_manifest, 'Transcriptomics resource and provenance differ')
+    require(transcript_manifest['source']['doi'] == '10.5281/zenodo.23283595', 'Unexpected transcriptomics release')
+    require(transcript_client.tool('search_transcriptomic_genes', {'query':'GPX4','limit':1})['data']['genes'][0]['symbol'] == 'GPX4', 'Gene search failed')
+    require(len(transcript_client.tool('get_transcriptomic_gene', {'gene':'GPX4'})['data']['results']) == 3, 'Gene contrasts missing')
+    pathway = transcript_client.tool('get_transcriptomic_pathways', {'query':'oxidative phosphorylation'})['data']['pathways'][0]
+    require(set(pathway['atlas_links_by_contrast']) == {'day1_vs_control','day3_vs_control','day3_vs_day1'}, 'Contrast-specific atlas links missing')
+    require(len(pathway['camera_both_settings']) == 6, 'Both CAMERA settings and all contrasts required')
+    require({r['mode'] for r in pathway['camera_both_settings']} == {'estimated','fixed_0.01'}, 'CAMERA setting lost')
+    robust = transcript_client.tool('get_transcriptomic_robustness')['data']['results']
+    require(len(robust['camera']) == 30, 'Complete CAMERA families missing')
+    require(len({r['fit'] for r in robust['bayesian'] if r['source_table'].endswith('posterior_summary.csv')}) == 10, 'Bayesian model omitted')
+    tr = transcript_client.rpc('resources/list')['resources']
+    require(len(tr) == 2, 'Transcriptomics resources must be distinct')
+    require(not {r['uri'] for r in tr} & {r['uri'] for r in resources}, 'Resources leaked across endpoints')
+    for resource in tr:
+        require(transcript_client.rpc('resources/read', {'uri':resource['uri']})['contents'][0]['text'], 'Transcriptomics resource unreadable')
     return {'status': 'passed', 'endpoint': client.endpoint, 'protocol': VERSION, 'server_version': init['serverInfo']['version'],
             'tools': sorted(TOOLS), 'resources': len(resources), 'observed_at_utc': _http.datetime.now(_http.timezone.utc).isoformat(),
-            'record_count': manifest['record_count'], 'snapshot_id': manifest['snapshot_id'], 'transcriptomics_snapshot':transcript_manifest['snapshot_id'], 'requests': client.counter}
+            'record_count': manifest['record_count'], 'snapshot_id': manifest['snapshot_id'], 'transcriptomics_endpoint': transcript_client.endpoint, 'transcriptomics_tools':sorted(TRANSCRIPTOMICS_TOOLS), 'transcriptomics_snapshot':transcript_manifest['snapshot_id'], 'requests': client.counter}
 
 
 def main():

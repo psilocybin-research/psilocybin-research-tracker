@@ -1,6 +1,6 @@
 # Transcriptomics results through MCP
 
-Connect to **https://psilocybin-research.com/mcp** using Streamable HTTP, without authentication. The same server provides publication tools and five separate transcriptomics tools. The transcriptomics tools query the fixed [Zenodo v1.2.0 archive](https://doi.org/10.5281/zenodo.23283595), not the live literature database.
+Connect to **https://psilocybin-research.com/mcp/transcriptomics** using Streamable HTTP, without authentication. This dedicated server exposes five transcriptomics tools and two resources; it does not query the bibliographic catalogue. The transcriptomics tools query the fixed [Zenodo v1.2.0 archive](https://doi.org/10.5281/zenodo.23283595), not the live literature database.
 
 | Tool | Parameters and scope |
 | --- | --- |
@@ -35,9 +35,9 @@ mkdir -p data
 curl -fL --retry 2 -o data/transcriptomics-source.zip 'FIXED_ZENODO_ARCHIVE_URL'
 python3 bin/build-transcriptomics-snapshot.py --archive data/transcriptomics-source.zip
 python3 -m unittest discover -s tests -p test_transcriptomics_snapshot.py -v
-php tests/mcp.php
+php tests/transcriptomics.php
 ```
 
 The builder verifies the outer archive and the imported files against its internal SHA-256 inventory. It reads an explicit set of members without extracting arbitrary ZIP paths. It generates an immutable, content-addressed SQLite derivative under `data/transcriptomics/` and a deployment manifest at `config/transcriptomics-snapshot.json`. The database is opened read-only and verified against the manifest on access. No requester can select files, SQL or remote URLs.
 
-Deploy the new database before activating its matching manifest, retain the previous database/manifest for rollback, and verify `bin/check-mcp-access.py` against production. Do not overwrite other runtime data. Never change the historical Zenodo ZIP, DOI or Git tag to update this connector. Source-anchored regression expectations must be reviewed for a new release rather than automatically rewritten to accept its results.
+Deploy the new database before activating its matching manifest, retain the previous database/manifest for rollback, and verify `bin/check-mcp-access.py` against the transcriptomics endpoint. Do not overwrite other runtime data. Never change the historical Zenodo ZIP, DOI or Git tag to update this connector. Source-anchored regression expectations must be reviewed for a new release rather than automatically rewritten to accept its results.
