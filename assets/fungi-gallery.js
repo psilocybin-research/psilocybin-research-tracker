@@ -122,14 +122,20 @@
   gallery.addEventListener('pointermove', wake, {passive: true});
   gallery.addEventListener('focusin', wake);
   gallery.addEventListener('pointerdown', event => {
-    wake(); if (event.target.closest('button,a,.thumbnails')) return;
-    touchStart = {x: event.clientX, y: event.clientY, type: event.pointerType};
+    wake();
+    if (!event.isPrimary || event.button !== 0 || event.target.closest('button,a,.thumbnails,.gallery-controls')) return;
+    touchStart = {id: event.pointerId, x: event.clientX, y: event.clientY, type: event.pointerType, time: performance.now()};
   }, {passive: true});
   gallery.addEventListener('pointerup', event => {
-    if (!touchStart || touchStart.type !== 'touch') return;
-    const dx = event.clientX - touchStart.x, dy = event.clientY - touchStart.y; touchStart = null;
-    if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.5) show(index + (dx < 0 ? 1 : -1));
+    if (!touchStart || touchStart.id !== event.pointerId) return;
+    const start = touchStart; touchStart = null;
+    if (event.target.closest('button,a,.thumbnails,.gallery-controls')) return;
+    const dx = event.clientX - start.x, dy = event.clientY - start.y;
+    if (start.type !== 'mouse' && Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      show(index + (dx < 0 ? 1 : -1));
+    } else if (Math.hypot(dx, dy) < 12 && performance.now() - start.time < 600) show(index + 1);
   }, {passive: true});
+  gallery.addEventListener('pointercancel', () => { touchStart = null; }, {passive: true});
   document.addEventListener('visibilitychange', schedule);
   reduced.addEventListener('change', () => { if (reduced.matches) { playing = false; syncPlay(); wake(); } });
   update(false); syncPlay(); wake();
