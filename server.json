@@ -3,7 +3,7 @@
   "name": "com.psilocybin-research/research",
   "title": "Psilocybin Research MCP \u2014 Papers, Trials and Research Data",
   "description": "Read-only psilocybin literature, trials, verified datasets and versioned transcriptomics results.",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "websiteUrl": "https://psilocybin-research.com/",
   "icons": [
     {
