@@ -19,7 +19,7 @@
   mirrorControls(); controls.after(blendedControls);
   new MutationObserver(mirrorControls).observe(controls, {subtree: true, attributes: true, childList: true, characterData: true});
 
-  let index = 0, active = 0, playing = !reduced.matches, busy = false, queued = null, timer, quietTimer, touchStart;
+  let index = 0, active = 0, playing = !reduced.matches, busy = false, queued = null, timer, quietTimer, touchStart, pendingIndex = 0;
   const prepared = new Map();
   const pausePath = 'M8 5v14M16 5v14', playPath = 'm9 5 11 7-11 7Z';
   const variant = slide => {
@@ -62,11 +62,11 @@
     gallery.dataset.slide = String(index);
     prepare((index + 1) % slides.length).catch(() => {});
   }
-  async function show(position, manual = true) {
+  async function show(position, manual = true, fast = false) {
     const next = (position + slides.length) % slides.length;
-    if (busy) { queued = {position: next, manual}; return; }
+    if (busy) { queued = {position: next, manual, fast}; return; }
     if (next === index) { schedule(); return; }
-    busy = true; clearTimeout(timer); byId('load-error').hidden = true;
+    busy = true; pendingIndex = next; clearTimeout(timer); byId('load-error').hidden = true;
     try {
       const url = await prepare(next), incoming = 1 - active, image = layers[incoming].querySelector('.picture');
       layers[incoming].querySelector('.backdrop').src = url;
@@ -74,14 +74,15 @@
       image.src = url; image.removeAttribute('srcset');
       await image.decode().catch(() => {});
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      layers.forEach(layer => { layer.style.transitionDuration = fast ? '180ms' : ''; });
       layers[incoming].classList.add('active'); layers[active].classList.remove('active');
       active = incoming; index = next; update(manual);
-      await new Promise(resolve => setTimeout(resolve, reduced.matches ? 0 : 1300));
+      await new Promise(resolve => setTimeout(resolve, reduced.matches ? 0 : fast ? 200 : 1300));
     } catch {
       byId('load-error').hidden = false; playing = false; syncPlay(); wake();
     } finally {
       busy = false;
-      if (queued) { const request = queued; queued = null; show(request.position, request.manual); }
+      if (queued) { const request = queued; queued = null; show(request.position, request.manual, request.fast); }
       else schedule();
     }
   }
@@ -144,6 +145,20 @@
     else if (event.key === 'Escape' && !thumbnails.hidden) { setBrowse(false); browse.focus(); }
     wake();
   });
+  let wheelSum = 0, wheelTime = -Infinity, wheelDirection = 0, wheelEventTime = 0;
+  gallery.addEventListener('wheel', event => {
+    if (!matchMedia('(hover: hover) and (pointer: fine)').matches || event.ctrlKey || event.metaKey || event.target.closest('.thumbnails') || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+    if (!event.deltaY) return;
+    event.preventDefault();
+    const now = performance.now(), direction = Math.sign(event.deltaY);
+    if (now - wheelTime < 180) return;
+    if (direction !== wheelDirection || now - wheelEventTime > 220) wheelSum = 0;
+    wheelDirection = direction; wheelEventTime = now;
+    wheelSum += event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? innerHeight : 1);
+    if (Math.abs(wheelSum) < 36) return;
+    wheelSum = 0; wheelTime = now; wake();
+    show((queued?.position ?? pendingIndex) + direction, true, true);
+  }, {passive: false});
   gallery.addEventListener('pointermove', wake, {passive: true});
   gallery.addEventListener('focusin', wake);
   gallery.addEventListener('pointerdown', event => {
