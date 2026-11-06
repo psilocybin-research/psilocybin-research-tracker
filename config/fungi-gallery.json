@@ -31,7 +31,8 @@
       "original_dimensions": [
         1920,
         1080
-      ]
+      ],
+      "position": "38% 50%"
     },
     {
       "id": "7536200",
@@ -61,7 +62,8 @@
       "original_dimensions": [
         1920,
         1280
-      ]
+      ],
+      "position": "67% 50%"
     },
     {
       "id": "7555696",
@@ -91,7 +93,8 @@
       "original_dimensions": [
         1920,
         1280
-      ]
+      ],
+      "position": "43% 50%"
     },
     {
       "id": "5764816",
@@ -128,7 +131,8 @@
       "original_dimensions": [
         6000,
         4000
-      ]
+      ],
+      "position": "58% 50%"
     },
     {
       "id": "4566638",
@@ -165,7 +169,8 @@
       "original_dimensions": [
         5394,
         3596
-      ]
+      ],
+      "position": "62% 50%"
     },
     {
       "id": "7561871",
@@ -195,7 +200,8 @@
       "original_dimensions": [
         1920,
         1280
-      ]
+      ],
+      "position": "38% 50%"
     }
   ]
 }

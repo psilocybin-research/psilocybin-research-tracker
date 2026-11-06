@@ -58,6 +58,7 @@
     try {
       const url = await prepare(next), incoming = 1 - active, image = layers[incoming].querySelector('.picture');
       layers[incoming].querySelector('.backdrop').src = url;
+      image.style.objectPosition = slides[next].position || '50% 50%';
       image.src = url; image.removeAttribute('srcset');
       await image.decode().catch(() => {});
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
@@ -77,7 +78,14 @@
   byId('previous').onclick = () => { wake(); show(index - 1); };
   play.onclick = togglePlay;
   function setBrowse(open) {
-    thumbnails.hidden = !open; browse.setAttribute('aria-expanded', String(open)); schedule(); wake();
+    const restoreFocus = !open && thumbnails.contains(document.activeElement);
+    thumbnails.hidden = !open; browse.setAttribute('aria-expanded', String(open));
+    const label = open ? 'Close photographs' : 'Browse photographs';
+    browse.setAttribute('aria-label', label); browse.title = label;
+    browse.querySelector('path').setAttribute('d', open ? 'm6 6 12 12M18 6 6 18' : 'M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z');
+    if (open) thumbnails.querySelector('[aria-current=true]')?.focus({preventScroll: true});
+    else if (restoreFocus) browse.focus({preventScroll: true});
+    schedule(); wake();
   }
   browse.onclick = () => setBrowse(thumbnails.hidden);
   thumbnails.onclick = event => {
@@ -124,6 +132,7 @@
   gallery.addEventListener('pointerdown', event => {
     wake();
     if (!event.isPrimary || event.button !== 0 || event.target.closest('button,a,.thumbnails,.gallery-controls')) return;
+    if (!thumbnails.hidden) { setBrowse(false); touchStart = null; return; }
     touchStart = {id: event.pointerId, x: event.clientX, y: event.clientY, type: event.pointerType, time: performance.now()};
   }, {passive: true});
   gallery.addEventListener('pointerup', event => {
