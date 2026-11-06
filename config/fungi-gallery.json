@@ -1,0 +1,201 @@
+{
+  "title": "Fungi",
+  "photographer": "Jürgen Liebherr",
+  "profile": "https://pixabay.com/users/jggrz-7998824/",
+  "slides": [
+    {
+      "id": "8512804",
+      "alt": "A slender mushroom on a moss-covered forest floor",
+      "source": "https://pixabay.com/photos/mushroom-helmling-moss-tap-forest-8512804/",
+      "photographer": "Jürgen Liebherr",
+      "profile": "https://pixabay.com/users/jggrz-7998824/",
+      "permission": "Used with direct permission. Copyright remains with Jürgen Liebherr.",
+      "variants": [
+        {
+          "url": "/assets/fungi/jggrz-8512804-960-09bf55edc7f7.webp",
+          "width": 960,
+          "height": 540,
+          "sha256": "09bf55edc7f75e8cd335d810284c51dc4ad2f8f6a3b358c665227da18f3f0e3f",
+          "bytes": 55214
+        },
+        {
+          "url": "/assets/fungi/jggrz-8512804-1920-8ec1a70a2c60.webp",
+          "width": 1920,
+          "height": 1080,
+          "sha256": "8ec1a70a2c605bb9aa22f6bda68d9a4ae59541d21f66eb48d2bf802b62ec71f3",
+          "bytes": 142702
+        }
+      ],
+      "thumbnail": "/assets/fungi/jggrz-8512804-thumb-f896b3c70dd5.webp",
+      "original_sha256": "4550f9da1d3e6ee57349d1c0b1fa4b086d01e6110a6391c49e7cd2d82501d38d",
+      "original_dimensions": [
+        1920,
+        1080
+      ]
+    },
+    {
+      "id": "7536200",
+      "alt": "A group of pale mushrooms rising from moss",
+      "source": "https://pixabay.com/photos/growth-forest-mushrooms-macro-7536200/",
+      "photographer": "Jürgen Liebherr",
+      "profile": "https://pixabay.com/users/jggrz-7998824/",
+      "permission": "Used with direct permission. Copyright remains with Jürgen Liebherr.",
+      "variants": [
+        {
+          "url": "/assets/fungi/jggrz-7536200-960-83f1efd5b0da.webp",
+          "width": 960,
+          "height": 640,
+          "sha256": "83f1efd5b0da95aacd2aa4077f1b62d2ded01c767e85bc4cd9605e455b905fc6",
+          "bytes": 34762
+        },
+        {
+          "url": "/assets/fungi/jggrz-7536200-1920-0dc190776b5f.webp",
+          "width": 1920,
+          "height": 1280,
+          "sha256": "0dc190776b5f01aa5049eb38a2a24e1bddecf8925f372e5118673c051f426bec",
+          "bytes": 176064
+        }
+      ],
+      "thumbnail": "/assets/fungi/jggrz-7536200-thumb-b32c04aadd61.webp",
+      "original_sha256": "463d122b02ae27466ee498ef6cbc35a70d3db11731d2c8c96ba76a5d2ea29e7d",
+      "original_dimensions": [
+        1920,
+        1280
+      ]
+    },
+    {
+      "id": "7555696",
+      "alt": "Violet mushrooms against a dark woodland background",
+      "source": "https://pixabay.com/photos/mushrooms-disc-fungus-fall-moss-7555696/",
+      "photographer": "Jürgen Liebherr",
+      "profile": "https://pixabay.com/users/jggrz-7998824/",
+      "permission": "Used with direct permission. Copyright remains with Jürgen Liebherr.",
+      "variants": [
+        {
+          "url": "/assets/fungi/jggrz-7555696-960-e22390b481a8.webp",
+          "width": 960,
+          "height": 640,
+          "sha256": "e22390b481a816364259a8c947d34590d00bff6f23761a05ab7b0412873cab01",
+          "bytes": 31002
+        },
+        {
+          "url": "/assets/fungi/jggrz-7555696-1920-5f2df10ffeb3.webp",
+          "width": 1920,
+          "height": 1280,
+          "sha256": "5f2df10ffeb36c23d7689a4062dc488c477154b685b277208b2ed79b9e8288d1",
+          "bytes": 87080
+        }
+      ],
+      "thumbnail": "/assets/fungi/jggrz-7555696-thumb-1c21cd4c88ad.webp",
+      "original_sha256": "236ae1444ddc6feb85948827584c5d2cdff3a63005ba95ceae04db928e5b1e3e",
+      "original_dimensions": [
+        1920,
+        1280
+      ]
+    },
+    {
+      "id": "5764816",
+      "alt": "Warm light through the gills of orange mushrooms",
+      "source": "https://pixabay.com/photos/mushrooms-moss-forest-floor-lamella-5764816/",
+      "photographer": "Jürgen Liebherr",
+      "profile": "https://pixabay.com/users/jggrz-7998824/",
+      "permission": "Used with direct permission. Copyright remains with Jürgen Liebherr.",
+      "variants": [
+        {
+          "url": "/assets/fungi/jggrz-5764816-960-c434ba19e160.webp",
+          "width": 960,
+          "height": 640,
+          "sha256": "c434ba19e160b92f4a89d91daa19634a357255ef485530e9fdad1631d530fec4",
+          "bytes": 67426
+        },
+        {
+          "url": "/assets/fungi/jggrz-5764816-1920-e38cd453ab3e.webp",
+          "width": 1920,
+          "height": 1280,
+          "sha256": "e38cd453ab3ef13c44f6d4790e2c1dce4957c2f6eb43acec6504564f2e615835",
+          "bytes": 179030
+        },
+        {
+          "url": "/assets/fungi/jggrz-5764816-2560-4570d97f5688.webp",
+          "width": 2560,
+          "height": 1707,
+          "sha256": "4570d97f56889119a12ed001e38bcba3b6ac033996517f469b15b2e217219b78",
+          "bytes": 282032
+        }
+      ],
+      "thumbnail": "/assets/fungi/jggrz-5764816-thumb-05952e43dc04.webp",
+      "original_sha256": "b9f268da2c5d4219acb8dcc83976b4dbbecf7fa19581166dfe2ac5a7d26abe70",
+      "original_dimensions": [
+        6000,
+        4000
+      ]
+    },
+    {
+      "id": "4566638",
+      "alt": "Amber mushrooms growing beside a fallen branch",
+      "source": "https://pixabay.com/photos/forest-mushrooms-screen-fungus-4566638/",
+      "photographer": "Jürgen Liebherr",
+      "profile": "https://pixabay.com/users/jggrz-7998824/",
+      "permission": "Used with direct permission. Copyright remains with Jürgen Liebherr.",
+      "variants": [
+        {
+          "url": "/assets/fungi/jggrz-4566638-960-53aebfa68aaa.webp",
+          "width": 960,
+          "height": 640,
+          "sha256": "53aebfa68aaa55b433e30e67e913fca38bafe762df8ff62b0c65bc52d3a00e6a",
+          "bytes": 123084
+        },
+        {
+          "url": "/assets/fungi/jggrz-4566638-1920-4b0d1fceaaa1.webp",
+          "width": 1920,
+          "height": 1280,
+          "sha256": "4b0d1fceaaa109033a438b05eb11702eed43ad65ddd6ae5be5424de5189afa5e",
+          "bytes": 405510
+        },
+        {
+          "url": "/assets/fungi/jggrz-4566638-2560-c18dd5cf9851.webp",
+          "width": 2560,
+          "height": 1707,
+          "sha256": "c18dd5cf98513473e6c54be2e24d11f5fa26d8792ed3de6f4a36227264950375",
+          "bytes": 714226
+        }
+      ],
+      "thumbnail": "/assets/fungi/jggrz-4566638-thumb-1c36574ab97a.webp",
+      "original_sha256": "91419b7db8af01b16156b22ce23b4a0f291dd9526e4478c6513272c8f8e8ddc4",
+      "original_dimensions": [
+        5394,
+        3596
+      ]
+    },
+    {
+      "id": "7561871",
+      "alt": "Delicate pale mushrooms surrounded by green moss",
+      "source": "https://pixabay.com/photos/mushrooms-helmetlings-moss-7561871/",
+      "photographer": "Jürgen Liebherr",
+      "profile": "https://pixabay.com/users/jggrz-7998824/",
+      "permission": "Used with direct permission. Copyright remains with Jürgen Liebherr.",
+      "variants": [
+        {
+          "url": "/assets/fungi/jggrz-7561871-960-3b9fbcf489c0.webp",
+          "width": 960,
+          "height": 640,
+          "sha256": "3b9fbcf489c0df1d976a0ef6c84ca705917c92ea7ea4747472a655f2cf6de52b",
+          "bytes": 44668
+        },
+        {
+          "url": "/assets/fungi/jggrz-7561871-1920-8d8425ffe469.webp",
+          "width": 1920,
+          "height": 1280,
+          "sha256": "8d8425ffe4693eb485aa28e7780b60226e94e326e84f573b7d798691488233b3",
+          "bytes": 155186
+        }
+      ],
+      "thumbnail": "/assets/fungi/jggrz-7561871-thumb-d90fdd6eca10.webp",
+      "original_sha256": "ab76e5e8017e24200a6021120ed746360bd147df4ebacec39ea44ccce036da88",
+      "original_dimensions": [
+        1920,
+        1280
+      ]
+    }
+  ]
+}

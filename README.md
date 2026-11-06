@@ -121,4 +121,4 @@ Source code is licensed under the [MIT License](LICENSE). That license does not 
 
 ## Image credit
 
-Mushroom photograph: **Jürgen Liebherr (jggrz), used with permission**. [Original photograph](https://pixabay.com/photos/mushroom-helmling-moss-tap-forest-8512804/) · [Photographer](https://pixabay.com/users/jggrz-7998824/). Cropped/resized for the project’s logo, app icons and backgrounds. The software MIT licence does not relicense this photograph.
+Mushroom photograph: **Jürgen Liebherr (jggrz), used with permission**. [Fungi photographic gallery](https://psilocybin-research.com/fungi-gallery.php). [Original photograph](https://pixabay.com/photos/mushroom-helmling-moss-tap-forest-8512804/) · [Photographer](https://pixabay.com/users/jggrz-7998824/). Cropped/resized for the project’s logo, app icons and backgrounds. The software MIT licence does not relicense this photograph.
