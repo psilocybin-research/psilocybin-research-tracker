@@ -10,11 +10,11 @@ $srcset = static fn(array $slide): string => implode(', ', array_map(static fn(a
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Fungi — photographs by Jürgen Liebherr | Psilocybin Research</title>
+<title>Photographs by Jürgen Liebherr | Psilocybin Research</title>
 <meta name="description" content="A quiet photographic journey through the forest floor. Mushroom photography by Jürgen Liebherr, presented with his permission.">
 <link rel="canonical" href="https://psilocybin-research.com/fungi-gallery.php">
 <meta name="theme-color" content="#101612"><meta name="color-scheme" content="dark">
-<meta property="og:type" content="website"><meta property="og:title" content="Fungi — photographs by Jürgen Liebherr">
+<meta property="og:type" content="website"><meta property="og:title" content="Photographs by Jürgen Liebherr">
 <meta property="og:description" content="A quiet photographic journey through the forest floor.">
 <meta property="og:url" content="https://psilocybin-research.com/fungi-gallery.php">
 <meta property="og:image" content="https://psilocybin-research.com<?= h($variant['url']) ?>">
@@ -24,15 +24,14 @@ $srcset = static fn(array $slide): string => implode(', ', array_map(static fn(a
 <script src="assets/fungi-gallery.js?v=<?= h(substr(hash_file('sha256', __DIR__ . '/assets/fungi-gallery.js'), 0, 12)) ?>" defer></script>
 </head>
 <body>
-<main class="gallery" id="gallery" aria-label="Fungi photographic gallery">
+<main class="gallery" id="gallery" aria-label="Photographic slideshow">
   <div class="photograph active" aria-hidden="true"><img class="backdrop" src="<?= h($variant['url']) ?>" alt=""><img class="picture" src="<?= h($variant['url']) ?>" srcset="<?= h($srcset($first)) ?>" sizes="100vw" alt=""></div>
   <div class="photograph" aria-hidden="true"><img class="backdrop" alt=""><img class="picture" alt=""></div>
   <header class="gallery-header chrome">
     <a class="return-link" href="/" aria-label="Return to Psilocybin Research"><span aria-hidden="true">←</span><span>Psilocybin Research</span></a>
-    <h1>Fungi</h1>
     <button class="icon-button" id="fullscreen" type="button" aria-label="Enter full screen" title="Full screen" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5m0 8v5h-5M3 16v5h5"/></svg></button>
   </header>
-  <div class="gallery-caption chrome"><p id="description"><?= h($first['alt']) ?></p><p class="credit">Photography by <a href="<?= h($gallery['profile']) ?>" target="_blank" rel="noopener">Jürgen Liebherr</a> <span class="credit-dot" aria-hidden="true">·</span> <a id="source-link" href="<?= h($first['source']) ?>" target="_blank" rel="noopener">View on Pixabay ↗</a></p></div>
+  <div class="gallery-caption chrome"><p class="credit">Photography by <a href="<?= h($gallery['profile']) ?>" target="_blank" rel="noopener">Jürgen Liebherr</a> <span class="credit-dot" aria-hidden="true">·</span> <a id="source-link" href="<?= h($first['source']) ?>" target="_blank" rel="noopener">View on Pixabay ↗</a></p></div>
   <div class="gallery-controls chrome" role="group" aria-label="Slideshow controls">
     <button class="icon-button" id="previous" type="button" aria-label="Previous photograph" title="Previous photograph"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button>
     <button class="icon-button play-button" id="play" type="button" aria-label="Pause slideshow" title="Pause slideshow"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="play-path" d="M8 5v14M16 5v14"/></svg></button>

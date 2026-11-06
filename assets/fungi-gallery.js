@@ -42,7 +42,6 @@
   }
   function update(manual) {
     const slide = slides[index];
-    byId('description').textContent = slide.alt;
     byId('source-link').href = slide.source;
     byId('counter').innerHTML = String(index + 1).padStart(2, '0') + ' <span aria-hidden="true">/</span> ' + String(slides.length).padStart(2, '0');
     byId('counter').setAttribute('aria-label', 'Photograph ' + (index + 1) + ' of ' + slides.length);
