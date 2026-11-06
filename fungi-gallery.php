@@ -28,7 +28,7 @@ $srcset = static fn(array $slide): string => implode(', ', array_map(static fn(a
   <div class="photograph active" aria-hidden="true"><img class="backdrop" src="<?= h($variant['url']) ?>" alt=""><img class="picture" src="<?= h($variant['url']) ?>" srcset="<?= h($srcset($first)) ?>" sizes="100vw" alt=""></div>
   <div class="photograph" aria-hidden="true"><img class="backdrop" alt=""><img class="picture" alt=""></div>
   <header class="gallery-header chrome">
-    <a class="return-link" href="/" aria-label="Return to Psilocybin Research"><span aria-hidden="true">←</span><span>Psilocybin Research</span></a>
+    <a class="return-link" href="/" aria-label="Return to Psilocybin-Research.com"><span>Psilocybin-Research.com</span><span aria-hidden="true">←</span></a>
     <button class="icon-button" id="fullscreen" type="button" aria-label="Enter full screen" title="Full screen" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5m0 8v5h-5M3 16v5h5"/></svg></button>
   </header>
   <div class="gallery-caption chrome"><p class="credit">Photography by <a href="<?= h($gallery['profile']) ?>" target="_blank" rel="noopener">Jürgen Liebherr</a> <span class="credit-dot" aria-hidden="true">·</span> <a id="source-link" href="<?= h($first['source']) ?>" target="_blank" rel="noopener">View on Pixabay ↗</a></p></div>
