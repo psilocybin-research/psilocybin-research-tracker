@@ -27,12 +27,16 @@ final class TranscriptomicsSnapshot
     }
     private function rows(string $sql, array $args = []): array
     {
-        return array_map(static fn($row) => json_decode($row['payload'], true, 64, JSON_THROW_ON_ERROR) + ['source_table' => $row['source']], $this->query($sql, $args));
+        return array_map(static fn($row) => json_decode($row['payload'], true, 64, JSON_THROW_ON_ERROR) + ['source_table' => $row['source']] + (isset($row['contrast']) ? ['contrast' => $row['contrast']] : []), $this->query($sql, $args));
+    }
+    private function atlasUrl(string $view, array $parameters = []): string
+    {
+        return rtrim($this->manifest['source']['atlas_url'], '/') . '/#' . http_build_query(['view' => $view] + $parameters, '', '&', PHP_QUERY_RFC3986);
     }
     private function envelope(array $data): array
     {
         $manifest = $this->manifest;
-        return ['data' => $data, 'provenance' => [
+        return ['data' => $data, 'atlas_links' => ['overview' => $this->atlasUrl('overview'), 'methods' => $this->atlasUrl('methods'), 'scope' => 'Links open the maintained visual atlas. The MCP numerical results remain pinned to the cited Zenodo release. Gene explorer links display all three contrasts; related section links do not imply every imported model or test has its own visualisation.'], 'provenance' => [
             'snapshot_id' => $manifest['snapshot_id'], 'analysis_version' => $manifest['source']['analysis_version'], 'doi' => $manifest['source']['doi'],
             'analysis_commit' => $manifest['source']['analysis_commit'], 'query_database_sha256' => $manifest['database']['sha256'],
             'manifest_url' => rtrim(Config::publicBaseUrl(), '/') . '/transcriptomics-manifest.php',
@@ -65,7 +69,7 @@ final class TranscriptomicsSnapshot
         if (array_key_exists('limit',$args) && (!is_int($args['limit']) || $args['limit'] < 1 || $args['limit'] > $maxLimit)) throw new InvalidArgumentException('Limit outside the supported range.');
         $maxOffset = $name === 'search_transcriptomic_genes' ? 50000 : 100;
         if (array_key_exists('offset',$args) && (!is_int($args['offset']) || $args['offset'] < 0 || $args['offset'] > $maxOffset)) throw new InvalidArgumentException('Offset outside the supported range.');
-        if ($name === 'get_transcriptomic_provenance') return $this->envelope(['manifest' => $this->manifest(), 'analysis_units' => $this->document('design'), 'sample_metadata' => $this->document('samples'), 'license_and_attribution_notices' => $this->document('notices')]);
+        if ($name === 'get_transcriptomic_provenance') return $this->envelope(['manifest' => $this->manifest(), 'analysis_units' => $this->document('design'), 'sample_metadata' => $this->document('samples'), 'license_and_attribution_notices' => $this->document('notices'), 'atlas_url' => $this->atlasUrl('methods')]);
         if ($name === 'search_transcriptomic_genes') {
             $query = trim($args['query']);
             $escaped = str_replace(['\\','%','_'], ['\\\\','\\%','\\_'], $query);
@@ -74,17 +78,20 @@ final class TranscriptomicsSnapshot
             $total = (int)$this->query('SELECT COUNT(DISTINCT gene_id) AS n FROM genes WHERE ' . $where, $params)[0]['n'];
             $limit = $args['limit'] ?? 20; $offset = $args['offset'] ?? 0;
             $rows = $this->query('SELECT DISTINCT gene_id,symbol FROM genes WHERE ' . $where . ' ORDER BY CASE WHEN symbol = ? COLLATE NOCASE OR gene_id = ? THEN 0 ELSE 1 END,symbol COLLATE NOCASE,gene_id LIMIT ' . $limit . ' OFFSET ' . $offset, [...$params,$query,$query]);
+            foreach ($rows as &$row) $row['atlas_url'] = $this->atlasUrl('genes', ['gene' => $row['gene_id']]);
+            unset($row);
             return $this->envelope(['genes' => $rows, 'total' => $total, 'offset' => $offset, 'limit' => $limit, 'next_offset' => $offset + count($rows) < $total ? $offset + count($rows) : null, 'scope' => 'Literal substring discovery among genes present in primary result tables; not semantic search or a complete genome catalogue.']);
         }
         if ($name === 'get_transcriptomic_gene') {
             $gene = trim($args['gene']);
             $where = '(symbol=? COLLATE NOCASE OR gene_id=? OR stable_id=?)'; $params = [$gene,$gene,strtoupper($gene)];
             if (isset($args['contrast'])) { $where .= ' AND contrast=?'; $params[] = $args['contrast']; }
-            $rows = $this->rows('SELECT payload,source FROM genes WHERE ' . $where . ' ORDER BY gene_id,contrast', $params);
+            $rows = $this->rows('SELECT payload,source,contrast FROM genes WHERE ' . $where . ' ORDER BY gene_id,contrast', $params);
             if (!$rows) throw new OutOfBoundsException('No matching primary result. Search gene symbols or Ensembl IDs; absence here is not evidence of no expression or no biological effect.');
             if (count($rows) > 30) throw new InvalidArgumentException('Ambiguous symbol; select one Ensembl gene ID from search_transcriptomic_genes.');
             $membership = $this->document('membership');
             foreach ($rows as &$row) {
+                $row['atlas_url'] = $this->atlasUrl('genes', ['gene' => $row['gene_id']]);
                 $row['pathway_memberships'] = array_keys(array_filter($membership, static fn($genes) => in_array($row['symbol'], $genes, true)));
             }
             unset($row);
@@ -98,7 +105,11 @@ final class TranscriptomicsSnapshot
             foreach ($selected as $pathway) {
                 $where = 'name=?'; $params = [$pathway];
                 if (isset($args['contrast'])) { $where .= ' AND contrast=?'; $params[] = $args['contrast']; }
-                $results[] = ['pathway' => $pathway,
+                 $atlasByContrast = [];
+                foreach (isset($args['contrast']) ? [$args['contrast']] : $this->manifest['contrasts'] as $comparison) {
+                    $atlasByContrast[$comparison] = ['pathway' => $this->atlasUrl('pathways', ['pathway' => $pathway, 'contrast' => $comparison]), 'robustness' => $this->atlasUrl('robustness', ['pathway' => $pathway, 'contrast' => $comparison])];
+                }
+                $results[] = ['pathway' => $pathway, 'atlas_links_by_contrast' => $atlasByContrast,
                     'fgsea_all_variants' => $this->rows("SELECT payload,source FROM records WHERE family='fgsea' AND " . $where . ' ORDER BY contrast,variant', $params),
                     'camera_both_settings' => $this->rows("SELECT payload,source FROM records WHERE family='camera' AND " . $where . ' ORDER BY contrast,variant', $params)];
             }
@@ -108,7 +119,7 @@ final class TranscriptomicsSnapshot
             $topic = $args['topic'] ?? 'all'; $families = match ($topic) { 'oxphos' => ['camera','bayesian','alias'], 'dna' => ['dna'], 'redox' => ['redox'], default => ['camera','bayesian','alias','dna','redox'] };
             $results = [];
             foreach ($families as $family) $results[$family] = $this->rows('SELECT payload,source FROM records WHERE family=? ORDER BY source,name,contrast,variant', [$family]);
-            return $this->envelope(['results' => $results, 'scope' => 'Complete imported rows for each requested family, including null and nonsignificant results. No filtering by significance or preferred model. Not posterior draws or fitted model objects.', 'methods' => ['camera' => 'reports/camera_sensitivity_methods.md', 'bayesian' => 'reports/bayesian_oxphos_methods.md', 'dna' => 'reports/dna_maintenance_results.md', 'redox' => 'config/targeted_redox_v1.json', 'alias' => 'reports/oxphos_alias_sensitivity.md']]);
+            return $this->envelope(['results' => $results, 'atlas_section_links' => ['oxphos_robustness' => $this->atlasUrl('robustness', ['pathway' => 'HALLMARK_OXIDATIVE_PHOSPHORYLATION', 'contrast' => 'day1_vs_control']), 'dna_maintenance' => $this->atlasUrl('dna'), 'redox_context' => $this->atlasUrl('overview')], 'scope' => 'Complete imported rows for each requested family, including null and nonsignificant results. No filtering by significance or preferred model. Not posterior draws or fitted model objects.', 'methods' => ['camera' => 'reports/camera_sensitivity_methods.md', 'bayesian' => 'reports/bayesian_oxphos_methods.md', 'dna' => 'reports/dna_maintenance_results.md', 'redox' => 'config/targeted_redox_v1.json', 'alias' => 'reports/oxphos_alias_sensitivity.md']]);
         }
         throw new InvalidArgumentException('Unknown transcriptomics tool.');
     }

@@ -107,11 +107,13 @@ def check(base):
         require(manifest['record_count'] == stats['record_count'], 'Same-revision MCP statistics and dataset counts differ')
     transcript = client.tool('get_transcriptomic_provenance')
     transcript_manifest = _http.json_response(urljoin(base,'transcriptomics-manifest.php'))
+    require(transcript['atlas_links']['methods'].endswith('#view=methods'), 'Atlas methods link missing')
     require(transcript['data']['manifest'] == transcript_manifest, 'Transcriptomics resource and provenance differ')
     require(transcript_manifest['source']['doi'] == '10.5281/zenodo.23283595', 'Unexpected transcriptomics release')
     require(client.tool('search_transcriptomic_genes', {'query':'GPX4','limit':1})['data']['genes'][0]['symbol'] == 'GPX4', 'Gene search failed')
     require(len(client.tool('get_transcriptomic_gene', {'gene':'GPX4'})['data']['results']) == 3, 'Gene contrasts missing')
     pathway = client.tool('get_transcriptomic_pathways', {'query':'oxidative phosphorylation'})['data']['pathways'][0]
+    require(set(pathway['atlas_links_by_contrast']) == {'day1_vs_control','day3_vs_control','day3_vs_day1'}, 'Contrast-specific atlas links missing')
     require(len(pathway['camera_both_settings']) == 6, 'Both CAMERA settings and all contrasts required')
     require({r['mode'] for r in pathway['camera_both_settings']} == {'estimated','fixed_0.01'}, 'CAMERA setting lost')
     robust = client.tool('get_transcriptomic_robustness')['data']['results']
