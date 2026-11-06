@@ -36,12 +36,11 @@ $srcset = static fn(array $slide): string => implode(', ', array_map(static fn(a
     <button class="icon-button" id="previous" type="button" aria-label="Previous photograph" title="Previous photograph"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button>
     <button class="icon-button play-button" id="play" type="button" aria-label="Pause slideshow" title="Pause slideshow"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="play-path" d="M8 5v14M16 5v14"/></svg></button>
     <button class="icon-button" id="next" type="button" aria-label="Next photograph" title="Next photograph"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 5 7 7-7 7"/></svg></button>
-    <span class="counter" id="counter" aria-label="Photograph 1 of <?= count($gallery['slides']) ?>">01 <span aria-hidden="true">/</span> <?= sprintf('%02d', count($gallery['slides'])) ?></span>
     <span class="control-divider" aria-hidden="true"></span>
     <button class="icon-button" id="browse" type="button" aria-label="Browse photographs" aria-expanded="false" aria-controls="thumbnails" title="Browse photographs"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z"/></svg></button>
   </div>
   <nav class="thumbnails chrome" id="thumbnails" aria-label="Choose a photograph" hidden>
-    <?php foreach ($gallery['slides'] as $index => $slide): ?><button type="button" data-index="<?= $index ?>" aria-label="Photograph <?= $index + 1 ?>: <?= h($slide['alt']) ?>" aria-current="<?= $index === 0 ? 'true' : 'false' ?>"><img src="<?= h($slide['thumbnail']) ?>" alt="" loading="lazy"><span><?= sprintf('%02d', $index + 1) ?></span></button><?php endforeach; ?>
+    <?php foreach ($gallery['slides'] as $index => $slide): ?><button type="button" data-index="<?= $index ?>" aria-label="Photograph <?= $index + 1 ?>: <?= h($slide['alt']) ?>" aria-current="<?= $index === 0 ? 'true' : 'false' ?>"><img src="<?= h($slide['thumbnail']) ?>" alt="" loading="lazy"></button><?php endforeach; ?>
   </nav>
   <p class="sr-only" id="announcement" aria-live="polite" aria-atomic="true"></p>
   <p class="load-error chrome" id="load-error" role="status" hidden>The photograph could not be loaded. Please try another.</p>

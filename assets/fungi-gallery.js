@@ -43,8 +43,6 @@
   function update(manual) {
     const slide = slides[index];
     byId('source-link').href = slide.source;
-    byId('counter').innerHTML = String(index + 1).padStart(2, '0') + ' <span aria-hidden="true">/</span> ' + String(slides.length).padStart(2, '0');
-    byId('counter').setAttribute('aria-label', 'Photograph ' + (index + 1) + ' of ' + slides.length);
     thumbnails.querySelectorAll('button').forEach((button, i) => button.setAttribute('aria-current', String(i === index)));
     if (manual) byId('announcement').textContent = 'Photograph ' + (index + 1) + ' of ' + slides.length + ': ' + slide.alt;
     gallery.dataset.slide = String(index);
