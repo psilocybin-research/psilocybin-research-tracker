@@ -6,17 +6,6 @@
   const byId = id => document.getElementById(id);
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const thumbnails = byId('thumbnails'), browse = byId('browse'), play = byId('play');
-  const thumbnailSurface = document.createElement('div');
-  thumbnailSurface.className = 'thumbnail-surface chrome';
-  thumbnailSurface.hidden = true; thumbnailSurface.setAttribute('aria-hidden', 'true');
-  gallery.insertBefore(thumbnailSurface, thumbnails);
-  function syncThumbnailSurface() {
-    if (thumbnails.hidden) return;
-    const panel = thumbnails.getBoundingClientRect(), frame = gallery.getBoundingClientRect();
-    Object.assign(thumbnailSurface.style, {left: (panel.left - frame.left) + 'px', top: (panel.top - frame.top) + 'px', width: panel.width + 'px', height: panel.height + 'px'});
-  }
-  if (typeof ResizeObserver === 'function') new ResizeObserver(syncThumbnailSurface).observe(thumbnails);
-  window.addEventListener('resize', syncThumbnailSurface, {passive: true});
   let index = 0, active = 0, playing = !reduced.matches, busy = false, queued = null, timer, quietTimer, touchStart;
   const prepared = new Map();
   const pausePath = 'M8 5v14M16 5v14', playPath = 'm9 5 11 7-11 7Z';
@@ -90,8 +79,7 @@
   play.onclick = togglePlay;
   function setBrowse(open) {
     const restoreFocus = !open && thumbnails.contains(document.activeElement);
-    thumbnails.hidden = !open; thumbnailSurface.hidden = !open;
-    if (open) syncThumbnailSurface();
+    thumbnails.hidden = !open;
     browse.setAttribute('aria-expanded', String(open));
     const label = open ? 'Close photographs' : 'Browse photographs';
     browse.setAttribute('aria-label', label); browse.title = label;
