@@ -93,6 +93,8 @@ def build(archive, source, root=ROOT):
             return data
         def table(path):
             data = read(path)
+            if license_map.get(path,{}).get('spdx') not in {'CC-BY-4.0','CC0-1.0','MIT AND CC-BY-4.0','MIT AND CC-BY-4.0 AND CC0-1.0'}:
+                raise ValueError('Source table requires a new rights review: ' + path)
             reader = csv.DictReader(io.StringIO(data.decode('utf-8')))
             rows = [{key: convert(value) for key, value in row.items()} for row in reader]
             descriptors.append({'path': path, 'sha256': hashlib.sha256(data).hexdigest(), 'bytes': len(data), 'rows': len(rows), 'columns': reader.fieldnames, 'rights': license_map[path], 'url': source['pinned_repository'] + '/blob/' + source['analysis_commit'] + '/' + path})
@@ -122,6 +124,9 @@ def build(archive, source, root=ROOT):
             notices = '\n\n'.join('## ' + path + '\n\n' + read(path).decode() for path in ['LICENSE.md','THIRD_PARTY_NOTICES.md','ATLAS_THIRD_PARTY_NOTICES.md','LICENSES/MIT.txt','LICENSES/CC-BY-4.0.txt','LICENSES/CC0-1.0.txt'])
             db.execute('INSERT INTO documents VALUES(?,?,?)',('notices',dumps(notices),'LICENSE.md; THIRD_PARTY_NOTICES.md; ATLAS_THIRD_PARTY_NOTICES.md; LICENSES/'))
             membership = json.loads(read('explorer/src/data/atlas.json'))['membership']
+            review = json.loads(read('metadata/gene_set_redistribution_review.json'))
+            approved = {item['id'] for item in review['frozen_gene_sets'] + review.get('additional_redistributed_sets',[]) if item.get('redistribution_approved') is True}
+            if set(membership) - approved: raise ValueError('Unreviewed gene-set membership cannot be served')
             db.execute('INSERT INTO documents VALUES(?,?,?)',('membership',dumps(membership),'explorer/src/data/atlas.json'))
             db.commit()
             assert db.execute('PRAGMA integrity_check').fetchone()[0] == 'ok'

@@ -802,6 +802,17 @@
           "2004-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California"
         ]
       }
+    },
+    {
+      "path": "metadata/gene_set_redistribution_review.json",
+      "sha256": "2ee9610c009653ffbfcbcf7036785a9fb841e015ca2b9996f359b88374a38c2b",
+      "bytes": 5683,
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      }
     }
   ],
   "field_definitions": {
