@@ -14,3 +14,11 @@ licence for third parties to reuse our copies.
 Adaptations: crops, resizing, format conversion, application-icon variants
 and social-preview layouts. Some previews add the official EU emblem.
 Credit: Photo: Jürgen Liebherr (jggrz), used with permission.
+
+Additional use: the Fungi gallery presents the logo-source photograph first,
+followed by five further photographs by Jürgen Liebherr, supplied by the
+project owner. Direct permission for a slideshow was confirmed in Pixabay
+correspondence supplied on 6 November 2026. Each photograph links to its
+source; assets/fungi and config/fungi-gallery.json retain source identifiers,
+photographer attribution and derivative checksums. Gallery copies are resized
+and converted to WebP; original downloads remain unchanged.
