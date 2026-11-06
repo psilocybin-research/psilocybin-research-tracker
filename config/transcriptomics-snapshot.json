@@ -1,0 +1,846 @@
+{
+  "schema_version": 1,
+  "snapshot_id": "zenodo-23283595-3160a87e725e",
+  "source": {
+    "record_id": "23283595",
+    "analysis_version": "1.2.0",
+    "doi": "10.5281/zenodo.23283595",
+    "archive_url": "https://zenodo.org/records/23283595/files/psilocin-human-neuron-transcriptomics-v1.2.0.zip?download=1",
+    "archive_bytes": 148671524,
+    "archive_md5": "3a10554b4ea3de1fe7d6521a84e65ce1",
+    "archive_sha256": "3160a87e725eef42f8f608fba69abb64ef418f07b12fada5d84cbea2ad1f0e48",
+    "pinned_repository": "https://github.com/psilocybin-research/psilocin-human-neuron-transcriptomics",
+    "analysis_commit": "d732838ee117940f008bb3acd9534694be5e16dd",
+    "atlas_url": "https://psilocybin-research.github.io/psilocin-human-neuron-transcriptomics/"
+  },
+  "database": {
+    "path": "data/transcriptomics/zenodo-23283595-3160a87e725e/results-2feb7085ea592b8e.sqlite",
+    "sha256": "2feb7085ea592b8e46f400eb5357ebbd0af0981a2a7438242f87072c52a05570",
+    "bytes": 28643328
+  },
+  "gene_count": 21154,
+  "contrasts": [
+    "day1_vs_control",
+    "day3_vs_control",
+    "day3_vs_day1"
+  ],
+  "tables": [
+    {
+      "path": "tables/transcriptomics/primary_day1_vs_control_genes.csv",
+      "sha256": "f1d4fbfaa6b55eabef36baaca50e9ca17aa4fbe7702310889347f7575f097a4e",
+      "bytes": 2920963,
+      "rows": 21154,
+      "columns": [
+        "baseMean",
+        "log2FoldChange",
+        "lfcSE",
+        "stat",
+        "pvalue",
+        "padj",
+        "gene_id",
+        "symbol"
+      ],
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      },
+      "url": "https://github.com/psilocybin-research/psilocin-human-neuron-transcriptomics/blob/d732838ee117940f008bb3acd9534694be5e16dd/tables/transcriptomics/primary_day1_vs_control_genes.csv"
+    },
+    {
+      "path": "tables/transcriptomics/primary_day3_vs_control_genes.csv",
+      "sha256": "3e3744696c1915ac62a064cb3436698281fe38800f68d19aa9324d652afdde1d",
+      "bytes": 2914062,
+      "rows": 21154,
+      "columns": [
+        "baseMean",
+        "log2FoldChange",
+        "lfcSE",
+        "stat",
+        "pvalue",
+        "padj",
+        "gene_id",
+        "symbol"
+      ],
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      },
+      "url": "https://github.com/psilocybin-research/psilocin-human-neuron-transcriptomics/blob/d732838ee117940f008bb3acd9534694be5e16dd/tables/transcriptomics/primary_day3_vs_control_genes.csv"
+    },
+    {
+      "path": "tables/transcriptomics/primary_day3_vs_day1_genes.csv",
+      "sha256": "64b4546a50bfae8b256f3b68fab8793324a6c1c8a26ad25002cc21495f3f7171",
+      "bytes": 2914494,
+      "rows": 21154,
+      "columns": [
+        "baseMean",
+        "log2FoldChange",
+        "lfcSE",
+        "stat",
+        "pvalue",
+        "padj",
+        "gene_id",
+        "symbol"
+      ],
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      },
+      "url": "https://github.com/psilocybin-research/psilocin-human-neuron-transcriptomics/blob/d732838ee117940f008bb3acd9534694be5e16dd/tables/transcriptomics/primary_day3_vs_day1_genes.csv"
+    },
+    {
+      "path": "tables/transcriptomics/enrichment_all.csv",
+      "sha256": "2e93a3fb942f5a3a9651426518d2be716a3ddab4e928d7968a0ff13fff369525",
+      "bytes": 187414,
+      "rows": 420,
+      "columns": [
+        "pathway",
+        "pval",
+        "log2err",
+        "ES",
+        "NES",
+        "size",
+        "leadingEdge",
+        "tier",
+        "variant",
+        "contrast",
+        "rank_kind",
+        "fgsea_internal_padj",
+        "ranked_genes",
+        "rank_ties",
+        "family_fdr"
+      ],
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      },
+      "url": "https://github.com/psilocybin-research/psilocin-human-neuron-transcriptomics/blob/d732838ee117940f008bb3acd9534694be5e16dd/tables/transcriptomics/enrichment_all.csv"
+    },
+    {
+      "path": "tables/camera_sensitivity/all_tests.csv",
+      "sha256": "b1d215f50d5515bbcf4c1116030ab8c5f03025bc9b5d09808b00e0645d3d2dd7",
+      "bytes": 4718,
+      "rows": 30,
+      "columns": [
+        "NGenes",
+        "Correlation",
+        "Direction",
+        "PValue",
+        "pathway",
+        "mode",
+        "contrast",
+        "variance_inflation_factor",
+        "camera_per_contrast_FDR",
+        "residual_df",
+        "family_fdr"
+      ],
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      },
+      "url": "https://github.com/psilocybin-research/psilocin-human-neuron-transcriptomics/blob/d732838ee117940f008bb3acd9534694be5e16dd/tables/camera_sensitivity/all_tests.csv"
+    },
+    {
+      "path": "tables/bayesian_oxphos/posterior_summary.csv",
+      "sha256": "4c2f1a7a07d36ab26e8e2b7487e1dd9f422f4a5d952246c4e39ac51fa3793394",
+      "bytes": 12907,
+      "rows": 60,
+      "columns": [
+        "fit",
+        "likelihood",
+        "effect_sd",
+        "residual_sd",
+        "parameter",
+        "mean",
+        "median",
+        "lower95",
+        "upper95",
+        "probability_gt_zero",
+        "prior_lower95",
+        "prior_upper95",
+        "posterior_prior_width_ratio",
+        "computationally_valid"
+      ],
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      },
+      "url": "https://github.com/psilocybin-research/psilocin-human-neuron-transcriptomics/blob/d732838ee117940f008bb3acd9534694be5e16dd/tables/bayesian_oxphos/posterior_summary.csv"
+    },
+    {
+      "path": "tables/bayesian_oxphos/diagnostics.csv",
+      "sha256": "b09c243ce274beb5d58128e30aa4810e739656f963795691c873d177e3a65378",
+      "bytes": 1745,
+      "rows": 18,
+      "columns": [
+        "fit",
+        "rhat_max",
+        "ess_bulk_min",
+        "ess_tail_min",
+        "divergences",
+        "passed",
+        "attempt"
+      ],
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      },
+      "url": "https://github.com/psilocybin-research/psilocin-human-neuron-transcriptomics/blob/d732838ee117940f008bb3acd9534694be5e16dd/tables/bayesian_oxphos/diagnostics.csv"
+    },
+    {
+      "path": "tables/bayesian_oxphos/paired_scores.csv",
+      "sha256": "fc187a00d0fd24ee88345b3fcfb5498c765bc2eafd1bfc8ef2c5f9d3cadc45d1",
+      "bytes": 280,
+      "rows": 3,
+      "columns": [
+        "block",
+        "day1_vs_control",
+        "day3_vs_control",
+        "treated_day3_minus_day1"
+      ],
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      },
+      "url": "https://github.com/psilocybin-research/psilocin-human-neuron-transcriptomics/blob/d732838ee117940f008bb3acd9534694be5e16dd/tables/bayesian_oxphos/paired_scores.csv"
+    },
+    {
+      "path": "tables/bayesian_oxphos/profile_scores.csv",
+      "sha256": "77008643557ba6ebf57053118dd49a52ecae6f8ac82b87cf7cc8a0bcf1c0da53",
+      "bytes": 754,
+      "rows": 9,
+      "columns": [
+        "profile",
+        "block",
+        "condition",
+        "score",
+        "mapped_genes"
+      ],
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      },
+      "url": "https://github.com/psilocybin-research/psilocin-human-neuron-transcriptomics/blob/d732838ee117940f008bb3acd9534694be5e16dd/tables/bayesian_oxphos/profile_scores.csv"
+    },
+    {
+      "path": "tables/bayesian_oxphos/predictive_checks.csv",
+      "sha256": "79d29a1d9fdb573d5d0e4ad9c4611fed69252236da65f75c70e7dc52add61491",
+      "bytes": 33233,
+      "rows": 240,
+      "columns": [
+        "fit",
+        "source",
+        "contrast",
+        "statistic",
+        "lower95",
+        "median",
+        "upper95",
+        "observed",
+        "block",
+        "percentile"
+      ],
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      },
+      "url": "https://github.com/psilocybin-research/psilocin-human-neuron-transcriptomics/blob/d732838ee117940f008bb3acd9534694be5e16dd/tables/bayesian_oxphos/predictive_checks.csv"
+    },
+    {
+      "path": "tables/dna_maintenance/all_tests.csv",
+      "sha256": "b15fd1a0fd4850d95992ea11ef3c7fee745c1b466e1e1c7b8441df19c577a71f",
+      "bytes": 105118,
+      "rows": 240,
+      "columns": [
+        "module",
+        "kind",
+        "contrast",
+        "variant",
+        "mapped",
+        "total",
+        "ranked_genes",
+        "rank_ties",
+        "NES",
+        "ES",
+        "pval",
+        "leadingEdge",
+        "log2err",
+        "family_fdr"
+      ],
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      },
+      "url": "https://github.com/psilocybin-research/psilocin-human-neuron-transcriptomics/blob/d732838ee117940f008bb3acd9534694be5e16dd/tables/dna_maintenance/all_tests.csv"
+    },
+    {
+      "path": "tables/dna_maintenance/canonical_panel.csv",
+      "sha256": "cbef295af89dc7a73c0dd62f56951f63401331bd8444ad8a7f59a75c87636b36",
+      "bytes": 6710,
+      "rows": 54,
+      "columns": [
+        "gene",
+        "contrast",
+        "gene_id",
+        "availability",
+        "log2FoldChange",
+        "lfcSE",
+        "gene_fdr",
+        "telomere_le",
+        "dna_repair_le"
+      ],
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      },
+      "url": "https://github.com/psilocybin-research/psilocin-human-neuron-transcriptomics/blob/d732838ee117940f008bb3acd9534694be5e16dd/tables/dna_maintenance/canonical_panel.csv"
+    },
+    {
+      "path": "tables/dna_maintenance/concordance.csv",
+      "sha256": "f97fd8d59fa25e3cc61e82785f11a7befc85b2864d8f88c6487fa715d6605095",
+      "bytes": 972,
+      "rows": 6,
+      "columns": [
+        "selection",
+        "statistic",
+        "n",
+        "spearman",
+        "same_sign_n",
+        "positive_both_n",
+        "zero_either_n",
+        "same_sign_fraction",
+        "interpretation"
+      ],
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      },
+      "url": "https://github.com/psilocybin-research/psilocin-human-neuron-transcriptomics/blob/d732838ee117940f008bb3acd9534694be5e16dd/tables/dna_maintenance/concordance.csv"
+    },
+    {
+      "path": "tables/dna_maintenance/telomere_decomposition.csv",
+      "sha256": "e3e2cbaf8c778086e34ccd471bfc1e565b113b699ae680ce199e0b234eb05607",
+      "bytes": 18198,
+      "rows": 30,
+      "columns": [
+        "gene",
+        "gene_id",
+        "day1_le",
+        "day3_le",
+        "dna_member",
+        "dna_day1_le",
+        "dna_day3_le",
+        "modules",
+        "reactome_children",
+        "child_names",
+        "reaction_annotations",
+        "reaction_ids",
+        "annotation_basis",
+        "day1_log2fc",
+        "day1_SE",
+        "day1_stat",
+        "day1_gene_fdr",
+        "day3_log2fc",
+        "day3_SE",
+        "day3_stat",
+        "day3_gene_fdr",
+        "day3_minus_day1_log2fc",
+        "day3_minus_day1_SE",
+        "day3_minus_day1_stat",
+        "day3_minus_day1_gene_fdr"
+      ],
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      },
+      "url": "https://github.com/psilocybin-research/psilocin-human-neuron-transcriptomics/blob/d732838ee117940f008bb3acd9534694be5e16dd/tables/dna_maintenance/telomere_decomposition.csv"
+    },
+    {
+      "path": "tables/targeted_redox/all_tests.csv",
+      "sha256": "8b64d573119bceac8836294f223044a082f4130a4b4298ba297763e555606174",
+      "bytes": 14003,
+      "rows": 80,
+      "columns": [
+        "module",
+        "contrast",
+        "variant",
+        "method",
+        "mapped",
+        "total",
+        "coverage",
+        "estimate",
+        "pval",
+        "leadingEdge",
+        "log2err",
+        "family_fdr"
+      ],
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      },
+      "url": "https://github.com/psilocybin-research/psilocin-human-neuron-transcriptomics/blob/d732838ee117940f008bb3acd9534694be5e16dd/tables/targeted_redox/all_tests.csv"
+    },
+    {
+      "path": "tables/oxphos_alias/primary_comparison.csv",
+      "sha256": "1cc745ef5ce83f83b482968443b62bb48dbcfe41dd575f57823ed1a4d5e54a92",
+      "bytes": 3107,
+      "rows": 3,
+      "columns": [
+        "variant",
+        "contrast",
+        "baseline_mapped",
+        "baseline_NES",
+        "baseline_pval",
+        "mapped",
+        "NES",
+        "pval",
+        "delta_NES",
+        "leading_edge",
+        "rescued_leading_edge",
+        "bonferroni_15",
+        "robustness"
+      ],
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      },
+      "url": "https://github.com/psilocybin-research/psilocin-human-neuron-transcriptomics/blob/d732838ee117940f008bb3acd9534694be5e16dd/tables/oxphos_alias/primary_comparison.csv"
+    },
+    {
+      "path": "tables/oxphos_alias/alias_mapping.csv",
+      "sha256": "d86eee92098d39a3690e65eb4e58de84514a7d2c124ade8d311d981242e8a546",
+      "bytes": 1899,
+      "rows": 18,
+      "columns": [
+        "current_symbol",
+        "hgnc_id",
+        "ensembl_stable_id",
+        "source_symbol",
+        "source_gene_id",
+        "selected_gene_id",
+        "status"
+      ],
+      "rights": {
+        "spdx": "CC0-1.0",
+        "copyright": [
+          "HGNC 2026"
+        ]
+      },
+      "url": "https://github.com/psilocybin-research/psilocin-human-neuron-transcriptomics/blob/d732838ee117940f008bb3acd9534694be5e16dd/tables/oxphos_alias/alias_mapping.csv"
+    },
+    {
+      "path": "metadata/schmidt_analysis_units.csv",
+      "sha256": "4d77c47b012f59ed468ba7b6edd6361da7e6cd680a317b80550dc9ad262deb02",
+      "bytes": 1009,
+      "rows": 9,
+      "columns": [
+        "analysis_unit",
+        "block",
+        "condition",
+        "Cell_line",
+        "Batch",
+        "libraries_n",
+        "RIN_min",
+        "RIN_max",
+        "RIN_mean",
+        "source_samples"
+      ],
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      },
+      "url": "https://github.com/psilocybin-research/psilocin-human-neuron-transcriptomics/blob/d732838ee117940f008bb3acd9534694be5e16dd/metadata/schmidt_analysis_units.csv"
+    },
+    {
+      "path": "metadata/schmidt_core_samples.csv",
+      "sha256": "4c1a9d96d7b1f99ccfeb1639128b1082ca60bdf1686afff072880d90acdbe2cc",
+      "bytes": 6827,
+      "rows": 23,
+      "columns": [
+        "ODCF_name",
+        "ID",
+        "ASID",
+        "Name",
+        "sample_name",
+        "RIN",
+        "Cell_line",
+        "Condition",
+        "Culture",
+        "Batch",
+        "QC_comment",
+        "timepoint_d",
+        "Age generation of fibroblasts ",
+        "Sex",
+        "Psi_conc_uM",
+        "Psi_trt_time_min",
+        "Ket_conc_uM",
+        "Ket_trt_time_min",
+        "PLG_conc_uM",
+        "PLG_trt_time_min",
+        "Condition_simple",
+        "Treatment_simple",
+        "block",
+        "condition",
+        "post_exposure_day",
+        "analysis_unit",
+        "biological_unit_status",
+        "control_time_status"
+      ],
+      "rights": {
+        "spdx": "MIT AND CC-BY-4.0",
+        "copyright": [
+          "2026 Anne Hoffrichter",
+          "2026 Christopher B. Germann"
+        ]
+      },
+      "url": "https://github.com/psilocybin-research/psilocin-human-neuron-transcriptomics/blob/d732838ee117940f008bb3acd9534694be5e16dd/metadata/schmidt_core_samples.csv"
+    }
+  ],
+  "verified_archive_inputs": [
+    {
+      "path": "tables/transcriptomics/primary_day1_vs_control_genes.csv",
+      "sha256": "f1d4fbfaa6b55eabef36baaca50e9ca17aa4fbe7702310889347f7575f097a4e",
+      "bytes": 2920963,
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      }
+    },
+    {
+      "path": "tables/transcriptomics/primary_day3_vs_control_genes.csv",
+      "sha256": "3e3744696c1915ac62a064cb3436698281fe38800f68d19aa9324d652afdde1d",
+      "bytes": 2914062,
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      }
+    },
+    {
+      "path": "tables/transcriptomics/primary_day3_vs_day1_genes.csv",
+      "sha256": "64b4546a50bfae8b256f3b68fab8793324a6c1c8a26ad25002cc21495f3f7171",
+      "bytes": 2914494,
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      }
+    },
+    {
+      "path": "tables/transcriptomics/enrichment_all.csv",
+      "sha256": "2e93a3fb942f5a3a9651426518d2be716a3ddab4e928d7968a0ff13fff369525",
+      "bytes": 187414,
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      }
+    },
+    {
+      "path": "tables/camera_sensitivity/all_tests.csv",
+      "sha256": "b1d215f50d5515bbcf4c1116030ab8c5f03025bc9b5d09808b00e0645d3d2dd7",
+      "bytes": 4718,
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      }
+    },
+    {
+      "path": "tables/bayesian_oxphos/posterior_summary.csv",
+      "sha256": "4c2f1a7a07d36ab26e8e2b7487e1dd9f422f4a5d952246c4e39ac51fa3793394",
+      "bytes": 12907,
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      }
+    },
+    {
+      "path": "tables/bayesian_oxphos/diagnostics.csv",
+      "sha256": "b09c243ce274beb5d58128e30aa4810e739656f963795691c873d177e3a65378",
+      "bytes": 1745,
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      }
+    },
+    {
+      "path": "tables/bayesian_oxphos/paired_scores.csv",
+      "sha256": "fc187a00d0fd24ee88345b3fcfb5498c765bc2eafd1bfc8ef2c5f9d3cadc45d1",
+      "bytes": 280,
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      }
+    },
+    {
+      "path": "tables/bayesian_oxphos/profile_scores.csv",
+      "sha256": "77008643557ba6ebf57053118dd49a52ecae6f8ac82b87cf7cc8a0bcf1c0da53",
+      "bytes": 754,
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      }
+    },
+    {
+      "path": "tables/bayesian_oxphos/predictive_checks.csv",
+      "sha256": "79d29a1d9fdb573d5d0e4ad9c4611fed69252236da65f75c70e7dc52add61491",
+      "bytes": 33233,
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      }
+    },
+    {
+      "path": "tables/dna_maintenance/all_tests.csv",
+      "sha256": "b15fd1a0fd4850d95992ea11ef3c7fee745c1b466e1e1c7b8441df19c577a71f",
+      "bytes": 105118,
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      }
+    },
+    {
+      "path": "tables/dna_maintenance/canonical_panel.csv",
+      "sha256": "cbef295af89dc7a73c0dd62f56951f63401331bd8444ad8a7f59a75c87636b36",
+      "bytes": 6710,
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      }
+    },
+    {
+      "path": "tables/dna_maintenance/concordance.csv",
+      "sha256": "f97fd8d59fa25e3cc61e82785f11a7befc85b2864d8f88c6487fa715d6605095",
+      "bytes": 972,
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      }
+    },
+    {
+      "path": "tables/dna_maintenance/telomere_decomposition.csv",
+      "sha256": "e3e2cbaf8c778086e34ccd471bfc1e565b113b699ae680ce199e0b234eb05607",
+      "bytes": 18198,
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      }
+    },
+    {
+      "path": "tables/targeted_redox/all_tests.csv",
+      "sha256": "8b64d573119bceac8836294f223044a082f4130a4b4298ba297763e555606174",
+      "bytes": 14003,
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      }
+    },
+    {
+      "path": "tables/oxphos_alias/primary_comparison.csv",
+      "sha256": "1cc745ef5ce83f83b482968443b62bb48dbcfe41dd575f57823ed1a4d5e54a92",
+      "bytes": 3107,
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      }
+    },
+    {
+      "path": "tables/oxphos_alias/alias_mapping.csv",
+      "sha256": "d86eee92098d39a3690e65eb4e58de84514a7d2c124ade8d311d981242e8a546",
+      "bytes": 1899,
+      "rights": {
+        "spdx": "CC0-1.0",
+        "copyright": [
+          "HGNC 2026"
+        ]
+      }
+    },
+    {
+      "path": "metadata/schmidt_analysis_units.csv",
+      "sha256": "4d77c47b012f59ed468ba7b6edd6361da7e6cd680a317b80550dc9ad262deb02",
+      "bytes": 1009,
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      }
+    },
+    {
+      "path": "metadata/schmidt_core_samples.csv",
+      "sha256": "4c1a9d96d7b1f99ccfeb1639128b1082ca60bdf1686afff072880d90acdbe2cc",
+      "bytes": 6827,
+      "rights": {
+        "spdx": "MIT AND CC-BY-4.0",
+        "copyright": [
+          "2026 Anne Hoffrichter",
+          "2026 Christopher B. Germann"
+        ]
+      }
+    },
+    {
+      "path": "LICENSE.md",
+      "sha256": "5dba23703e59e39157a9d65fad75eacd6610f6c0203a877c61015d8d332579f2",
+      "bytes": 1735,
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      }
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "sha256": "4c5d1b0218f5cafad3dbf78d9fee6e8e85a32843d1f060253decac3505e3904f",
+      "bytes": 2101,
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      }
+    },
+    {
+      "path": "ATLAS_THIRD_PARTY_NOTICES.md",
+      "sha256": "c6aebf93344f0b280b0afb3c90766b2028b6022f88bc274d06a3823fc3dc5f58",
+      "bytes": 1126,
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann"
+        ]
+      }
+    },
+    {
+      "path": "LICENSES/MIT.txt",
+      "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5",
+      "bytes": 1078,
+      "rights": {}
+    },
+    {
+      "path": "LICENSES/CC-BY-4.0.txt",
+      "sha256": "d557539df68e771cc1eedcc91d13f70fca930e508d11eedcafa4b15db49e3744",
+      "bytes": 17023,
+      "rights": {}
+    },
+    {
+      "path": "LICENSES/CC0-1.0.txt",
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499",
+      "bytes": 7048,
+      "rights": {}
+    },
+    {
+      "path": "explorer/src/data/atlas.json",
+      "sha256": "8326664da0d1156bfb5172be2429a6d16a6e81936cedb1aa7eb634cbd6d78230",
+      "bytes": 1750263,
+      "rights": {
+        "spdx": "CC-BY-4.0",
+        "copyright": [
+          "2026 Christopher B. Germann",
+          "2004-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California"
+        ]
+      }
+    }
+  ],
+  "field_definitions": {
+    "log2FoldChange": "Unshrunken DESeq2 log2 expression fold-change; not mitochondrial activity.",
+    "lfcSE": "Standard error of the log2 fold-change estimate.",
+    "baseMean": "Mean DESeq2-normalized count across modeled profiles.",
+    "stat": "DESeq2 Wald statistic.",
+    "pvalue": "Unadjusted gene-level p-value.",
+    "padj": "DESeq2 adjusted gene-level p-value; null denotes missing, not zero.",
+    "NES": "FGSEA normalized enrichment score; not a gene-expression effect size.",
+    "pval": "Unadjusted p-value for the test identified by the table/method.",
+    "PValue": "Unadjusted CAMERA p-value.",
+    "family_fdr": "Adjusted p-value within this analysis table's declared test family. Families differ; consult its source report.",
+    "fgsea_internal_padj": "FGSEA internal adjustment; family_fdr is the declared family correction.",
+    "mode": "CAMERA correlation specification: estimated or fixed_0.01; neither is independent replication.",
+    "Correlation": "Inter-gene correlation used by CAMERA.",
+    "variance_inflation_factor": "Variance inflation due to gene correlation, not an expression effect size.",
+    "residual_df": "Residual degrees of freedom; fixed CAMERA reference df differs; see methods.",
+    "probability_gt_zero": "Posterior probability conditional on the specified model and priors.",
+    "mean": "Bayesian posterior mean of the named parameter; expression-score differences are not gene-level fold changes.",
+    "lower95": "Lower 95% posterior credible bound in posterior_summary.",
+    "upper95": "Upper 95% posterior credible bound in posterior_summary.",
+    "fit": "Bayesian likelihood and prior specification; all ten models are available.",
+    "leadingEdge": "Semicolon-separated leading-edge genes, selected by FGSEA; not independently validated mediators."
+  },
+  "limitations": [
+    "Independent secondary analysis of Schmidt et al.; not a new experiment or independent replication.",
+    "Three differentiation blocks, two cell-line backgrounds, nine pooled profiles and 23 libraries. The CAMERA model has four residual degrees of freedom.",
+    "Control harvest age is unresolved. Common-control contrasts are not verified matched-age treatment effects; Day 3 minus Day 1 is not a treatment-by-time interaction.",
+    "Transcriptional associations do not establish mitochondrial respiration, redox flux, telomerase activity, telomere preservation or lengthening.",
+    "FGSEA, CAMERA and Bayesian analyses reuse the same experiment and answer different questions. Adjusted p-values and posterior probabilities are not interchangeable.",
+    "Estimated-correlation CAMERA is nonsignificant for OXPHOS; fixed-0.01 CAMERA is more favorable. Both settings must be reported. Their reference degrees of freedom also differ (4 versus 21,096).",
+    "Bayesian probabilities are conditional on models and priors; Day 1 magnitude is prior-sensitive and Day 3 intervals include zero.",
+    "Telomere enrichment is exploratory; removing DNA-repair overlap retains significance only at Day 1. Coordinated NRF2–glutathione support was not established."
+  ],
+  "citations": {
+    "source_study": "Schmidt M, Hoffrichter A, Davoudi M, et al. (2026). Psilocin fosters neuroplasticity in iPSC-derived human cortical neurons. eLife 14:RP104006. https://doi.org/10.7554/eLife.104006.3",
+    "reanalysis": "Germann CB (2026). Metabolic and redox transcription after brief psilocin exposure in human iPSC-derived cortical neurons. Version 1.2.0. https://doi.org/10.5281/zenodo.23283595"
+  },
+  "scope": "Query derivative of the fixed Zenodo archive. No statistical reanalysis; source CSV values retained, missing values become JSON null, numbers become JSON numbers. Not a mirror of raw data, fitted objects or posterior draws.",
+  "update_policy": "Pinned release; GitHub/atlas changes never alter this snapshot. A new Zenodo release requires checksum review, rebuild, tests and deployment. No runtime calls to Zenodo or GitHub."
+}

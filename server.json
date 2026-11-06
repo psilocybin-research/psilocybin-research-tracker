@@ -1,9 +1,9 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "com.psilocybin-research/research",
-  "title": "Psilocybin Research MCP — Papers, Trials and Research Data",
-  "description": "Free, read-only psilocybin/psilocin papers, trials, citations and verified research datasets.",
-  "version": "1.0.0",
+  "title": "Psilocybin Research MCP \u2014 Papers, Trials and Research Data",
+  "description": "Read-only psilocybin literature, trials, verified datasets and versioned transcriptomics results.",
+  "version": "1.2.0",
   "websiteUrl": "https://psilocybin-research.com/",
   "icons": [
     {

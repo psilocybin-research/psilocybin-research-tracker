@@ -45,8 +45,18 @@ jobs:
       - name: Lint PHP files
         run: find . -name '*.php' -print0 | xargs -0 -n1 php -l
 
+      - name: Prepare fixed transcriptomics query snapshot
+        run: |
+          mkdir -p data
+          transcriptomics_archive_url=$(python3 -c 'import json; print(json.load(open("config/transcriptomics-source.json"))["archive_url"])')
+          curl -fL --retry 2 --max-time 180 -o data/transcriptomics-source.zip "$transcriptomics_archive_url"
+          python3 bin/build-transcriptomics-snapshot.py --archive data/transcriptomics-source.zip
+          python3 -m unittest discover -s tests -p test_transcriptomics_snapshot.py -v
+
       - name: Run regression tests
-        run: php tests/run.php
+        run: |
+          php tests/run.php
+          php tests/transcriptomics.php
 
   project-quality:
     name: Project quality

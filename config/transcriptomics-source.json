@@ -1,0 +1,12 @@
+{
+  "record_id": "23283595",
+  "analysis_version": "1.2.0",
+  "doi": "10.5281/zenodo.23283595",
+  "archive_url": "https://zenodo.org/records/23283595/files/psilocin-human-neuron-transcriptomics-v1.2.0.zip?download=1",
+  "archive_bytes": 148671524,
+  "archive_md5": "3a10554b4ea3de1fe7d6521a84e65ce1",
+  "archive_sha256": "3160a87e725eef42f8f608fba69abb64ef418f07b12fada5d84cbea2ad1f0e48",
+  "pinned_repository": "https://github.com/psilocybin-research/psilocin-human-neuron-transcriptomics",
+  "analysis_commit": "d732838ee117940f008bb3acd9534694be5e16dd",
+  "atlas_url": "https://psilocybin-research.github.io/psilocin-human-neuron-transcriptomics/"
+}

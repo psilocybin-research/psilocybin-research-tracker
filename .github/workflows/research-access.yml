@@ -34,6 +34,8 @@ jobs:
         run: Rscript -e 'install.packages(c("jsonlite", "digest"), repos="https://cloud.r-project.org")'
       - name: Reproduce one snapshot in R, Python, notebook and SQL
         run: python3 tools/reproducible/check_examples.py --output "$RUNNER_TEMP/research-examples"
+      - name: Check for a newer transcriptomics release
+        run: python3 bin/build-transcriptomics-snapshot.py --check-latest --require-current
       - name: Verify the public MCP research connector
         run: python3 bin/check-mcp-access.py --report "$RUNNER_TEMP/mcp-access.json"
       - name: Record verification result
