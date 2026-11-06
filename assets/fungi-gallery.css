@@ -29,3 +29,4 @@
 @media(max-width:600px) and (min-height:481px){.gallery-dots{top:calc(max(22px,env(safe-area-inset-top)) + 46px)}}
 @media(max-height:480px){.gallery-dots{top:10px}}
 @media(prefers-reduced-motion:reduce){.gallery-dots span{transition:none}}
+#fullscreen{mix-blend-mode:hard-light}#fullscreen[aria-pressed=true]{mix-blend-mode:normal}
