@@ -10,11 +10,11 @@ $srcset = static fn(array $slide): string => implode(', ', array_map(static fn(a
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Fungi — photographs by Jürgen Liebherr | Psilocybin Research</title>
+<title>Photographs by Jürgen Liebherr | Psilocybin Research</title>
 <meta name="description" content="A quiet photographic journey through the forest floor. Mushroom photography by Jürgen Liebherr, presented with his permission.">
 <link rel="canonical" href="https://psilocybin-research.com/fungi-gallery.php">
 <meta name="theme-color" content="#101612"><meta name="color-scheme" content="dark">
-<meta property="og:type" content="website"><meta property="og:title" content="Fungi — photographs by Jürgen Liebherr">
+<meta property="og:type" content="website"><meta property="og:title" content="Photographs by Jürgen Liebherr">
 <meta property="og:description" content="A quiet photographic journey through the forest floor.">
 <meta property="og:url" content="https://psilocybin-research.com/fungi-gallery.php">
 <meta property="og:image" content="https://psilocybin-research.com<?= h($variant['url']) ?>">
@@ -24,26 +24,26 @@ $srcset = static fn(array $slide): string => implode(', ', array_map(static fn(a
 <script src="assets/fungi-gallery.js?v=<?= h(substr(hash_file('sha256', __DIR__ . '/assets/fungi-gallery.js'), 0, 12)) ?>" defer></script>
 </head>
 <body>
-<main class="gallery" id="gallery" aria-label="Fungi photographic gallery">
-  <div class="photograph active" aria-hidden="true"><img class="backdrop" src="<?= h($variant['url']) ?>" alt=""><img class="picture" src="<?= h($variant['url']) ?>" srcset="<?= h($srcset($first)) ?>" sizes="100vw" alt=""></div>
+<main class="gallery fill" id="gallery" aria-label="Photographic slideshow">
+  <div class="photograph active" aria-hidden="true"><img class="backdrop" src="<?= h($variant['url']) ?>" alt=""><img class="picture" style="object-position:<?= h($first['position'] ?? '50% 50%') ?>" src="<?= h($variant['url']) ?>" srcset="<?= h($srcset($first)) ?>" sizes="100vw" alt=""></div>
   <div class="photograph" aria-hidden="true"><img class="backdrop" alt=""><img class="picture" alt=""></div>
   <header class="gallery-header chrome">
-    <a class="return-link" href="/" aria-label="Return to Psilocybin Research"><span aria-hidden="true">←</span><span>Psilocybin Research</span></a>
-    <h1>Fungi</h1>
+    <a class="return-link" href="/" aria-label="Return to Psilocybin-Research.com"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg><span>Psilocybin-Research.com</span></a>
     <button class="icon-button" id="fullscreen" type="button" aria-label="Enter full screen" title="Full screen" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5m0 8v5h-5M3 16v5h5"/></svg></button>
   </header>
-  <div class="gallery-caption chrome"><p id="description"><?= h($first['alt']) ?></p><p class="credit">Photography by <a href="<?= h($gallery['profile']) ?>" target="_blank" rel="noopener">Jürgen Liebherr</a> <span class="credit-dot" aria-hidden="true">·</span> <a id="source-link" href="<?= h($first['source']) ?>" target="_blank" rel="noopener">View on Pixabay ↗</a></p></div>
+  <nav class="gallery-dots chrome" aria-label="Slide navigation">
+    <?php foreach ($gallery['slides'] as $index => $slide): ?><button type="button" data-slide-index="<?= $index ?>" aria-label="Photograph <?= $index + 1 ?>" aria-current="<?= $index === 0 ? 'true' : 'false' ?>"><span aria-hidden="true"></span></button><?php endforeach; ?>
+  </nav>
+  <div class="gallery-caption chrome"><p class="credit">Photography by <a href="<?= h($gallery['profile']) ?>" target="_blank" rel="noopener">Jürgen Liebherr</a> <span class="credit-dot" aria-hidden="true">·</span> Used with permission <span class="credit-dot" aria-hidden="true">·</span> <a id="source-link" href="<?= h($first['source']) ?>" target="_blank" rel="noopener">View on Pixabay ↗</a></p></div>
   <div class="gallery-controls chrome" role="group" aria-label="Slideshow controls">
     <button class="icon-button" id="previous" type="button" aria-label="Previous photograph" title="Previous photograph"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button>
     <button class="icon-button play-button" id="play" type="button" aria-label="Pause slideshow" title="Pause slideshow"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="play-path" d="M8 5v14M16 5v14"/></svg></button>
     <button class="icon-button" id="next" type="button" aria-label="Next photograph" title="Next photograph"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 5 7 7-7 7"/></svg></button>
-    <span class="counter" id="counter" aria-label="Photograph 1 of <?= count($gallery['slides']) ?>">01 <span aria-hidden="true">/</span> <?= sprintf('%02d', count($gallery['slides'])) ?></span>
     <span class="control-divider" aria-hidden="true"></span>
-    <button class="icon-button" id="fit" type="button" aria-label="Fill screen with photograph" aria-pressed="false" title="Fill screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8V4h4m8 0h4v4m0 8v4h-4M8 20H4v-4M9 9h6v6H9z"/></svg></button>
     <button class="icon-button" id="browse" type="button" aria-label="Browse photographs" aria-expanded="false" aria-controls="thumbnails" title="Browse photographs"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z"/></svg></button>
   </div>
   <nav class="thumbnails chrome" id="thumbnails" aria-label="Choose a photograph" hidden>
-    <?php foreach ($gallery['slides'] as $index => $slide): ?><button type="button" data-index="<?= $index ?>" aria-label="Photograph <?= $index + 1 ?>: <?= h($slide['alt']) ?>" aria-current="<?= $index === 0 ? 'true' : 'false' ?>"><img src="<?= h($slide['thumbnail']) ?>" alt="" loading="lazy"><span><?= sprintf('%02d', $index + 1) ?></span></button><?php endforeach; ?>
+    <?php foreach ($gallery['slides'] as $index => $slide): ?><button type="button" data-index="<?= $index ?>" aria-label="Photograph <?= $index + 1 ?>: <?= h($slide['alt']) ?>" aria-current="<?= $index === 0 ? 'true' : 'false' ?>"><img src="<?= h($slide['thumbnail']) ?>" alt="" loading="lazy"></button><?php endforeach; ?>
   </nav>
   <p class="sr-only" id="announcement" aria-live="polite" aria-atomic="true"></p>
   <p class="load-error chrome" id="load-error" role="status" hidden>The photograph could not be loaded. Please try another.</p>
