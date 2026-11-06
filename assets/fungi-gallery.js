@@ -84,25 +84,29 @@
     const button = event.target.closest('button[data-index]'); if (!button) return;
     show(Number(button.dataset.index)); setBrowse(false); browse.focus();
   };
-  byId('fit').onclick = () => {
-    const fill = gallery.classList.toggle('fill');
-    byId('fit').setAttribute('aria-pressed', String(fill));
-    const label = fill ? 'Show the whole photograph' : 'Fill screen with photograph';
-    byId('fit').setAttribute('aria-label', label); byId('fit').title = label; wake();
-  };
   const requestName = ['requestFullscreen', 'webkitRequestFullscreen'].find(name => typeof gallery[name] === 'function');
   const exitName = ['exitFullscreen', 'webkitExitFullscreen'].find(name => typeof document[name] === 'function');
   const full = byId('fullscreen');
-  if (requestName && exitName) {
+  const fullscreenEnabled = document.fullscreenEnabled ?? document.webkitFullscreenEnabled;
+  if (requestName && exitName && fullscreenEnabled !== false) {
     full.hidden = false;
     full.onclick = async () => {
       try {
         if (document.fullscreenElement || document.webkitFullscreenElement) await document[exitName]();
         else await gallery[requestName]();
+        if (!full.matches(':focus-visible')) full.blur();
       } catch { byId('announcement').textContent = 'Full screen is unavailable in this browser.'; }
       wake();
     };
-    const updateFull = () => full.setAttribute('aria-label', document.fullscreenElement || document.webkitFullscreenElement ? 'Exit full screen' : 'Enter full screen');
+    const updateFull = () => {
+      const isFull = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+      const label = isFull ? 'Exit full screen' : 'Enter full screen';
+      full.setAttribute('aria-label', label); full.title = label;
+      full.setAttribute('aria-pressed', String(isFull));
+      full.querySelector('path').setAttribute('d', isFull ? 'M3 8h5V3m8 0v5h5m0 8h-5v5M8 21v-5H3' : 'M8 3H3v5m13-5h5v5m0 8v5h-5M3 16v5h5');
+      wake();
+    };
+    updateFull();
     document.addEventListener('fullscreenchange', updateFull); document.addEventListener('webkitfullscreenchange', updateFull);
   }
   document.addEventListener('keydown', event => {

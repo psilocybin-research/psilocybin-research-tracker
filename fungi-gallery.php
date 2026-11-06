@@ -24,7 +24,7 @@ $srcset = static fn(array $slide): string => implode(', ', array_map(static fn(a
 <script src="assets/fungi-gallery.js?v=<?= h(substr(hash_file('sha256', __DIR__ . '/assets/fungi-gallery.js'), 0, 12)) ?>" defer></script>
 </head>
 <body>
-<main class="gallery" id="gallery" aria-label="Photographic slideshow">
+<main class="gallery fill" id="gallery" aria-label="Photographic slideshow">
   <div class="photograph active" aria-hidden="true"><img class="backdrop" src="<?= h($variant['url']) ?>" alt=""><img class="picture" src="<?= h($variant['url']) ?>" srcset="<?= h($srcset($first)) ?>" sizes="100vw" alt=""></div>
   <div class="photograph" aria-hidden="true"><img class="backdrop" alt=""><img class="picture" alt=""></div>
   <header class="gallery-header chrome">
@@ -38,7 +38,6 @@ $srcset = static fn(array $slide): string => implode(', ', array_map(static fn(a
     <button class="icon-button" id="next" type="button" aria-label="Next photograph" title="Next photograph"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 5 7 7-7 7"/></svg></button>
     <span class="counter" id="counter" aria-label="Photograph 1 of <?= count($gallery['slides']) ?>">01 <span aria-hidden="true">/</span> <?= sprintf('%02d', count($gallery['slides'])) ?></span>
     <span class="control-divider" aria-hidden="true"></span>
-    <button class="icon-button" id="fit" type="button" aria-label="Fill screen with photograph" aria-pressed="false" title="Fill screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8V4h4m8 0h4v4m0 8v4h-4M8 20H4v-4M9 9h6v6H9z"/></svg></button>
     <button class="icon-button" id="browse" type="button" aria-label="Browse photographs" aria-expanded="false" aria-controls="thumbnails" title="Browse photographs"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z"/></svg></button>
   </div>
   <nav class="thumbnails chrome" id="thumbnails" aria-label="Choose a photograph" hidden>
