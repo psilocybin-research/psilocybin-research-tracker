@@ -20,3 +20,12 @@
 @media(hover:hover){#gallery .gallery-controls:not(.gallery-controls-blended):hover{opacity:1}#gallery .gallery-controls:not(.gallery-controls-blended):hover+.gallery-controls-blended{opacity:0}}
 #gallery.quiet .gallery-controls{opacity:0}
 @media(prefers-reduced-motion:reduce){#gallery .gallery-controls{transition:none}}
+
+.gallery-dots{position:absolute;top:max(22px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);display:flex;align-items:center}
+.gallery-dots button{display:grid;place-items:center;width:28px;height:44px;padding:0;border:0;background:none;color:#fff;cursor:pointer;touch-action:manipulation}
+.gallery-dots span{display:block;width:4px;height:4px;border-radius:50%;background:currentColor;opacity:.45;box-shadow:0 1px 4px #0008;transition:opacity .2s ease,transform .2s ease}
+.gallery-dots button[aria-current=true] span{opacity:1;transform:scale(1.5)}
+.gallery-dots button:hover span{opacity:.85}.gallery-dots button:focus-visible{outline:1px solid #fff;outline-offset:-4px;border-radius:20px}
+@media(max-width:600px) and (min-height:481px){.gallery-dots{top:calc(max(22px,env(safe-area-inset-top)) + 46px)}}
+@media(max-height:480px){.gallery-dots{top:10px}}
+@media(prefers-reduced-motion:reduce){.gallery-dots span{transition:none}}

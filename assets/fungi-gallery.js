@@ -57,6 +57,7 @@
     const slide = slides[index];
     byId('source-link').href = slide.source;
     thumbnails.querySelectorAll('button').forEach((button, i) => button.setAttribute('aria-current', String(i === index)));
+    gallery.querySelectorAll('[data-slide-index]').forEach((button, i) => button.setAttribute('aria-current', String(i === index)));
     if (manual) byId('announcement').textContent = 'Photograph ' + (index + 1) + ' of ' + slides.length + ': ' + slide.alt;
     gallery.dataset.slide = String(index);
     prepare((index + 1) % slides.length).catch(() => {});
@@ -85,6 +86,10 @@
     }
   }
   const togglePlay = () => { playing = !playing; syncPlay(); wake(); };
+  gallery.querySelector('.gallery-dots').onclick = event => {
+    const button = event.target.closest('[data-slide-index]');
+    if (button) { wake(); show(Number(button.dataset.slideIndex)); }
+  };
   byId('next').onclick = () => { wake(); show(index + 1); };
   byId('previous').onclick = () => { wake(); show(index - 1); };
   play.onclick = togglePlay;

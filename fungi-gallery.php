@@ -31,6 +31,9 @@ $srcset = static fn(array $slide): string => implode(', ', array_map(static fn(a
     <a class="return-link" href="/" aria-label="Return to Psilocybin-Research.com"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg><span>Psilocybin-Research.com</span></a>
     <button class="icon-button" id="fullscreen" type="button" aria-label="Enter full screen" title="Full screen" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5m0 8v5h-5M3 16v5h5"/></svg></button>
   </header>
+  <nav class="gallery-dots chrome" aria-label="Slide navigation">
+    <?php foreach ($gallery['slides'] as $index => $slide): ?><button type="button" data-slide-index="<?= $index ?>" aria-label="Photograph <?= $index + 1 ?>" aria-current="<?= $index === 0 ? 'true' : 'false' ?>"><span aria-hidden="true"></span></button><?php endforeach; ?>
+  </nav>
   <div class="gallery-caption chrome"><p class="credit">Photography by <a href="<?= h($gallery['profile']) ?>" target="_blank" rel="noopener">Jürgen Liebherr</a> <span class="credit-dot" aria-hidden="true">·</span> Used with permission <span class="credit-dot" aria-hidden="true">·</span> <a id="source-link" href="<?= h($first['source']) ?>" target="_blank" rel="noopener">View on Pixabay ↗</a></p></div>
   <div class="gallery-controls chrome" role="group" aria-label="Slideshow controls">
     <button class="icon-button" id="previous" type="button" aria-label="Previous photograph" title="Previous photograph"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button>
