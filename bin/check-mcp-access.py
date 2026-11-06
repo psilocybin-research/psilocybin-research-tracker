@@ -12,7 +12,7 @@ _spec = spec_from_file_location('research_access', Path(__file__).with_name('che
 _http = module_from_spec(_spec)
 _spec.loader.exec_module(_http)
 require = _http.require
-TOOLS = {'search', 'fetch', 'search_publications', 'search_trials', 'get_citation', 'get_citation_relationships', 'get_annual_statistics', 'get_dataset_downloads', 'get_study_relationships'}
+TOOLS = {'search', 'fetch', 'search_publications', 'search_trials', 'get_citation', 'get_citation_relationships', 'get_annual_statistics', 'get_dataset_downloads', 'get_study_relationships', 'search_transcriptomic_genes', 'get_transcriptomic_gene', 'get_transcriptomic_pathways', 'get_transcriptomic_robustness', 'get_transcriptomic_provenance'}
 VERSION = '2025-11-25'
 
 
@@ -105,8 +105,20 @@ def check(base):
     require(manifest['snapshot_id'] == http_manifest['snapshot_id'] and manifest['artifacts'] == http_manifest['artifacts'] and manifest['complete'] is True, 'MCP download manifest differs from public HTTP')
     if manifest['catalogue_revision'] == stats['catalogue_revision']:
         require(manifest['record_count'] == stats['record_count'], 'Same-revision MCP statistics and dataset counts differ')
+    transcript = client.tool('get_transcriptomic_provenance')
+    transcript_manifest = _http.json_response(urljoin(base,'transcriptomics-manifest.php'))
+    require(transcript['data']['manifest'] == transcript_manifest, 'Transcriptomics resource and provenance differ')
+    require(transcript_manifest['source']['doi'] == '10.5281/zenodo.23283595', 'Unexpected transcriptomics release')
+    require(client.tool('search_transcriptomic_genes', {'query':'GPX4','limit':1})['data']['genes'][0]['symbol'] == 'GPX4', 'Gene search failed')
+    require(len(client.tool('get_transcriptomic_gene', {'gene':'GPX4'})['data']['results']) == 3, 'Gene contrasts missing')
+    pathway = client.tool('get_transcriptomic_pathways', {'query':'oxidative phosphorylation'})['data']['pathways'][0]
+    require(len(pathway['camera_both_settings']) == 6, 'Both CAMERA settings and all contrasts required')
+    require({r['mode'] for r in pathway['camera_both_settings']} == {'estimated','fixed_0.01'}, 'CAMERA setting lost')
+    robust = client.tool('get_transcriptomic_robustness')['data']['results']
+    require(len(robust['camera']) == 30, 'Complete CAMERA families missing')
+    require(len({r['fit'] for r in robust['bayesian'] if r['source_table'].endswith('posterior_summary.csv')}) == 10, 'Bayesian model omitted')
     resources = client.rpc('resources/list')['resources']
-    require(len(resources) == 3, 'Finite MCP resource list changed')
+    require(len(resources) == 4, 'Finite MCP resource list changed')
     for resource in resources:
         require(resource['uri'].startswith(base), 'Unexpected MCP resource origin')
         content = client.rpc('resources/read', {'uri': resource['uri']})['contents'][0]
@@ -122,7 +134,7 @@ def check(base):
         require(error.code == 405, 'MCP GET must describe unsupported standalone SSE transport')
     return {'status': 'passed', 'endpoint': client.endpoint, 'protocol': VERSION, 'server_version': init['serverInfo']['version'],
             'tools': sorted(TOOLS), 'resources': len(resources), 'observed_at_utc': _http.datetime.now(_http.timezone.utc).isoformat(),
-            'record_count': manifest['record_count'], 'snapshot_id': manifest['snapshot_id'], 'requests': client.counter}
+            'record_count': manifest['record_count'], 'snapshot_id': manifest['snapshot_id'], 'transcriptomics_snapshot':transcript_manifest['snapshot_id'], 'requests': client.counter}
 
 
 def main():
