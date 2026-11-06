@@ -11,4 +11,12 @@
 
 
 .gallery-controls{border-color:#ffffff30;mix-blend-mode:color-dodge}.play-button{border-color:#ffffff30}.icon-button{opacity:.92}.icon-button:hover,.icon-button:focus-visible{opacity:1}
-.gallery-controls:focus-within,.gallery-controls:active{mix-blend-mode:normal}@media(hover:hover){.gallery-controls:hover{mix-blend-mode:normal}}
+
+
+#gallery .gallery-controls{opacity:0;mix-blend-mode:normal;transition:opacity .28s ease}
+#gallery .gallery-controls-blended{opacity:1;mix-blend-mode:color-dodge;pointer-events:none}
+#gallery .gallery-controls:is(:focus-within,:active){opacity:1}
+#gallery .gallery-controls:is(:focus-within,:active)+.gallery-controls-blended{opacity:0}
+@media(hover:hover){#gallery .gallery-controls:not(.gallery-controls-blended):hover{opacity:1}#gallery .gallery-controls:not(.gallery-controls-blended):hover+.gallery-controls-blended{opacity:0}}
+#gallery.quiet .gallery-controls{opacity:0}
+@media(prefers-reduced-motion:reduce){#gallery .gallery-controls{transition:none}}

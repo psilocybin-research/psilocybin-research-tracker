@@ -6,6 +6,19 @@
   const byId = id => document.getElementById(id);
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const thumbnails = byId('thumbnails'), browse = byId('browse'), play = byId('play');
+  const controls = gallery.querySelector('.gallery-controls');
+  const blendedControls = controls.cloneNode(true);
+  blendedControls.classList.add('gallery-controls-blended');
+  blendedControls.setAttribute('aria-hidden', 'true'); blendedControls.inert = true;
+  blendedControls.removeAttribute('role'); blendedControls.removeAttribute('aria-label');
+  function mirrorControls() {
+    blendedControls.innerHTML = controls.innerHTML;
+    blendedControls.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
+    blendedControls.querySelectorAll('button,a,[tabindex]').forEach(node => node.setAttribute('tabindex', '-1'));
+  }
+  mirrorControls(); controls.after(blendedControls);
+  new MutationObserver(mirrorControls).observe(controls, {subtree: true, attributes: true, childList: true, characterData: true});
+
   let index = 0, active = 0, playing = !reduced.matches, busy = false, queued = null, timer, quietTimer, touchStart;
   const prepared = new Map();
   const pausePath = 'M8 5v14M16 5v14', playPath = 'm9 5 11 7-11 7Z';
