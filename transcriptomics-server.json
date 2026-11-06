@@ -1,0 +1,23 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "com.psilocybin-research/transcriptomics",
+  "title": "Psilocin Human Neuron Transcriptomics",
+  "description": "Read-only psilocin human-neuron gene results, pathway sensitivities and archived provenance.",
+  "version": "2.0.0",
+  "websiteUrl": "https://psilocybin-research.github.io/psilocin-human-neuron-transcriptomics/",
+  "icons": [
+    {
+      "src": "https://psilocybin-research.com/assets/pwa/icon-192.png",
+      "mimeType": "image/png",
+      "sizes": [
+        "192x192"
+      ]
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://psilocybin-research.com/mcp/transcriptomics"
+    }
+  ]
+}
