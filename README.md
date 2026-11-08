@@ -48,7 +48,8 @@ The tracker helps researchers, clinicians, journalists, policy analysts, and adv
 | Citation workflow | BibTeX, RIS, CSV, JSON, LaTeX, citation copying, DOI and PubMed links |
 | Research exploration | Analytics, author pages, evidence pages, related records, and an interactive citation network |
 | Monitoring | Double opt-in email alerts and Web Push notifications |
-| Reuse | Public API and read-only MCP connector, embeddable widgets, rights-safe SQLite download, R toolkit, PWA |
+| Reuse | Public API and read-only MCP connector, embeddable widgets, rights-safe SQLite and RDS downloads, R toolkit, PWA |
+| Hosted R analysis | Open browser-side webR workspace with custom R code, tables, plots, PDF reports and complete LaTeX source exports |
 
 ## Public database and AI access
 
@@ -68,6 +69,14 @@ These URLs describe the current deployed service; a repository checkout or earli
 The [public research access workflow](.github/workflows/research-access.yml) runs daily and on demand using `python3 bin/check-research-access.py` and `python3 bin/check-mcp-access.py`. It downloads and checks the published files, reconciles annual counts against public SQLite, checks documentation response types, and exercises the public MCP lifecycle, the bibliographic endpoint and its nine tools and three resources. This tests ordinary external HTTP access; it does not guarantee access from every AI provider’s restricted execution environment.
 
 If a tool rejects Markdown, use HTML or plain text. If Python cannot resolve the host, try an available browser tool or a user-attached download. Do not reconstruct an exhaustive catalogue from snippets. Public metadata access excludes private runtime state, source-derived abstracts and full texts.
+
+## Open R analysis
+
+Use the [hosted webR workspace](https://psilocybin-research.com/r-analysis/workspace/) to analyse public research metadata in your browser. Running R and downloading R code, CSV tables, PNG plots, LaTeX-generated PDF reports and complete LaTeX source archives require no account. An optional account adds private online saving and cross-device access.
+
+R runs on your device and loads on demand. Exports retain dataset provenance; the LaTeX archive includes data, code, outputs, fonts, compilation instructions and checksums. The live workspace can use a newer snapshot than the fixed Zenodo release: cite and retain the exact data used. Indexed records are not independent studies or participants.
+
+These are hosted-service capabilities, not a promise that a repository checkout includes the account or report-export services. Private authentication, account storage and user analyses are not distributed here.
 
 ## Quick Start
 
@@ -110,7 +119,7 @@ Runtime databases, logs, subscriptions, credentials, private keys, backups, sign
 
 Use GitHub's **Cite this repository** control or [CITATION.cff](CITATION.cff) for the software.
 
-The latest public dataset version is available through the Zenodo concept DOI: [10.5281/zenodo.21293525](https://doi.org/10.5281/zenodo.21293525). The fixed v1.0.6 dataset snapshot is [10.5281/zenodo.21333043](https://doi.org/10.5281/zenodo.21333043) and corresponds to software release v2.1.2. Later application releases do not replace that fixed snapshot's recorded software version.
+The latest public dataset version is available through the Zenodo concept DOI: [10.5281/zenodo.21293525](https://doi.org/10.5281/zenodo.21293525). The current fixed dataset is **v1.1.0**, released 8 November 2026, with **5,154 records**: [10.5281/zenodo.24051198](https://doi.org/10.5281/zenodo.24051198). It includes SQLite/XZ, RDS, CSV/JSON, citation formats, a field dictionary, technical validation, reproduction scripts and checksums. The earlier v1.0.6 dataset snapshot is [10.5281/zenodo.21333043](https://doi.org/10.5281/zenodo.21333043) and corresponds to software release v2.1.2. Later application releases do not replace that fixed snapshot's recorded software version.
 
 ## License
 

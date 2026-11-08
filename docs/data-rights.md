@@ -23,7 +23,10 @@ The private runtime database may retain source-derived text, keywords, registry 
 ## Dataset Citation
 
 - Latest dataset concept DOI: [10.5281/zenodo.21293525](https://doi.org/10.5281/zenodo.21293525)
-- Fixed dataset v1.0.6 DOI: [10.5281/zenodo.21333043](https://doi.org/10.5281/zenodo.21333043)
+- Current fixed dataset v1.1.0 DOI: [10.5281/zenodo.24051198](https://doi.org/10.5281/zenodo.24051198), 5,154 public records, 8 November 2026.
+- Historical dataset v1.0.6 DOI: [10.5281/zenodo.21333043](https://doi.org/10.5281/zenodo.21333043)
 - Dataset v1.0.6 corresponds to software release [v2.1.2](https://github.com/psilocybin-research/psilocybin-research-tracker/releases/tag/v2.1.2)
 
 Software releases after v2.1.2 improve the living application but do not alter the immutable v1.0.6 dataset snapshot.
+
+The v1.1.0 archive contains public data, documentation, validation outputs and reproduction scripts only. It includes no manuscript files, private account implementation or user data. Its technical validation does not represent a rerun of the historical external-coverage audit. The hosted webR workspace defaults to the live index, so a live analysis must retain its own exact snapshot rather than assume identity with a Zenodo version.
