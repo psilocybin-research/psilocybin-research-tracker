@@ -7,10 +7,6 @@ type: software
 license: MIT
 url: "https://psilocybin-research.com/"
 repository-code: "https://github.com/psilocybin-research/psilocybin-research-tracker"
-identifiers:
-  - type: doi
-    value: "10.5281/zenodo.21293525"
-    description: "Concept DOI for the latest version of the public dataset"
 abstract: "A self-contained PHP and SQLite research application for finding, filtering, exporting, monitoring, and analyzing psilocybin and psilocin literature, including public API access, citation exports, analytics, an interactive citation network, PWA support and an R bibliometrics workflow."
 keywords:
   - psilocybin
@@ -28,9 +24,9 @@ authors:
 references:
   - type: data
     title: "An integrated living dataset of psilocybin and psilocin publications, preprints, and trial records"
-    version: "1.0.6"
-    doi: "10.5281/zenodo.21333043"
+    version: "1.1.0"
+    doi: "10.5281/zenodo.24051198"
     authors:
       - family-names: Germann
         given-names: "Christopher B."
-    notes: "This fixed dataset snapshot corresponds to software release v2.1.2."
+    notes: "Frozen public dataset of 5,154 records, released 8 November 2026. Distinct from the software version and moving live index."

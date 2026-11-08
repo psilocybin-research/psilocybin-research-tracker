@@ -2,6 +2,12 @@
 
 Notable software changes are documented here. Dataset versions are released separately on Zenodo and retain their own version, DOI, checksums, and release notes.
 
+## Dataset v1.1.0 — 2026-11-08
+
+- Published a new fixed [Zenodo dataset](https://doi.org/10.5281/zenodo.24051198) containing 5,154 records, with SQLite/XZ, RDS, tabular and citation exports, a data dictionary, reproducibility scripts, technical validation and checksums.
+- Preserved v1.0.6 and its historical validation materials. The net increase is 336 records; technical checks do not constitute a new external coverage audit. No manuscript files or private user data are included.
+- The hosted webR workspace provides open R execution and PDF/LaTeX exports; accounts are optional for online saving. This dataset release does not change the software version.
+
 ## [2.1.6] - 2026-08-09
 
 ### Added
