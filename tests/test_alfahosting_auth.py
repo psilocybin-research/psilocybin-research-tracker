@@ -32,9 +32,10 @@ class FakeClient:
             self.hostkeys = source.read()
 
     def get_host_keys(self):
-        if self.host_matches:
-            return {BASE["ALFA_HOST"]: object()}
-        return {}
+        class HostKeys:
+            def lookup(_, hostname):
+                return object() if self.host_matches and hostname == BASE["ALFA_HOST"] else None
+        return HostKeys()
 
     def set_missing_host_key_policy(self, policy):
         self.policy = policy
