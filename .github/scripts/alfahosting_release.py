@@ -15,6 +15,7 @@ import sys
 from urllib.request import urlopen
 
 from alfahosting_preflight import validated_root
+from alfahosting_auth import connect
 
 ROOT_FILES = frozenset({
     ".htaccess", "favicon.ico", "manifest.webmanifest", "offline.html",
@@ -172,30 +173,6 @@ def remote_hash(sftp, path: str) -> str:
                 break
             hasher.update(chunk)
     return hasher.hexdigest()
-
-
-def connect():
-    import paramiko
-
-    required = ("ALFA_HOST", "ALFA_USER", "ALFA_PASSWORD", "ALFA_HOST_KEY")
-    config = {name: os.environ.get(name, "") for name in required}
-    if not all(config.values()):
-        raise ValueError("Missing SFTP connection configuration")
-    import tempfile
-    client = paramiko.SSHClient()
-    with tempfile.NamedTemporaryFile("w", encoding="utf-8") as hostkeys:
-        os.chmod(hostkeys.name, 0o600)
-        hostkeys.write(config["ALFA_HOST_KEY"].rstrip() + "\n")
-        hostkeys.flush()
-        client.load_host_keys(hostkeys.name)
-    client.set_missing_host_key_policy(paramiko.RejectPolicy())
-    client.connect(
-        hostname=config["ALFA_HOST"], port=22,
-        username=config["ALFA_USER"], password=config["ALFA_PASSWORD"],
-        look_for_keys=False, allow_agent=False,
-        timeout=20, auth_timeout=20, banner_timeout=20,
-    )
-    return client
 
 
 def verify_target(sftp, site: str, private: str) -> None:
