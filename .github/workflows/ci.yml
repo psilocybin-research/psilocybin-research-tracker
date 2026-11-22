@@ -92,6 +92,9 @@ jobs:
       - name: Verify Alfahosting preflight path validation
         run: python3 -m unittest discover -s tests -p test_alfahosting_preflight.py -v
 
+      - name: Verify strict SFTP authentication and host-key rejection
+        run: python3 -m unittest discover -s tests -p test_alfahosting_auth.py -v
+
       - name: Verify Alfahosting release allowlist and path safety
         run: python3 -m unittest discover -s tests -p test_alfahosting_release.py -v
 
