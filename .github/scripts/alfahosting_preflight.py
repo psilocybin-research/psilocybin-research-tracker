@@ -6,7 +6,15 @@ import posixpath
 import stat
 import sys
 
-from alfahosting_auth import connect
+from alfahosting_auth import AlfahostingAuthError, ConfigurationError, connect
+
+
+class SftpError(RuntimeError):
+    category = "sftp"
+
+
+class DocumentRootError(RuntimeError):
+    category = "document-root"
 
 
 def validated_root(value):
@@ -21,7 +29,11 @@ def verify():
     root = validated_root(os.environ.get("ALFA_DOCUMENT_ROOT", ""))
     client = connect()
     try:
-        with client.open_sftp() as sftp:
+        try:
+            sftp = client.open_sftp()
+        except Exception:
+            raise SftpError("SFTP initialization failed") from None
+        try:
             for name, predicate in (
                 ("", stat.S_ISDIR),
                 (".htaccess", stat.S_ISREG),
@@ -30,16 +42,34 @@ def verify():
                 ("data", stat.S_ISDIR),
                 ("data/.htaccess", stat.S_ISREG),
             ):
-                if not predicate(sftp.lstat(posixpath.join(root, name)).st_mode):
-                    raise RuntimeError("Unexpected document-root structure")
+                try:
+                    info = sftp.lstat(posixpath.join(root, name))
+                except Exception:
+                    raise DocumentRootError("Expected document-root entry was not readable") from None
+                if not predicate(info.st_mode):
+                    raise DocumentRootError("Unexpected document-root structure")
+        finally:
+            sftp.close()
     finally:
         client.close()
 
 
-if __name__ == "__main__":
+def preflight_failure_message(exc):
+    if isinstance(exc, (AlfahostingAuthError, ConfigurationError, SftpError, DocumentRootError)):
+        return "SFTP preflight failed: " + getattr(exc, "category", "unexpected")
+    if isinstance(exc, ValueError):
+        return "SFTP preflight failed: configuration"
+    return "SFTP preflight failed: unexpected"
+
+
+def main():
     try:
         verify()
         print("Read-only SFTP preflight passed. No files changed.")
-    except Exception:
-        print("SFTP preflight failed. Verify credentials, host key, and document root.", file=sys.stderr)
+    except Exception as exc:
+        print(preflight_failure_message(exc), file=sys.stderr)
         raise SystemExit(1)
+
+
+if __name__ == "__main__":
+    main()
