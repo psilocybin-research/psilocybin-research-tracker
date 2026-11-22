@@ -1,0 +1,37 @@
+name: Alfahosting connection preflight
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alfahosting-preflight
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 5
+    steps:
+      - name: Check out reviewed source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install SFTP client
+        run: python3 -m pip install --disable-pip-version-check 'paramiko==3.5.1'
+
+      - name: Verify host identity and document root without changes
+        env:
+          ALFA_HOST: ${{ secrets.ALFA_HOST }}
+          ALFA_USER: ${{ secrets.ALFA_USER }}
+          ALFA_AUTH_METHOD: ${{ vars.ALFA_AUTH_METHOD }}
+          ALFA_PRIVATE_KEY: ${{ secrets.ALFA_PRIVATE_KEY }}
+          ALFA_PRIVATE_KEY_PASSPHRASE: ${{ secrets.ALFA_PRIVATE_KEY_PASSPHRASE }}
+          ALFA_PASSWORD: ${{ secrets.ALFA_PASSWORD }}
+          ALFA_ALLOW_PASSWORD_AUTH: ${{ secrets.ALFA_ALLOW_PASSWORD_AUTH }}
+          ALFA_HOST_KEY: ${{ secrets.ALFA_HOST_KEY }}
+          ALFA_DOCUMENT_ROOT: ${{ secrets.ALFA_DOCUMENT_ROOT }}
+        run: python3 .github/scripts/alfahosting_preflight.py
