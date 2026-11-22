@@ -37,6 +37,17 @@ final class HealthService
         ];
     }
 
+    /** Public probes expose health states, never filesystem paths, logs or task context. */
+    public function publicReport(): array
+    {
+        $report = $this->report();
+        $report['checks'] = array_map(
+            static fn (array $check): array => ['status' => $check['status'] ?? 'warn'],
+            $report['checks']
+        );
+        return $report;
+    }
+
     private function databaseCheck(): array
     {
         try {
@@ -229,10 +240,21 @@ final class HealthService
 
     private function tailJsonLog(string $file, int $limit): array
     {
-        $lines = @file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        if (!$lines) {
-            return [];
+        $handle = @fopen($file, 'rb');
+        if (!$handle) return [];
+        try {
+            $size = (int)(fstat($handle)['size'] ?? 0);
+            $offset = max(0, $size - 65536);
+            if ($offset > 0) fseek($handle, $offset);
+            $tail = stream_get_contents($handle, 65536);
+        } finally { fclose($handle); }
+        if (!is_string($tail) || $tail === '') return [];
+        // Ignore a truncated first record when reading only the bounded tail.
+        if ($offset > 0) {
+            $newline = strpos($tail, "\n");
+            $tail = $newline === false ? '' : substr($tail, $newline + 1);
         }
+        $lines = array_values(array_filter(explode("\n", $tail), static fn (string $line): bool => trim($line) !== ''));
         $items = [];
         foreach (array_slice($lines, -$limit) as $line) {
             $decoded = json_decode($line, true);

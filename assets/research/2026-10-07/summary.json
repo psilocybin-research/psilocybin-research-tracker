@@ -1,0 +1,575 @@
+{
+  "snapshot_sha256": "0e6fd79ee574846aa2018990e5acaedaf2cb3c336be8250c6155dc7ad709426b",
+  "total": 5076,
+  "unknown_year": 0,
+  "identifiers": {
+    "doi": 4334,
+    "pubmed": 2979
+  },
+  "years": [
+    {
+      "year": 1958,
+      "status": "published",
+      "records": 5
+    },
+    {
+      "year": 1959,
+      "status": "published",
+      "records": 11
+    },
+    {
+      "year": 1960,
+      "status": "published",
+      "records": 11
+    },
+    {
+      "year": 1961,
+      "status": "published",
+      "records": 14
+    },
+    {
+      "year": 1962,
+      "status": "published",
+      "records": 15
+    },
+    {
+      "year": 1963,
+      "status": "published",
+      "records": 20
+    },
+    {
+      "year": 1964,
+      "status": "published",
+      "records": 10
+    },
+    {
+      "year": 1965,
+      "status": "published",
+      "records": 10
+    },
+    {
+      "year": 1966,
+      "status": "published",
+      "records": 9
+    },
+    {
+      "year": 1967,
+      "status": "published",
+      "records": 12
+    },
+    {
+      "year": 1968,
+      "status": "published",
+      "records": 15
+    },
+    {
+      "year": 1969,
+      "status": "published",
+      "records": 13
+    },
+    {
+      "year": 1970,
+      "status": "published",
+      "records": 12
+    },
+    {
+      "year": 1971,
+      "status": "published",
+      "records": 9
+    },
+    {
+      "year": 1972,
+      "status": "published",
+      "records": 3
+    },
+    {
+      "year": 1973,
+      "status": "published",
+      "records": 15
+    },
+    {
+      "year": 1974,
+      "status": "published",
+      "records": 15
+    },
+    {
+      "year": 1975,
+      "status": "published",
+      "records": 9
+    },
+    {
+      "year": 1976,
+      "status": "published",
+      "records": 7
+    },
+    {
+      "year": 1977,
+      "status": "published",
+      "records": 9
+    },
+    {
+      "year": 1978,
+      "status": "published",
+      "records": 10
+    },
+    {
+      "year": 1979,
+      "status": "published",
+      "records": 7
+    },
+    {
+      "year": 1980,
+      "status": "published",
+      "records": 9
+    },
+    {
+      "year": 1981,
+      "status": "published",
+      "records": 16
+    },
+    {
+      "year": 1982,
+      "status": "published",
+      "records": 8
+    },
+    {
+      "year": 1983,
+      "status": "published",
+      "records": 4
+    },
+    {
+      "year": 1984,
+      "status": "published",
+      "records": 7
+    },
+    {
+      "year": 1985,
+      "status": "published",
+      "records": 6
+    },
+    {
+      "year": 1986,
+      "status": "published",
+      "records": 8
+    },
+    {
+      "year": 1987,
+      "status": "published",
+      "records": 6
+    },
+    {
+      "year": 1988,
+      "status": "published",
+      "records": 6
+    },
+    {
+      "year": 1989,
+      "status": "published",
+      "records": 6
+    },
+    {
+      "year": 1990,
+      "status": "published",
+      "records": 7
+    },
+    {
+      "year": 1991,
+      "status": "published",
+      "records": 1
+    },
+    {
+      "year": 1992,
+      "status": "published",
+      "records": 4
+    },
+    {
+      "year": 1993,
+      "status": "published",
+      "records": 6
+    },
+    {
+      "year": 1994,
+      "status": "published",
+      "records": 6
+    },
+    {
+      "year": 1995,
+      "status": "published",
+      "records": 1
+    },
+    {
+      "year": 1996,
+      "status": "published",
+      "records": 5
+    },
+    {
+      "year": 1997,
+      "status": "published",
+      "records": 4
+    },
+    {
+      "year": 1998,
+      "status": "published",
+      "records": 15
+    },
+    {
+      "year": 1999,
+      "status": "published",
+      "records": 18
+    },
+    {
+      "year": 2000,
+      "status": "published",
+      "records": 17
+    },
+    {
+      "year": 2001,
+      "status": "published",
+      "records": 8
+    },
+    {
+      "year": 2002,
+      "status": "published",
+      "records": 17
+    },
+    {
+      "year": 2003,
+      "status": "published",
+      "records": 18
+    },
+    {
+      "year": 2004,
+      "status": "published",
+      "records": 12
+    },
+    {
+      "year": 2005,
+      "status": "published",
+      "records": 20
+    },
+    {
+      "year": 2006,
+      "status": "published",
+      "records": 25
+    },
+    {
+      "year": 2007,
+      "status": "published",
+      "records": 16
+    },
+    {
+      "year": 2008,
+      "status": "published",
+      "records": 24
+    },
+    {
+      "year": 2009,
+      "status": "published",
+      "records": 24
+    },
+    {
+      "year": 2010,
+      "status": "published",
+      "records": 16
+    },
+    {
+      "year": 2011,
+      "status": "published",
+      "records": 22
+    },
+    {
+      "year": 2012,
+      "status": "published",
+      "records": 24
+    },
+    {
+      "year": 2013,
+      "status": "published",
+      "records": 37
+    },
+    {
+      "year": 2014,
+      "status": "clinical trial",
+      "records": 1
+    },
+    {
+      "year": 2014,
+      "status": "published",
+      "records": 38
+    },
+    {
+      "year": 2015,
+      "status": "published",
+      "records": 41
+    },
+    {
+      "year": 2016,
+      "status": "clinical trial",
+      "records": 1
+    },
+    {
+      "year": 2016,
+      "status": "published",
+      "records": 64
+    },
+    {
+      "year": 2017,
+      "status": "clinical trial",
+      "records": 1
+    },
+    {
+      "year": 2017,
+      "status": "preprint",
+      "records": 1
+    },
+    {
+      "year": 2017,
+      "status": "published",
+      "records": 71
+    },
+    {
+      "year": 2018,
+      "status": "clinical trial",
+      "records": 1
+    },
+    {
+      "year": 2018,
+      "status": "preprint",
+      "records": 5
+    },
+    {
+      "year": 2018,
+      "status": "published",
+      "records": 100
+    },
+    {
+      "year": 2019,
+      "status": "clinical trial",
+      "records": 3
+    },
+    {
+      "year": 2019,
+      "status": "preprint",
+      "records": 4
+    },
+    {
+      "year": 2019,
+      "status": "published",
+      "records": 107
+    },
+    {
+      "year": 2020,
+      "status": "clinical trial",
+      "records": 4
+    },
+    {
+      "year": 2020,
+      "status": "preprint",
+      "records": 15
+    },
+    {
+      "year": 2020,
+      "status": "protocol",
+      "records": 2
+    },
+    {
+      "year": 2020,
+      "status": "published",
+      "records": 149
+    },
+    {
+      "year": 2021,
+      "status": "clinical trial",
+      "records": 7
+    },
+    {
+      "year": 2021,
+      "status": "preprint",
+      "records": 45
+    },
+    {
+      "year": 2021,
+      "status": "published",
+      "records": 252
+    },
+    {
+      "year": 2022,
+      "status": "clinical trial",
+      "records": 11
+    },
+    {
+      "year": 2022,
+      "status": "preprint",
+      "records": 44
+    },
+    {
+      "year": 2022,
+      "status": "published",
+      "records": 368
+    },
+    {
+      "year": 2023,
+      "status": "clinical trial",
+      "records": 25
+    },
+    {
+      "year": 2023,
+      "status": "preprint",
+      "records": 72
+    },
+    {
+      "year": 2023,
+      "status": "published",
+      "records": 453
+    },
+    {
+      "year": 2024,
+      "status": "clinical trial",
+      "records": 33
+    },
+    {
+      "year": 2024,
+      "status": "preprint",
+      "records": 80
+    },
+    {
+      "year": 2024,
+      "status": "published",
+      "records": 541
+    },
+    {
+      "year": 2025,
+      "status": "clinical trial",
+      "records": 56
+    },
+    {
+      "year": 2025,
+      "status": "preprint",
+      "records": 96
+    },
+    {
+      "year": 2025,
+      "status": "published",
+      "records": 736
+    },
+    {
+      "year": 2026,
+      "status": "clinical trial",
+      "records": 165
+    },
+    {
+      "year": 2026,
+      "status": "preprint",
+      "records": 88
+    },
+    {
+      "year": 2026,
+      "status": "protocol",
+      "records": 1
+    },
+    {
+      "year": 2026,
+      "status": "published",
+      "records": 731
+    }
+  ],
+  "statuses": [
+    {
+      "label": "published",
+      "records": 4315
+    },
+    {
+      "label": "preprint",
+      "records": 450
+    },
+    {
+      "label": "clinical trial",
+      "records": 308
+    },
+    {
+      "label": "protocol",
+      "records": 3
+    }
+  ],
+  "sources": [
+    {
+      "label": "PubMed",
+      "records": 2582
+    },
+    {
+      "label": "OpenAlex",
+      "records": 1174
+    },
+    {
+      "label": "Crossref",
+      "records": 418
+    },
+    {
+      "label": "ClinicalTrials.gov",
+      "records": 308
+    },
+    {
+      "label": "Europe PMC",
+      "records": 237
+    },
+    {
+      "label": "PsyArXiv",
+      "records": 186
+    },
+    {
+      "label": "bioRxiv",
+      "records": 127
+    },
+    {
+      "label": "medRxiv",
+      "records": 44
+    }
+  ],
+  "study_types": [
+    {
+      "label": "Other",
+      "records": 2207
+    },
+    {
+      "label": "Clinical Trial",
+      "records": 977
+    },
+    {
+      "label": "Review Article",
+      "records": 481
+    },
+    {
+      "label": "Animal Study",
+      "records": 344
+    },
+    {
+      "label": "Observational Study",
+      "records": 337
+    },
+    {
+      "label": "Randomized Controlled Trial",
+      "records": 300
+    },
+    {
+      "label": "Systematic Review",
+      "records": 161
+    },
+    {
+      "label": "Qualitative Study",
+      "records": 90
+    },
+    {
+      "label": "Meta-Analysis",
+      "records": 77
+    },
+    {
+      "label": "Case Report",
+      "records": 62
+    },
+    {
+      "label": "In Vitro Study",
+      "records": 40
+    }
+  ],
+  "record_metadata_sha256": "bb711860a81bfcfa741970ffc133c194de8658a856af478dbeb7e3f81c3804b7"
+}

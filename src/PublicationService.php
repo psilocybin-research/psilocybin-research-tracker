@@ -7,7 +7,8 @@ final class PublicationService
     public function __construct(
         private PublicationRepository $publications,
         private FetchRunRepository $runs,
-        private array $fetchers
+        private array $fetchers,
+        private Database $db
     ) {
     }
 
@@ -26,13 +27,15 @@ final class PublicationService
                 new BioMedRxivFetcher($http, 'biorxiv'),
                 new PsyArXivFetcher($http),
                 new ClinicalTrialsFetcher($http),
-            ]
+            ],
+            $db
         );
     }
 
     /** @param array<int,string> $sources */
     public function refresh(?string $from = null, ?string $to = null, int $limit = 0, array $sources = []): array
     {
+        (new ResearchChanges($this->db))->observe();
         $summary = ['inserted' => 0, 'updated' => 0, 'skipped' => 0, 'errors' => 0, 'messages' => []];
         $sourceFilter = array_map(
             fn(string $source): string => self::normalizeSourceName($source),
@@ -80,6 +83,7 @@ final class PublicationService
             $summary['errors']++;
             $summary['messages'][] = 'No fetcher matched --source=' . implode(',', $sources);
         }
+        $summary['research_changes']=(new ResearchChanges($this->db))->observe();
         return $summary;
     }
 

@@ -19,7 +19,7 @@ $selectedSources = request_array('sources');
 $selectedStatuses = request_array('publication_statuses');
 $selectedSubstances = request_array('substances') ?: ['psilocybin', 'psilocin'];
 $paperId = (int)request_value('paper', '0');
-$limit = max(1, min((int)request_value('limit', '8'), 48));
+$limit = max(1, min((int)request_value('limit', '1'), 48));
 
 if ($range !== 'custom') {
     $from = match ($range) {
@@ -44,6 +44,11 @@ $filters = [
     'substances' => $selectedSubstances,
     'sort' => 'newest',
 ];
+if ($paperId > 0) {
+    $neighborhood = CitationNeighborhood::build($db, $paperId, (int)request_value('connections', '12'));
+    if ($neighborhood === null) http_response_code(404);
+    require __DIR__ . '/templates/citation-paper.php'; return;
+}
 $graph = $repo->citationNetwork($filters, $paperId, $limit);
 $topics = array_slice($repo->topics(), 0, 80);
 $journals = $repo->journals();
@@ -62,26 +67,51 @@ if ($selectedSources) $activeFilterLabels[] = 'Sources: ' . implode(', ', $selec
 if ($selectedStatuses) $activeFilterLabels[] = 'Status: ' . implode(', ', array_map(static fn(string $status): string => $publicationStatuses[$status] ?? $status, $selectedStatuses));
 $hasActiveFilters = (bool)($activeFilterLabels || $paperId > 0 || $selectedSubstances !== ['psilocybin', 'psilocin']);
 $hasAdvancedFilters = (bool)($year !== '' || $range !== 'all' || $selectedSources || $selectedStatuses || $selectedSubstances !== ['psilocybin', 'psilocin']);
-$assetVersion = '20260809-network-first-v94';
+$assetVersion = '20261120-paper-citations-v2';
+$pageTitle = 'Psilocybin Citation Network | Papers, Authors and Topics';
+$description = 'Explore citation, author, topic, journal, and DOI-reference relationships across indexed psilocybin and psilocin research.';
+$baseUrl = rtrim(Config::publicBaseUrl(), '/') . '/';
+$robots = $hasActiveFilters ? 'noindex, follow, noarchive' : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
 ?>
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Citation Network | Psilocybin Research</title>
-  <meta name="description" content="Explore citation, author, topic, journal, and DOI-reference relationships in the psilocybin and psilocin literature.">
-  <link rel="stylesheet" href="assets/styles.min.css?v=<?= h($assetVersion) ?>">
-  <script src="assets/app.min.js?v=<?= h($assetVersion) ?>" defer></script>
+  <title><?= h($pageTitle) ?></title>
+  <?= detail_page_seo($pageTitle, $description, 'citation-network.php', ['robots' => $robots]) ?>
+  <?= json_ld_script(['@context' => 'https://schema.org', '@type' => 'CollectionPage', 'name' => $pageTitle, 'description' => $description, 'url' => $baseUrl . 'citation-network.php', 'numberOfItems' => (int)$graph['stats']['nodes'], 'about' => ['@type' => 'Dataset', 'name' => 'Psilocybin and psilocin bibliographic relationships'], 'isPartOf' => ['@type' => 'WebSite', 'name' => 'Psilocybin Research', 'url' => $baseUrl]]) ?>
+  <link rel="preload" href="assets/preloader-mushroom-desktop.webp" as="image" media="(min-width: 701px)" fetchpriority="high">
+  <link rel="preload" href="assets/preloader-mushroom-mobile.webp" as="image" media="(max-width: 700px)" fetchpriority="high">
+  <link rel="stylesheet" href="<?= h(FrontendAssets::url('assets/styles.min.css')) ?>">
+  <link rel="stylesheet" href="<?= h(FrontendAssets::url('assets/citation-network.min.css') . '&revision=20261104-fullscreen-stack') ?>">
+  <script src="<?= h(FrontendAssets::url('assets/app.min.js')) ?>" defer></script>
+  <link rel="stylesheet" href="<?= h(FrontendAssets::url('assets/citation-paper.min.css')) ?>">
+  <script src="<?= h(FrontendAssets::url('assets/citation-paper.min.js')) ?>" defer></script>
+  <script src="assets/citation-network.min.js?v=<?= h($assetVersion) ?>" defer></script>
+  <script>
+    document.documentElement.classList.add('js');
+    try {
+      if (window.sessionStorage.getItem('citationNetworkTransitionPreloaded') === '1') {
+        window.sessionStorage.removeItem('citationNetworkTransitionPreloaded');
+        document.documentElement.classList.add('skip-entry-preloader');
+      } else {
+        document.documentElement.classList.add('is-loading');
+      }
+    } catch (error) {
+      document.documentElement.classList.add('is-loading');
+    }
+  </script>
 </head>
 <body class="detail-page citation-network-page">
+<?= detail_preloader('Loading citation network…', 'Loading the interactive citation network') ?>
 <?= detail_page_header('citation-network') ?>
 <main class="detail-shell citation-network-shell">
   <section class="panel detail-hero citation-network-hero">
     <div class="citation-network-hero-copy">
-      <span class="eyebrow">Citation network</span>
-      <h1>Explore the literature network</h1>
-      <p>Follow citations and shared authors, topics, and journals. Select any node to inspect its evidence, or refine the seed literature after exploring the current map.</p>
+      <div class="detail-hero-intro">
+        <div><span class="eyebrow">Citation network</span><h1>Explore the literature network</h1><p>Discover literature through authors, topics and journals. Select a paper and open its citation view to follow direct references and citing papers.</p></div>
+      </div>
     </div>
     <div class="citation-network-hero-stats" aria-label="Current citation network summary">
       <div><strong><?= h(number_format((int)$graph['stats']['seed_papers'])) ?></strong><span>seed papers</span></div>
@@ -103,30 +133,31 @@ $assetVersion = '20260809-network-first-v94';
           <span class="citation-step-number">1</span>
           <div>
             <h2>Explore the network</h2>
-            <p><?= h(number_format((int)$graph['stats']['nodes'])) ?> nodes · <?= h(number_format((int)$graph['stats']['edges'])) ?> connections · <?= h(number_format((int)$graph['stats']['seed_papers'])) ?> seed papers · <?= h(number_format((int)$graph['stats']['external_references'])) ?> external references</p>
+            <p><span data-citation-visible-count><?= h(number_format((int)$graph['stats']['nodes'])) ?> nodes · <?= h(number_format((int)$graph['stats']['edges'])) ?> connections</span> · <?= h(number_format((int)$graph['stats']['seed_papers'])) ?> seed papers · <?= h(number_format((int)$graph['stats']['external_references'])) ?> external references</p>
           </div>
         </div>
-        <div class="citation-network-controls" aria-label="Essential graph controls">
+      </div>
+      <div class="citation-map-toolbar map-explorer-toolbar">
+        <p class="citation-map-gesture-hint"><i data-icon="move" aria-hidden="true"></i><span data-map-hint>Tap a node for details · Drag to pan · Ctrl + scroll to zoom</span></p>
+        <div class="citation-network-controls map-explorer-actions" aria-label="Essential graph controls">
+          <button class="secondary map-touch-toggle" type="button" data-map-interaction aria-pressed="false">Move network</button>
+          <button class="secondary compact" type="button" data-citation-zoom-out aria-label="Zoom out"><span aria-hidden="true">−</span></button>
+          <button class="secondary compact" type="button" data-citation-zoom-in aria-label="Zoom in"><span aria-hidden="true">+</span></button>
           <button class="secondary" type="button" data-citation-fit><i data-icon="maximize" aria-hidden="true"></i><span>Fit graph</span></button>
           <button class="secondary" type="button" data-citation-fullscreen hidden aria-pressed="false"><i data-icon="maximize" aria-hidden="true"></i><span>Fullscreen</span></button>
         </div>
       </div>
-      <div class="citation-network-legend" aria-label="Graph legend">
-        <span><i class="legend-paper"></i>Papers</span>
-        <span><i class="legend-reference"></i>References</span>
-        <span><i class="legend-author"></i>Authors</span>
-        <span><i class="legend-topic"></i>Topics</span>
-        <span><i class="legend-journal"></i>Journals</span>
-      </div>
-      <div class="citation-network-canvas" data-citation-network aria-label="Interactive citation network visualization" role="img">
+      <div class="citation-network-canvas" data-citation-network aria-label="Interactive citation network visualization" role="region">
         <div class="citation-network-empty">Loading network...</div>
       </div>
+      <a class="citation-selection-jump" href="#citation-selection" data-citation-selection-jump hidden>View selected node <span aria-hidden="true">↓</span></a>
       <div class="citation-network-insight" data-citation-insight aria-live="polite">
         Showing the full graph. Search or filter to focus the network.
       </div>
-      <div class="citation-network-workbench" aria-label="Network analysis controls">
+      <div id="network-options" tabindex="-1" class="citation-network-workbench" aria-label="Network analysis controls">
         <div class="citation-view-controls">
           <label class="citation-network-search"><span>Find in this graph</span><input type="search" data-citation-search placeholder="Title, DOI, author, journal, or topic"></label>
+          <details class="citation-display-options"><summary>Layout and display <i data-icon="chevron-down" aria-hidden="true"></i></summary><div class="citation-display-grid">
           <div class="citation-seed-control">
             <label><span>Seed papers</span><select data-citation-seed-limit aria-label="Change number of seed papers">
               <?php foreach ([1, 8, 16, 24, 28, 36, 48] as $option): ?>
@@ -135,13 +166,24 @@ $assetVersion = '20260809-network-first-v94';
             </select></label>
           </div>
           <label><span>Layout</span><select data-citation-layout-mode aria-label="Change network layout">
-            <option value="force">Organic map</option>
+            <option value="force">Organic network</option>
             <option value="radial">Citation rings</option>
             <option value="timeline">Publication timeline</option>
           </select></label>
           <label><span>Node labels</span><select data-citation-label-mode><option value="important">Important only</option><option value="all">All labels</option><option value="selected">Selected node</option><option value="off">No labels</option></select></label>
           <label class="citation-toggle-control"><span>Context nodes</span><input type="checkbox" data-citation-clusters checked><em>Authors, topics, journals</em></label>
+          </div></details>
         </div>
+
+      </div>
+      <div class="citation-network-legend" aria-label="Show or hide node types" role="group">
+        <button type="button" data-citation-legend-type="paper" aria-pressed="true" title="Hide papers"><i class="legend-paper" aria-hidden="true"></i>Papers</button>
+        <button type="button" data-citation-legend-type="reference" aria-pressed="true" title="Hide references"><i class="legend-reference" aria-hidden="true"></i>References</button>
+        <button type="button" data-citation-legend-type="author" aria-pressed="true" title="Hide authors"><i class="legend-author" aria-hidden="true"></i>Authors</button>
+        <button type="button" data-citation-legend-type="topic" aria-pressed="true" title="Hide topics"><i class="legend-topic" aria-hidden="true"></i>Topics</button>
+        <button type="button" data-citation-legend-type="journal" aria-pressed="true" title="Hide journals"><i class="legend-journal" aria-hidden="true"></i>Journals</button>
+      </div>
+      <div class="citation-export-workbench">
         <details class="citation-analysis-tools">
           <summary><span><i data-icon="settings" aria-hidden="true"></i>Selection, sharing, and export</span></summary>
           <div class="citation-network-utility-actions">
@@ -159,22 +201,22 @@ $assetVersion = '20260809-network-first-v94';
       <p class="citation-network-note"><strong>How to read this:</strong> arrows show citation direction; dashed links show shared authors, topics, or journals. Connections support discovery, not causal claims or formal bibliometric strength estimates.</p>
     </div>
 
-    <aside class="panel citation-network-detail" data-citation-detail>
-      <span class="eyebrow">2 · Inspect selection</span>
-      <h2>Choose a node</h2>
-      <p>Tap or click a paper, author, topic, journal, or reference to inspect it. Drag nodes to untangle dense areas.</p>
-      <dl class="detail-list">
-        <div><dt>Interaction</dt><dd>Drag nodes, use Fit graph to recenter, and open linked records from this panel.</dd></div>
-      </dl>
-      <div class="citation-node-relations" data-citation-relations></div>
-    </aside>
-  </section>
+    <div class="citation-network-rail">
+      <aside class="panel citation-network-detail" id="citation-selection" tabindex="-1" aria-label="Selected node details" data-citation-detail>
+        <span class="eyebrow">2 · Inspect selection</span>
+        <h2>Choose a node</h2>
+        <p>Tap or click a paper, author, topic, journal, or reference to inspect it. Drag nodes to untangle dense areas.</p>
+        <dl class="detail-list">
+          <div><dt>Interaction</dt><dd>Drag nodes, use Fit graph to recenter, and open linked records from this panel.</dd></div>
+        </dl>
+        <div class="citation-node-relations" data-citation-relations></div>
+      </aside>
 
-  <section class="panel citation-literature-panel" id="refine-network">
-    <details class="citation-literature-filters" <?= $hasActiveFilters ? 'open' : '' ?>>
+      <section class="panel citation-literature-panel" id="refine-network">
+        <details class="citation-literature-filters" <?= $hasActiveFilters ? 'open' : '' ?>>
       <summary>
         <span class="citation-step-number">3</span>
-        <div><strong>Refine the seed literature</strong><small>Change the papers used to build the network by search, author, journal, topic, time, status, source, or substance.</small></div>
+        <div><strong>Refine the seed literature</strong><small>Choose papers by search, topic, journal, or date.</small></div>
         <em><?= $hasActiveFilters ? h((string)count($activeFilterLabels)) . ' active filters' : 'Optional' ?></em>
       </summary>
       <form class="citation-network-form" method="get">
@@ -252,11 +294,14 @@ $assetVersion = '20260809-network-first-v94';
           <a class="secondary iconed" href="./#papers"><i data-icon="book-marked" aria-hidden="true"></i><span>Back to papers</span></a>
         </div>
       </form>
-    </details>
+        </details>
+      </section>
+    </div>
   </section>
 
   <script id="citation-network-data" type="application/json"><?= json_encode($graph, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?></script>
 </main>
+<?= detail_footer() ?>
 <?= detail_scroll_top() ?>
 </body>
 </html>

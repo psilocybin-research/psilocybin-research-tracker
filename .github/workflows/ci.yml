@@ -79,7 +79,7 @@ jobs:
         run: npm run check:generated
 
       - name: Validate web manifest
-        run: php -r '$json = json_decode(file_get_contents("manifest.webmanifest"), true, 512, JSON_THROW_ON_ERROR); if (($json["start_url"] ?? null) !== "/?source=pwa") { throw new RuntimeException("Unexpected PWA start URL"); }'
+        run: php -r '$json = json_decode(file_get_contents("manifest.webmanifest"), true, 512, JSON_THROW_ON_ERROR); if (($json["start_url"] ?? null) !== "/") { throw new RuntimeException("Unexpected PWA start URL"); }'
 
       - name: Validate citation metadata
         run: |

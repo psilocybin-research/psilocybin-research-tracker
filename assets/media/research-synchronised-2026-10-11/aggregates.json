@@ -1,0 +1,6402 @@
+{
+  "snapshot_date": "2026-10-11",
+  "retrieved_utc": "2026-10-11T10:45:21.600742+00:00",
+  "source_urls": [
+    "https://psilocybin-research.com/api.php?resource=analytics",
+    "https://psilocybin-research.com/api.php?resource=sources"
+  ],
+  "total": 5079,
+  "sources": [
+    {
+      "source_name": "PubMed",
+      "count": 2582
+    },
+    {
+      "source_name": "OpenAlex",
+      "count": 1174
+    },
+    {
+      "source_name": "Crossref",
+      "count": 420
+    },
+    {
+      "source_name": "ClinicalTrials.gov",
+      "count": 308
+    },
+    {
+      "source_name": "Europe PMC",
+      "count": 237
+    },
+    {
+      "source_name": "PsyArXiv",
+      "count": 186
+    },
+    {
+      "source_name": "bioRxiv",
+      "count": 128
+    },
+    {
+      "source_name": "medRxiv",
+      "count": 44
+    }
+  ],
+  "years": [
+    {
+      "year": 1958,
+      "count": 5
+    },
+    {
+      "year": 1959,
+      "count": 11
+    },
+    {
+      "year": 1960,
+      "count": 11
+    },
+    {
+      "year": 1961,
+      "count": 14
+    },
+    {
+      "year": 1962,
+      "count": 15
+    },
+    {
+      "year": 1963,
+      "count": 20
+    },
+    {
+      "year": 1964,
+      "count": 10
+    },
+    {
+      "year": 1965,
+      "count": 10
+    },
+    {
+      "year": 1966,
+      "count": 9
+    },
+    {
+      "year": 1967,
+      "count": 12
+    },
+    {
+      "year": 1968,
+      "count": 15
+    },
+    {
+      "year": 1969,
+      "count": 13
+    },
+    {
+      "year": 1970,
+      "count": 12
+    },
+    {
+      "year": 1971,
+      "count": 9
+    },
+    {
+      "year": 1972,
+      "count": 3
+    },
+    {
+      "year": 1973,
+      "count": 15
+    },
+    {
+      "year": 1974,
+      "count": 15
+    },
+    {
+      "year": 1975,
+      "count": 9
+    },
+    {
+      "year": 1976,
+      "count": 7
+    },
+    {
+      "year": 1977,
+      "count": 9
+    },
+    {
+      "year": 1978,
+      "count": 10
+    },
+    {
+      "year": 1979,
+      "count": 7
+    },
+    {
+      "year": 1980,
+      "count": 9
+    },
+    {
+      "year": 1981,
+      "count": 16
+    },
+    {
+      "year": 1982,
+      "count": 8
+    },
+    {
+      "year": 1983,
+      "count": 4
+    },
+    {
+      "year": 1984,
+      "count": 7
+    },
+    {
+      "year": 1985,
+      "count": 6
+    },
+    {
+      "year": 1986,
+      "count": 8
+    },
+    {
+      "year": 1987,
+      "count": 6
+    },
+    {
+      "year": 1988,
+      "count": 6
+    },
+    {
+      "year": 1989,
+      "count": 6
+    },
+    {
+      "year": 1990,
+      "count": 7
+    },
+    {
+      "year": 1991,
+      "count": 1
+    },
+    {
+      "year": 1992,
+      "count": 4
+    },
+    {
+      "year": 1993,
+      "count": 6
+    },
+    {
+      "year": 1994,
+      "count": 6
+    },
+    {
+      "year": 1995,
+      "count": 1
+    },
+    {
+      "year": 1996,
+      "count": 5
+    },
+    {
+      "year": 1997,
+      "count": 4
+    },
+    {
+      "year": 1998,
+      "count": 15
+    },
+    {
+      "year": 1999,
+      "count": 18
+    },
+    {
+      "year": 2000,
+      "count": 17
+    },
+    {
+      "year": 2001,
+      "count": 8
+    },
+    {
+      "year": 2002,
+      "count": 17
+    },
+    {
+      "year": 2003,
+      "count": 18
+    },
+    {
+      "year": 2004,
+      "count": 12
+    },
+    {
+      "year": 2005,
+      "count": 20
+    },
+    {
+      "year": 2006,
+      "count": 25
+    },
+    {
+      "year": 2007,
+      "count": 16
+    },
+    {
+      "year": 2008,
+      "count": 24
+    },
+    {
+      "year": 2009,
+      "count": 24
+    },
+    {
+      "year": 2010,
+      "count": 16
+    },
+    {
+      "year": 2011,
+      "count": 22
+    },
+    {
+      "year": 2012,
+      "count": 24
+    },
+    {
+      "year": 2013,
+      "count": 37
+    },
+    {
+      "year": 2014,
+      "count": 39
+    },
+    {
+      "year": 2015,
+      "count": 41
+    },
+    {
+      "year": 2016,
+      "count": 65
+    },
+    {
+      "year": 2017,
+      "count": 73
+    },
+    {
+      "year": 2018,
+      "count": 106
+    },
+    {
+      "year": 2019,
+      "count": 114
+    },
+    {
+      "year": 2020,
+      "count": 170
+    },
+    {
+      "year": 2021,
+      "count": 304
+    },
+    {
+      "year": 2022,
+      "count": 423
+    },
+    {
+      "year": 2023,
+      "count": 550
+    },
+    {
+      "year": 2024,
+      "count": 654
+    },
+    {
+      "year": 2025,
+      "count": 888
+    },
+    {
+      "year": 2026,
+      "count": 988
+    }
+  ],
+  "statuses": {
+    "published": 4316,
+    "clinical trial": 308,
+    "preprint": 452,
+    "protocol": 3
+  },
+  "future_dated_records": 4,
+  "topics": [
+    {
+      "name": "Depression",
+      "count": 1784
+    },
+    {
+      "name": "Receptor Pharmacology",
+      "count": 1300
+    },
+    {
+      "name": "Safety",
+      "count": 1251
+    },
+    {
+      "name": "Mechanism of Action",
+      "count": 1099
+    },
+    {
+      "name": "Anxiety",
+      "count": 905
+    },
+    {
+      "name": "Addiction",
+      "count": 842
+    },
+    {
+      "name": "Brain Imaging",
+      "count": 492
+    }
+  ],
+  "topic_semantics": "Selected overlapping derived screening tags; counts are not additive or verified diagnoses",
+  "trial_registrations": 308,
+  "input_sha256": "a1cce8fa64a7bad914a2e8708952d413a7059ecabf76da0136ac565488026293",
+  "venue_labels": [
+    {
+      "name": "2026 IEEE 23rd International Symposium on Biomedical Imaging (ISBI)",
+      "count": 1
+    },
+    {
+      "name": "3 Biotech",
+      "count": 1
+    },
+    {
+      "name": "Academic forensic pathology",
+      "count": 1
+    },
+    {
+      "name": "Access Science",
+      "count": 2
+    },
+    {
+      "name": "ACS central science",
+      "count": 1
+    },
+    {
+      "name": "ACS chemical biology",
+      "count": 1
+    },
+    {
+      "name": "ACS chemical neuroscience",
+      "count": 25
+    },
+    {
+      "name": "ACS Chemical Neuroscience",
+      "count": 1
+    },
+    {
+      "name": "ACS medicinal chemistry letters",
+      "count": 17
+    },
+    {
+      "name": "ACS Medicinal Chemistry Letters",
+      "count": 3
+    },
+    {
+      "name": "ACS omega",
+      "count": 4
+    },
+    {
+      "name": "ACS Omega",
+      "count": 4
+    },
+    {
+      "name": "ACS pharmacology & translational science",
+      "count": 20
+    },
+    {
+      "name": "ACS Pharmacology & Translational Science",
+      "count": 1
+    },
+    {
+      "name": "Acta chemica Scandinavica",
+      "count": 1
+    },
+    {
+      "name": "Acta chirurgica Belgica",
+      "count": 1
+    },
+    {
+      "name": "Acta Crystallographica Section A Foundations and Advances",
+      "count": 1
+    },
+    {
+      "name": "Acta Crystallographica Section E Crystallographic Communications",
+      "count": 4
+    },
+    {
+      "name": "Acta Crystallographica Section E: Crystallographic Communications",
+      "count": 1
+    },
+    {
+      "name": "Acta crystallographica. Section C, Structural chemistry",
+      "count": 3
+    },
+    {
+      "name": "Acta Medica Academica",
+      "count": 1
+    },
+    {
+      "name": "Acta medica Lituanica",
+      "count": 1
+    },
+    {
+      "name": "Acta neurologica et psychiatrica Belgica",
+      "count": 1
+    },
+    {
+      "name": "Acta neuropsychiatrica",
+      "count": 6
+    },
+    {
+      "name": "Acta pharmaceutica Nordica",
+      "count": 1
+    },
+    {
+      "name": "Acta pharmaceutica Suecica",
+      "count": 1
+    },
+    {
+      "name": "Acta Poloniae Toxicologica",
+      "count": 1
+    },
+    {
+      "name": "Acta psychiatrica Scandinavica",
+      "count": 4
+    },
+    {
+      "name": "Acta Sociologica",
+      "count": 1
+    },
+    {
+      "name": "Acta Toxicologica",
+      "count": 3
+    },
+    {
+      "name": "Acta Universitatis Palackianae Olomucensis Facultatis Medicae",
+      "count": 1
+    },
+    {
+      "name": "Action Research",
+      "count": 1
+    },
+    {
+      "name": "Activitas nervosa superior",
+      "count": 10
+    },
+    {
+      "name": "Addiction",
+      "count": 4
+    },
+    {
+      "name": "Addiction (Abingdon, England)",
+      "count": 14
+    },
+    {
+      "name": "Addiction Biology",
+      "count": 1
+    },
+    {
+      "name": "Addiction biology",
+      "count": 4
+    },
+    {
+      "name": "Addiction Neuroscience",
+      "count": 1
+    },
+    {
+      "name": "Addiction research & theory",
+      "count": 1
+    },
+    {
+      "name": "Addiction science & clinical practice",
+      "count": 1
+    },
+    {
+      "name": "Addictive behaviors",
+      "count": 2
+    },
+    {
+      "name": "Addictive behaviors reports",
+      "count": 2
+    },
+    {
+      "name": "Addictive Disorders & Their Treatment",
+      "count": 1
+    },
+    {
+      "name": "Advance",
+      "count": 1
+    },
+    {
+      "name": "Advanced Neurology",
+      "count": 1
+    },
+    {
+      "name": "Advanced science (Weinheim, Baden-Wurttemberg, Germany)",
+      "count": 1
+    },
+    {
+      "name": "Advances in biochemical psychopharmacology",
+      "count": 1
+    },
+    {
+      "name": "Advances in clinical chemistry",
+      "count": 1
+    },
+    {
+      "name": "Advances in Complementary and Integrative Medicine",
+      "count": 1
+    },
+    {
+      "name": "Advances in experimental medicine and biology",
+      "count": 4
+    },
+    {
+      "name": "Advances in Mental Health",
+      "count": 1
+    },
+    {
+      "name": "Advances in pharmacology (San Diego, Calif.)",
+      "count": 2
+    },
+    {
+      "name": "Advances in psychiatry and behavioral health",
+      "count": 1
+    },
+    {
+      "name": "Advances in Research",
+      "count": 1
+    },
+    {
+      "name": "Advances in Sample Preparation",
+      "count": 1
+    },
+    {
+      "name": "Ageing research reviews",
+      "count": 1
+    },
+    {
+      "name": "Agents and actions",
+      "count": 4
+    },
+    {
+      "name": "AIDASCO Reviews",
+      "count": 1
+    },
+    {
+      "name": "AJNR. American journal of neuroradiology",
+      "count": 3
+    },
+    {
+      "name": "AJOB empirical bioethics",
+      "count": 1
+    },
+    {
+      "name": "AJOB neuroscience",
+      "count": 1
+    },
+    {
+      "name": "AJPM Focus",
+      "count": 1
+    },
+    {
+      "name": "Alcoholism & Drug Abuse Weekly",
+      "count": 5
+    },
+    {
+      "name": "Alcoholism Treatment Quarterly",
+      "count": 1
+    },
+    {
+      "name": "Alternative and Complementary Therapies",
+      "count": 1
+    },
+    {
+      "name": "Alzheimer s & Dementia",
+      "count": 1
+    },
+    {
+      "name": "Alzheimer's & dementia: the journal of the Alzheimer's Association",
+      "count": 2
+    },
+    {
+      "name": "American Anthropologist",
+      "count": 1
+    },
+    {
+      "name": "American Entomologist",
+      "count": 1
+    },
+    {
+      "name": "American family physician",
+      "count": 1
+    },
+    {
+      "name": "American journal of epidemiology",
+      "count": 1
+    },
+    {
+      "name": "American Journal of Geriatric Psychiatry",
+      "count": 1
+    },
+    {
+      "name": "American journal of health-system pharmacy: AJHP: official journal of the American Society of Health-System Pharmacists",
+      "count": 1
+    },
+    {
+      "name": "American Journal of Management",
+      "count": 1
+    },
+    {
+      "name": "American journal of ophthalmology case reports",
+      "count": 1
+    },
+    {
+      "name": "American journal of pharmacy and the sciences supporting public health",
+      "count": 1
+    },
+    {
+      "name": "American Journal of Preventive Medicine",
+      "count": 1
+    },
+    {
+      "name": "American Journal of Psychiatry",
+      "count": 5
+    },
+    {
+      "name": "American Journal of Psychiatry Residents Journal",
+      "count": 3
+    },
+    {
+      "name": "American journal of psychotherapy",
+      "count": 2
+    },
+    {
+      "name": "American journal of public health",
+      "count": 1
+    },
+    {
+      "name": "American Journal of Respiratory and Critical Care Medicine",
+      "count": 1
+    },
+    {
+      "name": "American journal of therapeutics",
+      "count": 2
+    },
+    {
+      "name": "Amyotrophic lateral sclerosis & frontotemporal degeneration",
+      "count": 1
+    },
+    {
+      "name": "Analytica Chimica Acta",
+      "count": 2
+    },
+    {
+      "name": "Analytical and bioanalytical chemistry",
+      "count": 1
+    },
+    {
+      "name": "Analytical and Bioanalytical Chemistry",
+      "count": 1
+    },
+    {
+      "name": "Analytical Letters",
+      "count": 1
+    },
+    {
+      "name": "Analytical Methods",
+      "count": 1
+    },
+    {
+      "name": "Analytical methods: advancing methods and applications",
+      "count": 1
+    },
+    {
+      "name": "Anesthesia & Analgesia",
+      "count": 1
+    },
+    {
+      "name": "Anesthesia Research",
+      "count": 1
+    },
+    {
+      "name": "Anesthesiology",
+      "count": 4
+    },
+    {
+      "name": "Angewandte Chemie",
+      "count": 3
+    },
+    {
+      "name": "Angewandte Chemie (International ed. in English)",
+      "count": 3
+    },
+    {
+      "name": "Annales Academiae Medicae Stetinensis",
+      "count": 1
+    },
+    {
+      "name": "Annales de medecine interne",
+      "count": 1
+    },
+    {
+      "name": "Annales medico-psychologiques",
+      "count": 1
+    },
+    {
+      "name": "Annales Médico-psychologiques revue psychiatrique",
+      "count": 1
+    },
+    {
+      "name": "Annals of Bioethics & Clinical Applications",
+      "count": 1
+    },
+    {
+      "name": "Annals of Emergency Medicine",
+      "count": 1
+    },
+    {
+      "name": "Annals of Indian Psychiatry",
+      "count": 1
+    },
+    {
+      "name": "Annals of internal medicine",
+      "count": 1
+    },
+    {
+      "name": "Annals of Medicine & Surgery",
+      "count": 1
+    },
+    {
+      "name": "Annals of medicine and surgery (2012)",
+      "count": 1
+    },
+    {
+      "name": "Annals of palliative medicine",
+      "count": 1
+    },
+    {
+      "name": "Annals of Punjab Medical College",
+      "count": 1
+    },
+    {
+      "name": "Annals of the New York Academy of Sciences",
+      "count": 2
+    },
+    {
+      "name": "Annual review of medicine",
+      "count": 1
+    },
+    {
+      "name": "Annual review of physiology",
+      "count": 1
+    },
+    {
+      "name": "Annual review of psychology",
+      "count": 1
+    },
+    {
+      "name": "Anthropology of Consciousness",
+      "count": 7
+    },
+    {
+      "name": "Antioxidants (Basel, Switzerland)",
+      "count": 1
+    },
+    {
+      "name": "Antonie van Leeuwenhoek",
+      "count": 1
+    },
+    {
+      "name": "Applied and environmental microbiology",
+      "count": 1
+    },
+    {
+      "name": "Applied Drug Research Clinical Trials and Regulatory Affairs",
+      "count": 1
+    },
+    {
+      "name": "Applied radiation and isotopes: including data, instrumentation and methods for use in agriculture, industry and medicine",
+      "count": 1
+    },
+    {
+      "name": "Archiv der Pharmazie",
+      "count": 3
+    },
+    {
+      "name": "Archiv fur Kriminologie",
+      "count": 2
+    },
+    {
+      "name": "Archive for the Psychology of Religion",
+      "count": 1
+    },
+    {
+      "name": "Archives internationales de pharmacodynamie et de therapie",
+      "count": 6
+    },
+    {
+      "name": "Archives of Clinical Neuropsychology",
+      "count": 2
+    },
+    {
+      "name": "Archives of general psychiatry",
+      "count": 2
+    },
+    {
+      "name": "Archives of General Psychiatry",
+      "count": 1
+    },
+    {
+      "name": "Archives of The Medicine and Case Reports",
+      "count": 1
+    },
+    {
+      "name": "Archives of Toxicology",
+      "count": 2
+    },
+    {
+      "name": "Archives of toxicology",
+      "count": 1
+    },
+    {
+      "name": "Archiwum medycyny sadowej i kryminologii",
+      "count": 1
+    },
+    {
+      "name": "Arizona State University Repository",
+      "count": 1
+    },
+    {
+      "name": "Arts Culture and Language",
+      "count": 1
+    },
+    {
+      "name": "Arzneimittel-Forschung",
+      "count": 2
+    },
+    {
+      "name": "Asian Journal of Ethics in Health and Medicine",
+      "count": 1
+    },
+    {
+      "name": "Asian journal of psychiatry",
+      "count": 4
+    },
+    {
+      "name": "Ask the expert - Psychedelic substances",
+      "count": 1
+    },
+    {
+      "name": "Australasian psychiatry: bulletin of Royal Australian and New Zealand College of Psychiatrists",
+      "count": 1
+    },
+    {
+      "name": "Australian Journal of Chemistry",
+      "count": 3
+    },
+    {
+      "name": "Australian Journal of Forensic Sciences",
+      "count": 2
+    },
+    {
+      "name": "Authorea Preprints",
+      "count": 8
+    },
+    {
+      "name": "BCIT Environmental Public Health Journal",
+      "count": 1
+    },
+    {
+      "name": "Behavioral neuropsychiatry",
+      "count": 1
+    },
+    {
+      "name": "Behavioral neuroscience",
+      "count": 1
+    },
+    {
+      "name": "Behavioral Sciences",
+      "count": 1
+    },
+    {
+      "name": "Behavioral sciences (Basel, Switzerland)",
+      "count": 1
+    },
+    {
+      "name": "Behavioural brain research",
+      "count": 3
+    },
+    {
+      "name": "Behavioural Pharmacology",
+      "count": 6
+    },
+    {
+      "name": "Behavioural pharmacology",
+      "count": 3
+    },
+    {
+      "name": "Berkeley Scientific Journal",
+      "count": 1
+    },
+    {
+      "name": "Biocatalysis and Agricultural Biotechnology",
+      "count": 1
+    },
+    {
+      "name": "Biochemical pharmacology",
+      "count": 2
+    },
+    {
+      "name": "Biochemie und Physiologie der Pflanzen",
+      "count": 3
+    },
+    {
+      "name": "Biochemistry and cell biology = Biochimie et biologie cellulaire",
+      "count": 1
+    },
+    {
+      "name": "Biochemistry and Molecular Biology Education",
+      "count": 1
+    },
+    {
+      "name": "Biochimica et Biophysica Acta (BBA) - Proteins and Proteomics",
+      "count": 1
+    },
+    {
+      "name": "Biochimica et biophysica acta. Biomembranes",
+      "count": 1
+    },
+    {
+      "name": "Bioengineered",
+      "count": 1
+    },
+    {
+      "name": "Bioethics",
+      "count": 2
+    },
+    {
+      "name": "Biofeedback",
+      "count": 1
+    },
+    {
+      "name": "Biological ^|^ Pharmaceutical Bulletin",
+      "count": 1
+    },
+    {
+      "name": "Biological psychiatry",
+      "count": 11
+    },
+    {
+      "name": "Biological Psychiatry",
+      "count": 32
+    },
+    {
+      "name": "Biological Psychiatry Global Open Science",
+      "count": 1
+    },
+    {
+      "name": "Biological psychiatry global open science",
+      "count": 1
+    },
+    {
+      "name": "Biological psychiatry. Cognitive neuroscience and neuroimaging",
+      "count": 7
+    },
+    {
+      "name": "Biologie aujourd'hui",
+      "count": 1
+    },
+    {
+      "name": "Biology",
+      "count": 1
+    },
+    {
+      "name": "Biology direct",
+      "count": 1
+    },
+    {
+      "name": "BioMed research international",
+      "count": 1
+    },
+    {
+      "name": "Biomedicine & pharmacotherapy = Biomedecine & pharmacotherapie",
+      "count": 4
+    },
+    {
+      "name": "Biomedicines",
+      "count": 3
+    },
+    {
+      "name": "Biomolecules",
+      "count": 1
+    },
+    {
+      "name": "Bioorganic & medicinal chemistry letters",
+      "count": 1
+    },
+    {
+      "name": "Biophotonics Congress: Optics in the Life Sciences 2023 (OMA, NTM, BODA, OMP, BRAIN)",
+      "count": 1
+    },
+    {
+      "name": "bioRxiv",
+      "count": 128
+    },
+    {
+      "name": "bioRxiv: the preprint server for biology",
+      "count": 31
+    },
+    {
+      "name": "Bioscience, biotechnology, and biochemistry",
+      "count": 1
+    },
+    {
+      "name": "BIOspektrum",
+      "count": 1
+    },
+    {
+      "name": "Biotechnologia",
+      "count": 1
+    },
+    {
+      "name": "Biotechnology advances",
+      "count": 1
+    },
+    {
+      "name": "Biotechnology and bioengineering",
+      "count": 2
+    },
+    {
+      "name": "Biotechnology progress",
+      "count": 2
+    },
+    {
+      "name": "Bipolar disorders",
+      "count": 1
+    },
+    {
+      "name": "Birth defects research",
+      "count": 1
+    },
+    {
+      "name": "BJPsych bulletin",
+      "count": 2
+    },
+    {
+      "name": "BJPsych Open",
+      "count": 4
+    },
+    {
+      "name": "BJPsych open",
+      "count": 7
+    },
+    {
+      "name": "BMC Medical Education",
+      "count": 1
+    },
+    {
+      "name": "BMC medical education",
+      "count": 2
+    },
+    {
+      "name": "BMC Medicine",
+      "count": 1
+    },
+    {
+      "name": "BMC neuroscience",
+      "count": 1
+    },
+    {
+      "name": "BMC palliative care",
+      "count": 1
+    },
+    {
+      "name": "BMC psychiatry",
+      "count": 4
+    },
+    {
+      "name": "BMC psychology",
+      "count": 1
+    },
+    {
+      "name": "BMJ",
+      "count": 2
+    },
+    {
+      "name": "BMJ (Clinical research ed.)",
+      "count": 10
+    },
+    {
+      "name": "BMJ case reports",
+      "count": 2
+    },
+    {
+      "name": "BMJ open",
+      "count": 7
+    },
+    {
+      "name": "BMJ Open",
+      "count": 1
+    },
+    {
+      "name": "BMJ supportive & palliative care",
+      "count": 2
+    },
+    {
+      "name": "Boletín de la Sociedad Argentina de Botánica",
+      "count": 1
+    },
+    {
+      "name": "Book of Proceedings",
+      "count": 1
+    },
+    {
+      "name": "Botanical Museum leaflets Harvard University",
+      "count": 1
+    },
+    {
+      "name": "Brain and behavior",
+      "count": 5
+    },
+    {
+      "name": "Brain and Behavior",
+      "count": 1
+    },
+    {
+      "name": "Brain and nerve = Shinkei kenkyu no shinpo",
+      "count": 1
+    },
+    {
+      "name": "Brain and Neurological Disorders",
+      "count": 1
+    },
+    {
+      "name": "Brain Behavior and Immunity",
+      "count": 2
+    },
+    {
+      "name": "Brain communications",
+      "count": 1
+    },
+    {
+      "name": "Brain Disorders",
+      "count": 1
+    },
+    {
+      "name": "Brain research",
+      "count": 3
+    },
+    {
+      "name": "Brain research bulletin",
+      "count": 1
+    },
+    {
+      "name": "Brain Sciences",
+      "count": 1
+    },
+    {
+      "name": "Brain sciences",
+      "count": 7
+    },
+    {
+      "name": "Brain stimulation",
+      "count": 1
+    },
+    {
+      "name": "Brain, behavior, and immunity",
+      "count": 1
+    },
+    {
+      "name": "Brain: a journal of neurology",
+      "count": 2
+    },
+    {
+      "name": "Brazilian Journal of Development",
+      "count": 1
+    },
+    {
+      "name": "Brazilian Journal of Health Review",
+      "count": 2
+    },
+    {
+      "name": "Brazilian Journal of Psychiatry",
+      "count": 1
+    },
+    {
+      "name": "Brazilian Journal of Science",
+      "count": 2
+    },
+    {
+      "name": "Bristol Research (University of Bristol)",
+      "count": 1
+    },
+    {
+      "name": "British journal of addiction",
+      "count": 1
+    },
+    {
+      "name": "British journal of clinical pharmacology",
+      "count": 4
+    },
+    {
+      "name": "British Journal of Mental Health Nursing",
+      "count": 1
+    },
+    {
+      "name": "British Journal of Neuroscience Nursing",
+      "count": 1
+    },
+    {
+      "name": "British journal of pain",
+      "count": 1
+    },
+    {
+      "name": "British journal of pharmacology",
+      "count": 11
+    },
+    {
+      "name": "British medical journal",
+      "count": 1
+    },
+    {
+      "name": "Bulletin of Integrative Psychiatry",
+      "count": 1
+    },
+    {
+      "name": "Bulletin of Taras Shevchenko National University of Kyiv Psychology",
+      "count": 1
+    },
+    {
+      "name": "Bulletin on narcotics",
+      "count": 1
+    },
+    {
+      "name": "Bundesinstitut für Risikobewertung Fachgruppe ZEBET - Datenbank und Informationsbeschaffung Abteilung Experimentelle Toxikologie und ZEBET",
+      "count": 1
+    },
+    {
+      "name": "C&EN Global Enterprise",
+      "count": 9
+    },
+    {
+      "name": "Caderno Pedagógico",
+      "count": 1
+    },
+    {
+      "name": "Cal Poly Humboldt Digital Commons",
+      "count": 1
+    },
+    {
+      "name": "Cambridge quarterly of healthcare ethics: CQ: the international journal of healthcare ethics committees",
+      "count": 2
+    },
+    {
+      "name": "Canadian Agency for Drugs and Technologies in Health, Ottawa (ON)",
+      "count": 1
+    },
+    {
+      "name": "Canadian family physician Medecin de famille canadien",
+      "count": 1
+    },
+    {
+      "name": "Canadian Journal of Bioethics",
+      "count": 1
+    },
+    {
+      "name": "Canadian Journal of Chemistry",
+      "count": 1
+    },
+    {
+      "name": "Canadian Journal of Education / Revue canadienne de l éducation",
+      "count": 1
+    },
+    {
+      "name": "Canadian journal of pain = Revue canadienne de la douleur",
+      "count": 1
+    },
+    {
+      "name": "Canadian journal of psychiatry. Revue canadienne de psychiatrie",
+      "count": 6
+    },
+    {
+      "name": "Canadian Journal of Public Health",
+      "count": 1
+    },
+    {
+      "name": "Canadian Medical Association Journal",
+      "count": 1
+    },
+    {
+      "name": "Cancer",
+      "count": 4
+    },
+    {
+      "name": "Cancer causes & control: CCC",
+      "count": 1
+    },
+    {
+      "name": "Cancer medicine",
+      "count": 1
+    },
+    {
+      "name": "Cancer reports (Hoboken, N.J.)",
+      "count": 1
+    },
+    {
+      "name": "Cancer Research",
+      "count": 1
+    },
+    {
+      "name": "Cancers",
+      "count": 1
+    },
+    {
+      "name": "Cannabis and cannabinoid research",
+      "count": 2
+    },
+    {
+      "name": "Carleton undergraduate journal of science.",
+      "count": 2
+    },
+    {
+      "name": "Case Medical Research",
+      "count": 8
+    },
+    {
+      "name": "Case Reports and Reviews",
+      "count": 2
+    },
+    {
+      "name": "Case reports in neurological medicine",
+      "count": 1
+    },
+    {
+      "name": "Casopis lekaru ceskych",
+      "count": 1
+    },
+    {
+      "name": "Cell",
+      "count": 1
+    },
+    {
+      "name": "Cell death discovery",
+      "count": 1
+    },
+    {
+      "name": "Cell Discovery",
+      "count": 1
+    },
+    {
+      "name": "Cell reports",
+      "count": 2
+    },
+    {
+      "name": "Cell Reports Medicine",
+      "count": 1
+    },
+    {
+      "name": "Cell reports. Medicine",
+      "count": 1
+    },
+    {
+      "name": "Cells",
+      "count": 2
+    },
+    {
+      "name": "Central European journal of public health",
+      "count": 1
+    },
+    {
+      "name": "CeON Repository (Centre for Evaluation in Education and Science)",
+      "count": 1
+    },
+    {
+      "name": "Cephalalgia",
+      "count": 1
+    },
+    {
+      "name": "Cephalalgia Reports",
+      "count": 1
+    },
+    {
+      "name": "Cephalalgia: an international journal of headache",
+      "count": 2
+    },
+    {
+      "name": "Cerebral cortex (New York, N.Y.: 1991)",
+      "count": 2
+    },
+    {
+      "name": "Ceskoslovenska psychiatrie",
+      "count": 1
+    },
+    {
+      "name": "ChemBioChem",
+      "count": 1
+    },
+    {
+      "name": "Chembiochem: a European journal of chemical biology",
+      "count": 10
+    },
+    {
+      "name": "Chemical & Engineering News",
+      "count": 1
+    },
+    {
+      "name": "Chemical and Pharmaceutical Bulletin",
+      "count": 1
+    },
+    {
+      "name": "Chemical reviews",
+      "count": 1
+    },
+    {
+      "name": "ChemInform",
+      "count": 8
+    },
+    {
+      "name": "Chemischer Informationsdienst",
+      "count": 8
+    },
+    {
+      "name": "Chemischer Informationsdienst Organische Chemie",
+      "count": 2
+    },
+    {
+      "name": "Chemischer Informationsdienst. Organische Chemie",
+      "count": 1
+    },
+    {
+      "name": "Chemistry (Weinheim an der Bergstrasse, Germany)",
+      "count": 5
+    },
+    {
+      "name": "Chemistry - A European Journal",
+      "count": 1
+    },
+    {
+      "name": "Chemistry and physics of lipids",
+      "count": 1
+    },
+    {
+      "name": "ChemistrySelect",
+      "count": 2
+    },
+    {
+      "name": "ChemMedChem",
+      "count": 1
+    },
+    {
+      "name": "ChemPlusChem",
+      "count": 1
+    },
+    {
+      "name": "Child and adolescent psychiatric clinics of North America",
+      "count": 1
+    },
+    {
+      "name": "Child and adolescent psychiatry and mental health",
+      "count": 1
+    },
+    {
+      "name": "Chinese medical journal",
+      "count": 2
+    },
+    {
+      "name": "Chronic stress (Thousand Oaks, Calif.)",
+      "count": 1
+    },
+    {
+      "name": "Chudoku kenkyu: Chudoku Kenkyukai jun kikanshi = The Japanese journal of toxicology",
+      "count": 2
+    },
+    {
+      "name": "CIIS Digital Commons (California Institute of Integral Studies)",
+      "count": 2
+    },
+    {
+      "name": "cIRcle (University of British Columbia)",
+      "count": 1
+    },
+    {
+      "name": "Citizen Science Theory and Practice",
+      "count": 1
+    },
+    {
+      "name": "Cleveland Clinic journal of medicine",
+      "count": 1
+    },
+    {
+      "name": "Clinica Chimica Acta",
+      "count": 1
+    },
+    {
+      "name": "Clinical & experimental optometry",
+      "count": 1
+    },
+    {
+      "name": "Clinical and experimental rheumatology",
+      "count": 1
+    },
+    {
+      "name": "Clinical case reports",
+      "count": 3
+    },
+    {
+      "name": "Clinical Chemistry",
+      "count": 2
+    },
+    {
+      "name": "Clinical drug investigation",
+      "count": 1
+    },
+    {
+      "name": "Clinical EEG (electroencephalography)",
+      "count": 1
+    },
+    {
+      "name": "Clinical Endocrinology and Metabolism",
+      "count": 1
+    },
+    {
+      "name": "Clinical Neuropharmacology",
+      "count": 1
+    },
+    {
+      "name": "Clinical neuropharmacology",
+      "count": 2
+    },
+    {
+      "name": "Clinical neurophysiology: official journal of the International Federation of Clinical Neurophysiology",
+      "count": 1
+    },
+    {
+      "name": "Clinical Neuropsychopharmacology and Addiction",
+      "count": 2
+    },
+    {
+      "name": "Clinical pediatrics",
+      "count": 1
+    },
+    {
+      "name": "Clinical Pharmacokinetics",
+      "count": 2
+    },
+    {
+      "name": "Clinical pharmacokinetics",
+      "count": 2
+    },
+    {
+      "name": "Clinical Pharmacology & Therapeutics",
+      "count": 1
+    },
+    {
+      "name": "Clinical pharmacology and therapeutics",
+      "count": 8
+    },
+    {
+      "name": "Clinical Pharmacology in Drug Development",
+      "count": 1
+    },
+    {
+      "name": "Clinical Psychiatry News",
+      "count": 1
+    },
+    {
+      "name": "Clinical psychopharmacology and neuroscience: the official scientific journal of the Korean College of Neuropsychopharmacology",
+      "count": 3
+    },
+    {
+      "name": "Clinical Social Work Journal",
+      "count": 1
+    },
+    {
+      "name": "Clinical therapeutics",
+      "count": 1
+    },
+    {
+      "name": "Clinical toxicology (Philadelphia, Pa.)",
+      "count": 9
+    },
+    {
+      "name": "ClinicalTrials.gov",
+      "count": 308
+    },
+    {
+      "name": "Clinics in geriatric medicine",
+      "count": 1
+    },
+    {
+      "name": "CMAJ: Canadian Medical Association journal = journal de l'Association medicale canadienne",
+      "count": 4
+    },
+    {
+      "name": "CME",
+      "count": 1
+    },
+    {
+      "name": "CNS & neurological disorders drug targets",
+      "count": 1
+    },
+    {
+      "name": "CNS drugs",
+      "count": 11
+    },
+    {
+      "name": "CNS Drugs",
+      "count": 1
+    },
+    {
+      "name": "CNS Neuroscience & Therapeutics",
+      "count": 1
+    },
+    {
+      "name": "CNS spectrums",
+      "count": 5
+    },
+    {
+      "name": "Cochrane Clinical Answers",
+      "count": 1
+    },
+    {
+      "name": "Cognitive Science",
+      "count": 1
+    },
+    {
+      "name": "Columbia University Academic Commons",
+      "count": 1
+    },
+    {
+      "name": "Communications Biology",
+      "count": 4
+    },
+    {
+      "name": "Communications Medicine",
+      "count": 1
+    },
+    {
+      "name": "Communicative & integrative biology",
+      "count": 1
+    },
+    {
+      "name": "Community mental health journal",
+      "count": 1
+    },
+    {
+      "name": "Comparative and General Pharmacology",
+      "count": 1
+    },
+    {
+      "name": "Comparative biochemistry and physiology. C: Comparative pharmacology",
+      "count": 1
+    },
+    {
+      "name": "Comprehensive psychiatry",
+      "count": 5
+    },
+    {
+      "name": "Comprehensive Psychiatry",
+      "count": 1
+    },
+    {
+      "name": "Comprehensive psychoneuroendocrinology",
+      "count": 1
+    },
+    {
+      "name": "Comprehensive reviews in food science and food safety",
+      "count": 1
+    },
+    {
+      "name": "Comptes rendus des seances de la Societe de biologie et de ses filiales",
+      "count": 3
+    },
+    {
+      "name": "Computational biology and chemistry",
+      "count": 1
+    },
+    {
+      "name": "Configurations",
+      "count": 1
+    },
+    {
+      "name": "Confinia psychiatrica. Borderland of psychiatry. Grenzgebiete der Psychiatrie. Les Confins de la psychiatrie",
+      "count": 4
+    },
+    {
+      "name": "Consciousness and cognition",
+      "count": 1
+    },
+    {
+      "name": "Consciousness Spirituality & Transpersonal Psychology",
+      "count": 2
+    },
+    {
+      "name": "Conservative Drug Policy Reform Group",
+      "count": 1
+    },
+    {
+      "name": "Contemporary clinical trials",
+      "count": 1
+    },
+    {
+      "name": "Contemporary Drug Problems",
+      "count": 2
+    },
+    {
+      "name": "Contemporary Family Therapy",
+      "count": 1
+    },
+    {
+      "name": "Corrosion Science",
+      "count": 1
+    },
+    {
+      "name": "Council on Spiritual Practices",
+      "count": 1
+    },
+    {
+      "name": "Creative Science",
+      "count": 1
+    },
+    {
+      "name": "Crime & Delinquency",
+      "count": 1
+    },
+    {
+      "name": "Croatian medical journal",
+      "count": 1
+    },
+    {
+      "name": "CUNY Academic Works (City University of New York)",
+      "count": 2
+    },
+    {
+      "name": "Cureus",
+      "count": 27
+    },
+    {
+      "name": "Curr Microbiol",
+      "count": 1
+    },
+    {
+      "name": "Current Addiction Reports",
+      "count": 4
+    },
+    {
+      "name": "Current Bioactive Compounds",
+      "count": 1
+    },
+    {
+      "name": "Current biology: CB",
+      "count": 5
+    },
+    {
+      "name": "Current drug abuse reviews",
+      "count": 3
+    },
+    {
+      "name": "Current gastroenterology reports",
+      "count": 1
+    },
+    {
+      "name": "Current geriatrics reports",
+      "count": 1
+    },
+    {
+      "name": "Current issues in molecular biology",
+      "count": 2
+    },
+    {
+      "name": "Current medical research and opinion",
+      "count": 3
+    },
+    {
+      "name": "Current medicinal chemistry",
+      "count": 2
+    },
+    {
+      "name": "Current microbiology",
+      "count": 1
+    },
+    {
+      "name": "Current molecular pharmacology",
+      "count": 1
+    },
+    {
+      "name": "Current neurology and neuroscience reports",
+      "count": 2
+    },
+    {
+      "name": "Current neuropharmacology",
+      "count": 4
+    },
+    {
+      "name": "Current oncology (Toronto, Ont.)",
+      "count": 2
+    },
+    {
+      "name": "Current Opinion in Behavioral Sciences",
+      "count": 1
+    },
+    {
+      "name": "Current opinion in biotechnology",
+      "count": 1
+    },
+    {
+      "name": "Current opinion in plant biology",
+      "count": 1
+    },
+    {
+      "name": "Current opinion in psychiatry",
+      "count": 3
+    },
+    {
+      "name": "Current opinion in psychology",
+      "count": 1
+    },
+    {
+      "name": "Current Opinion in Toxicology",
+      "count": 1
+    },
+    {
+      "name": "Current pain and headache reports",
+      "count": 4
+    },
+    {
+      "name": "Current pharmaceutical design",
+      "count": 1
+    },
+    {
+      "name": "Current Psychiatry",
+      "count": 2
+    },
+    {
+      "name": "Current psychiatry",
+      "count": 1
+    },
+    {
+      "name": "Current Psychiatry Reports",
+      "count": 2
+    },
+    {
+      "name": "Current psychiatry reports",
+      "count": 7
+    },
+    {
+      "name": "Current Psychiatry Research and Reviews",
+      "count": 2
+    },
+    {
+      "name": "Current Psychiatry Reviews",
+      "count": 1
+    },
+    {
+      "name": "Current Psychology",
+      "count": 1
+    },
+    {
+      "name": "Current Psychopharmacologye",
+      "count": 1
+    },
+    {
+      "name": "Current rheumatology reviews",
+      "count": 1
+    },
+    {
+      "name": "Current topics in behavioral neurosciences",
+      "count": 26
+    },
+    {
+      "name": "Current Topics in Medicinal Chemistry",
+      "count": 1
+    },
+    {
+      "name": "Current topics in medicinal chemistry",
+      "count": 1
+    },
+    {
+      "name": "Current treatment options in oncology",
+      "count": 1
+    },
+    {
+      "name": "Current Treatment Options in Psychiatry",
+      "count": 2
+    },
+    {
+      "name": "Data Archiving and Networked Services (DANS)",
+      "count": 1
+    },
+    {
+      "name": "Deep Blue (University of Michigan)",
+      "count": 1
+    },
+    {
+      "name": "Defense Technical Information Center (DTIC)",
+      "count": 1
+    },
+    {
+      "name": "Deleuze and Guattari Studies",
+      "count": 1
+    },
+    {
+      "name": "Depression and anxiety",
+      "count": 1
+    },
+    {
+      "name": "Der Nervenarzt",
+      "count": 5
+    },
+    {
+      "name": "DergiPark (Istanbul University)",
+      "count": 1
+    },
+    {
+      "name": "Dermatitis: contact, atopic, occupational, drug",
+      "count": 1
+    },
+    {
+      "name": "Deutsche medizinische Wochenschrift (1946)",
+      "count": 1
+    },
+    {
+      "name": "Deutsches Arzteblatt international",
+      "count": 1
+    },
+    {
+      "name": "Deviant Behavior",
+      "count": 2
+    },
+    {
+      "name": "Dialnet (Universidad de la Rioja)",
+      "count": 1
+    },
+    {
+      "name": "Dialogue A Journal of Mormon Thought",
+      "count": 1
+    },
+    {
+      "name": "Dialogues in clinical neuroscience",
+      "count": 2
+    },
+    {
+      "name": "Die Psychotherapie",
+      "count": 1
+    },
+    {
+      "name": "Digestive and Liver Disease",
+      "count": 3
+    },
+    {
+      "name": "Digital Commons - Gardner-Webb University (Gardner-Webb University)",
+      "count": 1
+    },
+    {
+      "name": "Digital Commons - George Fox University (George Fox University)",
+      "count": 1
+    },
+    {
+      "name": "Digital Commons - PCOM (Philadelphia College of Osteopathic Medicine)",
+      "count": 2
+    },
+    {
+      "name": "Digital Commons - University of South Florida (University of South Florida)",
+      "count": 1
+    },
+    {
+      "name": "Digital Commons at University of Maryland Carey Law (University of Maryland Francis King Carey School of Law)",
+      "count": 1
+    },
+    {
+      "name": "Digital Creativity",
+      "count": 1
+    },
+    {
+      "name": "Digital Showcase Research, Scholarship, & Creative Works (University of Lynchburg)",
+      "count": 3
+    },
+    {
+      "name": "DigitalCommons - Kennesaw State University (Kennesaw State University)",
+      "count": 2
+    },
+    {
+      "name": "Discover Mental Health",
+      "count": 1
+    },
+    {
+      "name": "Discover mental health",
+      "count": 2
+    },
+    {
+      "name": "Diseases of the nervous system",
+      "count": 2
+    },
+    {
+      "name": "Diva portal (Dalarna University Library)",
+      "count": 3
+    },
+    {
+      "name": "DMW - Deutsche Medizinische Wochenschrift",
+      "count": 1
+    },
+    {
+      "name": "DNP - Die Neurologie & Psychiatrie",
+      "count": 1
+    },
+    {
+      "name": "DOAJ (DOAJ: Directory of Open Access Journals)",
+      "count": 4
+    },
+    {
+      "name": "Dominican Scholar (Dominican University of California)",
+      "count": 1
+    },
+    {
+      "name": "Drug and alcohol dependence",
+      "count": 9
+    },
+    {
+      "name": "Drug and Alcohol Dependence",
+      "count": 26
+    },
+    {
+      "name": "Drug and alcohol review",
+      "count": 2
+    },
+    {
+      "name": "Drug and Alcohol Review",
+      "count": 1
+    },
+    {
+      "name": "Drug control",
+      "count": 1
+    },
+    {
+      "name": "Drug design, development and therapy",
+      "count": 1
+    },
+    {
+      "name": "Drug development research",
+      "count": 1
+    },
+    {
+      "name": "Drug discovery today",
+      "count": 1
+    },
+    {
+      "name": "Drug Metabolism and Disposition",
+      "count": 1
+    },
+    {
+      "name": "Drug Metabolism and Pharmacokinetics",
+      "count": 2
+    },
+    {
+      "name": "Drug Metabolism Reviews",
+      "count": 1
+    },
+    {
+      "name": "Drug safety",
+      "count": 1
+    },
+    {
+      "name": "Drug Science Policy and Law",
+      "count": 14
+    },
+    {
+      "name": "Drug Science, Policy and Law",
+      "count": 1
+    },
+    {
+      "name": "Drug testing and analysis",
+      "count": 7
+    },
+    {
+      "name": "Drug Testing and Analysis",
+      "count": 2
+    },
+    {
+      "name": "Drugs",
+      "count": 4
+    },
+    {
+      "name": "Drugs & aging",
+      "count": 1
+    },
+    {
+      "name": "Drugs & Therapy Perspectives",
+      "count": 1
+    },
+    {
+      "name": "Drugs (Abingdon, England)",
+      "count": 1
+    },
+    {
+      "name": "Drugs and Drug Candidates",
+      "count": 1
+    },
+    {
+      "name": "Drugs Education Prevention and Policy",
+      "count": 4
+    },
+    {
+      "name": "Eating and weight disorders: EWD",
+      "count": 1
+    },
+    {
+      "name": "EClinicalMedicine",
+      "count": 7
+    },
+    {
+      "name": "EcoEvoRxiv",
+      "count": 2
+    },
+    {
+      "name": "Economic Botany",
+      "count": 1
+    },
+    {
+      "name": "Ecopsychology",
+      "count": 1
+    },
+    {
+      "name": "Edinburgh Journal of Botany",
+      "count": 1
+    },
+    {
+      "name": "edoc Publication server (Humboldt University of Berlin)",
+      "count": 1
+    },
+    {
+      "name": "Educational Administration Theory and Practices",
+      "count": 1
+    },
+    {
+      "name": "Eisei Shikenjo hokoku. Bulletin of National Institute of Hygienic Sciences",
+      "count": 2
+    },
+    {
+      "name": "Electroencephalography and clinical neurophysiology",
+      "count": 2
+    },
+    {
+      "name": "Electronic Journal of General Medicine",
+      "count": 1
+    },
+    {
+      "name": "Electrophoresis",
+      "count": 1
+    },
+    {
+      "name": "eLife",
+      "count": 2
+    },
+    {
+      "name": "Emergency Medicine News",
+      "count": 1
+    },
+    {
+      "name": "Emerging Minds Journal for Student Research",
+      "count": 1
+    },
+    {
+      "name": "Emerging Trends in Drugs Addictions and Health",
+      "count": 3
+    },
+    {
+      "name": "Endocrinology",
+      "count": 1
+    },
+    {
+      "name": "Engrami",
+      "count": 1
+    },
+    {
+      "name": "Entertainment and Sports Law Journal",
+      "count": 1
+    },
+    {
+      "name": "Epubl LTU",
+      "count": 1
+    },
+    {
+      "name": "eScholarship (California Digital Library)",
+      "count": 2
+    },
+    {
+      "name": "European addiction research",
+      "count": 2
+    },
+    {
+      "name": "European archives of psychiatry and clinical neuroscience",
+      "count": 5
+    },
+    {
+      "name": "European eating disorders review: the journal of the Eating Disorders Association",
+      "count": 1
+    },
+    {
+      "name": "European journal of anaesthesiology",
+      "count": 1
+    },
+    {
+      "name": "European Journal of Arts Humanities and Social Sciences",
+      "count": 1
+    },
+    {
+      "name": "European Journal of Clinical Pharmacology",
+      "count": 1
+    },
+    {
+      "name": "European journal of drug metabolism and pharmacokinetics",
+      "count": 1
+    },
+    {
+      "name": "European journal of emergency medicine: official journal of the European Society for Emergency Medicine",
+      "count": 1
+    },
+    {
+      "name": "European Journal of Futures Research",
+      "count": 1
+    },
+    {
+      "name": "European journal of medicinal chemistry",
+      "count": 1
+    },
+    {
+      "name": "European Journal of Medicinal Chemistry Reports",
+      "count": 1
+    },
+    {
+      "name": "European journal of neurology",
+      "count": 1
+    },
+    {
+      "name": "European Journal of Neuroscience",
+      "count": 1
+    },
+    {
+      "name": "European journal of pain (London, England)",
+      "count": 1
+    },
+    {
+      "name": "European journal of pharmacology",
+      "count": 5
+    },
+    {
+      "name": "European journal of psychotraumatology",
+      "count": 1
+    },
+    {
+      "name": "European Journal of Trauma & Dissociation",
+      "count": 1
+    },
+    {
+      "name": "European Neuropsychopharmacology",
+      "count": 31
+    },
+    {
+      "name": "European neuropsychopharmacology: the journal of the European College of Neuropsychopharmacology",
+      "count": 14
+    },
+    {
+      "name": "European Psychiatry",
+      "count": 15
+    },
+    {
+      "name": "European psychiatry: the journal of the Association of European Psychiatrists",
+      "count": 26
+    },
+    {
+      "name": "European Psychologist",
+      "count": 1
+    },
+    {
+      "name": "Evidence-Based Practice",
+      "count": 2
+    },
+    {
+      "name": "EvidenzUpdate",
+      "count": 1
+    },
+    {
+      "name": "Evolution letters",
+      "count": 1
+    },
+    {
+      "name": "Exhibit - A Showcase of Scholarship, Creativity and Preservation Provided by Xavier University Library (Xavier University)",
+      "count": 1
+    },
+    {
+      "name": "Experientia",
+      "count": 10
+    },
+    {
+      "name": "Experimental and clinical psychopharmacology",
+      "count": 4
+    },
+    {
+      "name": "Experimental brain research",
+      "count": 1
+    },
+    {
+      "name": "Expert opinion on drug discovery",
+      "count": 2
+    },
+    {
+      "name": "Expert opinion on drug safety",
+      "count": 5
+    },
+    {
+      "name": "Expert opinion on emerging drugs",
+      "count": 3
+    },
+    {
+      "name": "Expert opinion on investigational drugs",
+      "count": 4
+    },
+    {
+      "name": "Expert opinion on pharmacotherapy",
+      "count": 2
+    },
+    {
+      "name": "Expert opinion on therapeutic targets",
+      "count": 1
+    },
+    {
+      "name": "Expert review of clinical pharmacology",
+      "count": 8
+    },
+    {
+      "name": "Expert review of neurotherapeutics",
+      "count": 5
+    },
+    {
+      "name": "Exploration of neuroscience",
+      "count": 2
+    },
+    {
+      "name": "Exploratory research in clinical and social pharmacy",
+      "count": 1
+    },
+    {
+      "name": "Explore (New York, N.Y.)",
+      "count": 2
+    },
+    {
+      "name": "eYLS (Yale Law School)",
+      "count": 5
+    },
+    {
+      "name": "F1000Res",
+      "count": 2
+    },
+    {
+      "name": "F1000Research",
+      "count": 5
+    },
+    {
+      "name": "Fa yi xue za zhi",
+      "count": 1
+    },
+    {
+      "name": "Faculty of 1000 Research Ltd",
+      "count": 8
+    },
+    {
+      "name": "Family Practice",
+      "count": 1
+    },
+    {
+      "name": "Farmacja Polska",
+      "count": 1
+    },
+    {
+      "name": "FEBS Letters",
+      "count": 1
+    },
+    {
+      "name": "FEBS letters",
+      "count": 1
+    },
+    {
+      "name": "Federation Proceedings",
+      "count": 1
+    },
+    {
+      "name": "Feminist Review",
+      "count": 1
+    },
+    {
+      "name": "Figshare",
+      "count": 11
+    },
+    {
+      "name": "Fitoterapia",
+      "count": 1
+    },
+    {
+      "name": "Fiziolohichnyi zhurnal (Kiev, Ukraine: 1994)",
+      "count": 1
+    },
+    {
+      "name": "Focus",
+      "count": 1
+    },
+    {
+      "name": "Focus (American Psychiatric Publishing)",
+      "count": 5
+    },
+    {
+      "name": "Folia medica Cracoviensia",
+      "count": 1
+    },
+    {
+      "name": "Food Chemistry",
+      "count": 1
+    },
+    {
+      "name": "Forensic Chemistry",
+      "count": 2
+    },
+    {
+      "name": "Forensic Science International",
+      "count": 3
+    },
+    {
+      "name": "Forensic science international",
+      "count": 7
+    },
+    {
+      "name": "Forensic science review",
+      "count": 1
+    },
+    {
+      "name": "Forensic sciences research",
+      "count": 1
+    },
+    {
+      "name": "Forensic Toxicology",
+      "count": 3
+    },
+    {
+      "name": "Fortschritte der Neurologie-Psychiatrie",
+      "count": 4
+    },
+    {
+      "name": "Frontiers in artificial intelligence",
+      "count": 1
+    },
+    {
+      "name": "Frontiers in Behavioral Neuroscience",
+      "count": 2
+    },
+    {
+      "name": "Frontiers in computational neuroscience",
+      "count": 1
+    },
+    {
+      "name": "Frontiers in Computer Science",
+      "count": 1
+    },
+    {
+      "name": "Frontiers in epidemiology",
+      "count": 1
+    },
+    {
+      "name": "Frontiers in Forests and Global Change",
+      "count": 1
+    },
+    {
+      "name": "Frontiers in fungal biology",
+      "count": 1
+    },
+    {
+      "name": "Frontiers in human neuroscience",
+      "count": 4
+    },
+    {
+      "name": "Frontiers in Human Neuroscience",
+      "count": 2
+    },
+    {
+      "name": "Frontiers in immunology",
+      "count": 1
+    },
+    {
+      "name": "Frontiers in microbiology",
+      "count": 2
+    },
+    {
+      "name": "Frontiers in neuroergonomics",
+      "count": 1
+    },
+    {
+      "name": "Frontiers in neurology",
+      "count": 2
+    },
+    {
+      "name": "Frontiers in Neuroscience",
+      "count": 4
+    },
+    {
+      "name": "Frontiers in neuroscience",
+      "count": 8
+    },
+    {
+      "name": "Frontiers in pharmacology",
+      "count": 30
+    },
+    {
+      "name": "Frontiers in Pharmacology",
+      "count": 3
+    },
+    {
+      "name": "Frontiers in Psychiatry",
+      "count": 15
+    },
+    {
+      "name": "Frontiers in psychiatry",
+      "count": 92
+    },
+    {
+      "name": "Frontiers in psychology",
+      "count": 26
+    },
+    {
+      "name": "Frontiers in Psychology",
+      "count": 1
+    },
+    {
+      "name": "Frontiers in Public Health",
+      "count": 4
+    },
+    {
+      "name": "Frontiers in public health",
+      "count": 1
+    },
+    {
+      "name": "Frontiers in synaptic neuroscience",
+      "count": 1
+    },
+    {
+      "name": "Frontiers in systems neuroscience",
+      "count": 1
+    },
+    {
+      "name": "Frontiers in veterinary science",
+      "count": 1
+    },
+    {
+      "name": "Functional Foods in Health and Disease",
+      "count": 1
+    },
+    {
+      "name": "Fundamental & clinical pharmacology",
+      "count": 1
+    },
+    {
+      "name": "Fungal biology",
+      "count": 2
+    },
+    {
+      "name": "Fungal biology and biotechnology",
+      "count": 1
+    },
+    {
+      "name": "Fungal genetics and biology: FG & B",
+      "count": 2
+    },
+    {
+      "name": "Furman University Scholar Exchange (Furman University)",
+      "count": 1
+    },
+    {
+      "name": "Future medicinal chemistry",
+      "count": 1
+    },
+    {
+      "name": "Gaceta Médica de Caracas",
+      "count": 1
+    },
+    {
+      "name": "Gastrointestinal Endoscopy",
+      "count": 1
+    },
+    {
+      "name": "Gender & History",
+      "count": 1
+    },
+    {
+      "name": "General Hospital Psychiatry",
+      "count": 2
+    },
+    {
+      "name": "General hospital psychiatry",
+      "count": 5
+    },
+    {
+      "name": "Genes",
+      "count": 1
+    },
+    {
+      "name": "Genetics and Molecular Research",
+      "count": 1
+    },
+    {
+      "name": "Georgetown Scientific Research Journal",
+      "count": 1
+    },
+    {
+      "name": "Gesundheitswesen (Bundesverband der Arzte des Offentlichen Gesundheitsdienstes (Germany))",
+      "count": 1
+    },
+    {
+      "name": "GFNPSS-International Journal of Multidisciplinary Research",
+      "count": 1
+    },
+    {
+      "name": "Global advances in integrative medicine and health",
+      "count": 1
+    },
+    {
+      "name": "Global Journal of Health Science",
+      "count": 1
+    },
+    {
+      "name": "Global Journal of Medical Research",
+      "count": 1
+    },
+    {
+      "name": "Greenwich Academic Literature Archive (University of Greenwich)",
+      "count": 1
+    },
+    {
+      "name": "Handbook of experimental pharmacology",
+      "count": 1
+    },
+    {
+      "name": "Harm reduction journal",
+      "count": 6
+    },
+    {
+      "name": "Headache",
+      "count": 6
+    },
+    {
+      "name": "Headache The Journal of Head and Face Pain",
+      "count": 1
+    },
+    {
+      "name": "Health Affairs Scholar",
+      "count": 1
+    },
+    {
+      "name": "Health and Society",
+      "count": 1
+    },
+    {
+      "name": "Health behavior research",
+      "count": 1
+    },
+    {
+      "name": "Health Law Outlook",
+      "count": 1
+    },
+    {
+      "name": "Health policy (Amsterdam, Netherlands)",
+      "count": 1
+    },
+    {
+      "name": "Health Problems of Civilization",
+      "count": 1
+    },
+    {
+      "name": "Health psychology review",
+      "count": 1
+    },
+    {
+      "name": "Health SA = SA Gesondheid",
+      "count": 1
+    },
+    {
+      "name": "Health, environment and sustainable development: interdisciplinary approach",
+      "count": 1
+    },
+    {
+      "name": "Healthcare",
+      "count": 2
+    },
+    {
+      "name": "Healthcare (Basel, Switzerland)",
+      "count": 3
+    },
+    {
+      "name": "Hearing research",
+      "count": 1
+    },
+    {
+      "name": "Heliyon",
+      "count": 2
+    },
+    {
+      "name": "Helvetica Chimica Acta",
+      "count": 2
+    },
+    {
+      "name": "Helvetica physiologica et pharmacologica acta",
+      "count": 1
+    },
+    {
+      "name": "HETEROCYCLES",
+      "count": 3
+    },
+    {
+      "name": "Highlights in Science Engineering and Technology",
+      "count": 2
+    },
+    {
+      "name": "Historia, ciencias, saude--Manguinhos",
+      "count": 1
+    },
+    {
+      "name": "History of psychiatry",
+      "count": 1
+    },
+    {
+      "name": "Hop and Medicinal Plants",
+      "count": 1
+    },
+    {
+      "name": "Human & experimental toxicology",
+      "count": 1
+    },
+    {
+      "name": "Human brain mapping",
+      "count": 4
+    },
+    {
+      "name": "Human Brain Mapping",
+      "count": 1
+    },
+    {
+      "name": "Human capital leadership.",
+      "count": 1
+    },
+    {
+      "name": "Human psychopharmacology",
+      "count": 7
+    },
+    {
+      "name": "Human toxicology",
+      "count": 1
+    },
+    {
+      "name": "Human Toxicology",
+      "count": 1
+    },
+    {
+      "name": "Humangenetik",
+      "count": 1
+    },
+    {
+      "name": "Hypertension (Dallas, Tex.: 1979)",
+      "count": 1
+    },
+    {
+      "name": "IBRO Neuroscience Reports",
+      "count": 5
+    },
+    {
+      "name": "IJS - International Journal of Sciences",
+      "count": 1
+    },
+    {
+      "name": "IMA fungus",
+      "count": 1
+    },
+    {
+      "name": "Imperial College London",
+      "count": 1
+    },
+    {
+      "name": "Indian Journal of Behavioural Sciences",
+      "count": 1
+    },
+    {
+      "name": "Indian Journal of Forensic Medicine & Toxicology",
+      "count": 1
+    },
+    {
+      "name": "Indian journal of microbiology",
+      "count": 1
+    },
+    {
+      "name": "Indian Journal of Psychiatry",
+      "count": 1
+    },
+    {
+      "name": "Indian journal of psychological medicine",
+      "count": 1
+    },
+    {
+      "name": "InFo Hämatologie + Onkologie",
+      "count": 1
+    },
+    {
+      "name": "InFo Neurologie + Psychiatrie",
+      "count": 5
+    },
+    {
+      "name": "Innovations in clinical neuroscience",
+      "count": 3
+    },
+    {
+      "name": "Insights in Chemistry and Biochemistry",
+      "count": 1
+    },
+    {
+      "name": "Institutional Repositories DataBase (IRDB)",
+      "count": 1
+    },
+    {
+      "name": "Instituto Politécnico do Porto",
+      "count": 2
+    },
+    {
+      "name": "IntechOpen",
+      "count": 1
+    },
+    {
+      "name": "Integrative and Complementary Therapies",
+      "count": 1
+    },
+    {
+      "name": "Integrative cancer therapies",
+      "count": 1
+    },
+    {
+      "name": "Internal medicine journal",
+      "count": 1
+    },
+    {
+      "name": "Internal Medicine Journal",
+      "count": 1
+    },
+    {
+      "name": "International clinical psychopharmacology",
+      "count": 1
+    },
+    {
+      "name": "International Immunopharmacology",
+      "count": 1
+    },
+    {
+      "name": "International immunopharmacology",
+      "count": 1
+    },
+    {
+      "name": "International Journal For Multidisciplinary Research",
+      "count": 1
+    },
+    {
+      "name": "International Journal for Research in Applied Science and Engineering Technology",
+      "count": 1
+    },
+    {
+      "name": "International Journal of Advanced Research in Medicine",
+      "count": 1
+    },
+    {
+      "name": "International Journal of Analytical and Applied Chemistry",
+      "count": 1
+    },
+    {
+      "name": "International journal of behavioral medicine",
+      "count": 1
+    },
+    {
+      "name": "International journal of bipolar disorders",
+      "count": 1
+    },
+    {
+      "name": "International journal of cardiology",
+      "count": 1
+    },
+    {
+      "name": "International journal of clinical and health psychology: IJCHP",
+      "count": 1
+    },
+    {
+      "name": "International Journal of Drug Policy",
+      "count": 1
+    },
+    {
+      "name": "International Journal of Eating Disorders",
+      "count": 1
+    },
+    {
+      "name": "International journal of environmental research and public health",
+      "count": 4
+    },
+    {
+      "name": "International Journal of Gynecological Cancer",
+      "count": 1
+    },
+    {
+      "name": "International journal of gynecological cancer: official journal of the International Gynecological Cancer Society",
+      "count": 1
+    },
+    {
+      "name": "International Journal of Innovative Technologies in Social Science",
+      "count": 9
+    },
+    {
+      "name": "International Journal of Legal Medicine",
+      "count": 3
+    },
+    {
+      "name": "International journal of medicinal mushrooms",
+      "count": 5
+    },
+    {
+      "name": "International Journal of Mental Health and Addiction",
+      "count": 3
+    },
+    {
+      "name": "International journal of mental health nursing",
+      "count": 3
+    },
+    {
+      "name": "International journal of molecular sciences",
+      "count": 17
+    },
+    {
+      "name": "International Journal of Molecular Sciences",
+      "count": 1
+    },
+    {
+      "name": "International Journal of Multiple Research Approaches",
+      "count": 1
+    },
+    {
+      "name": "International Journal of Neurobiology",
+      "count": 1
+    },
+    {
+      "name": "International Journal of Neuropharmacology",
+      "count": 1
+    },
+    {
+      "name": "International journal of neuropsychiatry",
+      "count": 1
+    },
+    {
+      "name": "International Journal of Pharma and Bio Sciences",
+      "count": 1
+    },
+    {
+      "name": "International journal of psychiatry in medicine",
+      "count": 2
+    },
+    {
+      "name": "International Journal of Psychophysiology",
+      "count": 2
+    },
+    {
+      "name": "International Journal of Qualitative Studies in Education",
+      "count": 1
+    },
+    {
+      "name": "International Journal of Research in Marketing Management and Sales",
+      "count": 1
+    },
+    {
+      "name": "International Journal of Surgery Global Health",
+      "count": 2
+    },
+    {
+      "name": "International Journal of Transpersonal Studies",
+      "count": 1
+    },
+    {
+      "name": "International Journal of Whole Person Care",
+      "count": 2
+    },
+    {
+      "name": "International Journal on Advanced Science Education and Religion",
+      "count": 1
+    },
+    {
+      "name": "International medical case reports journal",
+      "count": 1
+    },
+    {
+      "name": "International review of neurobiology",
+      "count": 11
+    },
+    {
+      "name": "International review of psychiatry (Abingdon, England)",
+      "count": 7
+    },
+    {
+      "name": "Invited speakers",
+      "count": 1
+    },
+    {
+      "name": "Irish journal of medical science",
+      "count": 1
+    },
+    {
+      "name": "Irish journal of psychological medicine",
+      "count": 4
+    },
+    {
+      "name": "iScience",
+      "count": 3
+    },
+    {
+      "name": "Italian Botanist",
+      "count": 1
+    },
+    {
+      "name": "J. Chem. Soc., Perkin Trans. 2",
+      "count": 1
+    },
+    {
+      "name": "JAAPA: official journal of the American Academy of Physician Assistants",
+      "count": 2
+    },
+    {
+      "name": "JACC",
+      "count": 1
+    },
+    {
+      "name": "JACCP JOURNAL OF THE AMERICAN COLLEGE OF CLINICAL PHARMACY",
+      "count": 1
+    },
+    {
+      "name": "JAMA",
+      "count": 6
+    },
+    {
+      "name": "JAMA Health Forum",
+      "count": 1
+    },
+    {
+      "name": "JAMA Network Open",
+      "count": 6
+    },
+    {
+      "name": "JAMA network open",
+      "count": 8
+    },
+    {
+      "name": "JAMA oncology",
+      "count": 1
+    },
+    {
+      "name": "JAMA Psychiatry",
+      "count": 3
+    },
+    {
+      "name": "JAMA psychiatry",
+      "count": 13
+    },
+    {
+      "name": "JAPhA Practice Innovations",
+      "count": 1
+    },
+    {
+      "name": "JMIR formative research",
+      "count": 1
+    },
+    {
+      "name": "JNCI Journal of the National Cancer Institute",
+      "count": 1
+    },
+    {
+      "name": "JoCN Forum",
+      "count": 2
+    },
+    {
+      "name": "Jornal Brasileiro de Psiquiatria",
+      "count": 1
+    },
+    {
+      "name": "Journal de pharmacie de Belgique",
+      "count": 1
+    },
+    {
+      "name": "Journal For International Medical Graduates",
+      "count": 1
+    },
+    {
+      "name": "Journal for the scientific study of religion",
+      "count": 1
+    },
+    {
+      "name": "Journal for the Scientific Study of Religion",
+      "count": 2
+    },
+    {
+      "name": "Journal of addiction medicine",
+      "count": 2
+    },
+    {
+      "name": "Journal of addiction psychiatry",
+      "count": 1
+    },
+    {
+      "name": "Journal of addictive diseases",
+      "count": 3
+    },
+    {
+      "name": "Journal of Adolescent Health",
+      "count": 1
+    },
+    {
+      "name": "JOURNAL OF ADVANCE AND FUTURE RESEARCH",
+      "count": 1
+    },
+    {
+      "name": "Journal of Advances in Developmental Research",
+      "count": 1
+    },
+    {
+      "name": "Journal of Advances in Medicine and Medical Research",
+      "count": 1
+    },
+    {
+      "name": "Journal of Affective Disorders",
+      "count": 8
+    },
+    {
+      "name": "Journal of affective disorders",
+      "count": 33
+    },
+    {
+      "name": "Journal of Affective Disorders Reports",
+      "count": 1
+    },
+    {
+      "name": "Journal of American college health: J of ACH",
+      "count": 1
+    },
+    {
+      "name": "Journal of Analytical & Bioanalytical Techniques",
+      "count": 1
+    },
+    {
+      "name": "Journal of Analytical Toxicology",
+      "count": 6
+    },
+    {
+      "name": "Journal of analytical toxicology",
+      "count": 5
+    },
+    {
+      "name": "Journal of Anesthesiology and Pain Therapy",
+      "count": 1
+    },
+    {
+      "name": "Journal of AOAC International",
+      "count": 2
+    },
+    {
+      "name": "Journal of Applied Sport Psychology",
+      "count": 1
+    },
+    {
+      "name": "Journal of applied toxicology: JAT",
+      "count": 1
+    },
+    {
+      "name": "Journal of basic microbiology",
+      "count": 2
+    },
+    {
+      "name": "Journal of bioethical inquiry",
+      "count": 1
+    },
+    {
+      "name": "Journal of Biological Chemistry",
+      "count": 1
+    },
+    {
+      "name": "Journal of cannabis research",
+      "count": 1
+    },
+    {
+      "name": "Journal of cerebral blood flow and metabolism: official journal of the International Society of Cerebral Blood Flow and Metabolism",
+      "count": 2
+    },
+    {
+      "name": "Journal of chemical information and modeling",
+      "count": 1
+    },
+    {
+      "name": "Journal of Child & Adolescent Substance Abuse",
+      "count": 1
+    },
+    {
+      "name": "Journal of child and adolescent psychopharmacology",
+      "count": 1
+    },
+    {
+      "name": "Journal of chromatographic science",
+      "count": 2
+    },
+    {
+      "name": "Journal of chromatography",
+      "count": 1
+    },
+    {
+      "name": "Journal of Chromatography A",
+      "count": 6
+    },
+    {
+      "name": "Journal of Chromatography B",
+      "count": 3
+    },
+    {
+      "name": "Journal of Chromatography B: Biomedical Sciences and Applications",
+      "count": 2
+    },
+    {
+      "name": "Journal of chromatography. A",
+      "count": 1
+    },
+    {
+      "name": "Journal of chromatography. B, Analytical technologies in the biomedical and life sciences",
+      "count": 2
+    },
+    {
+      "name": "Journal of chromatography. B, Biomedical sciences and applications",
+      "count": 4
+    },
+    {
+      "name": "Journal of Clinical & Experimental Immunology",
+      "count": 1
+    },
+    {
+      "name": "Journal of clinical and experimental neuropsychology",
+      "count": 1
+    },
+    {
+      "name": "Journal of clinical and translational science",
+      "count": 3
+    },
+    {
+      "name": "Journal of Clinical Epidemiology",
+      "count": 1
+    },
+    {
+      "name": "Journal of clinical epidemiology",
+      "count": 1
+    },
+    {
+      "name": "Journal of Clinical Forensic Medicine",
+      "count": 1
+    },
+    {
+      "name": "Journal of clinical gastroenterology",
+      "count": 1
+    },
+    {
+      "name": "Journal of clinical medicine",
+      "count": 4
+    },
+    {
+      "name": "Journal of Clinical Medicine",
+      "count": 1
+    },
+    {
+      "name": "Journal of Clinical Oncology",
+      "count": 3
+    },
+    {
+      "name": "Journal of clinical pharmacology",
+      "count": 2
+    },
+    {
+      "name": "Journal of clinical psychology",
+      "count": 3
+    },
+    {
+      "name": "Journal of clinical psychopharmacology",
+      "count": 9
+    },
+    {
+      "name": "Journal of CO2 Utilization",
+      "count": 1
+    },
+    {
+      "name": "Journal of cognitive neuroscience",
+      "count": 1
+    },
+    {
+      "name": "Journal of Complementary and Alternative Medical Research",
+      "count": 1
+    },
+    {
+      "name": "Journal of Complementary Medicine & Alternative Healthcare",
+      "count": 1
+    },
+    {
+      "name": "Journal of Contemporary ISTDP",
+      "count": 1
+    },
+    {
+      "name": "Journal of Contextual Behavioral Science",
+      "count": 2
+    },
+    {
+      "name": "Journal of Counseling & Development",
+      "count": 1
+    },
+    {
+      "name": "Journal of Drug Delivery Science and Technology",
+      "count": 2
+    },
+    {
+      "name": "Journal of Drug Issues",
+      "count": 4
+    },
+    {
+      "name": "Journal of eating disorders",
+      "count": 9
+    },
+    {
+      "name": "Journal of Education Health and Sport",
+      "count": 6
+    },
+    {
+      "name": "Journal of Education, Health and Sport",
+      "count": 1
+    },
+    {
+      "name": "Journal of ethnopharmacology",
+      "count": 6
+    },
+    {
+      "name": "Journal of Ethnopharmacology",
+      "count": 4
+    },
+    {
+      "name": "Journal of experimental pharmacology",
+      "count": 1
+    },
+    {
+      "name": "Journal of fluency disorders",
+      "count": 1
+    },
+    {
+      "name": "Journal of food and drug analysis",
+      "count": 1
+    },
+    {
+      "name": "Journal of forensic and legal medicine",
+      "count": 1
+    },
+    {
+      "name": "Journal of Forensic and Sciences",
+      "count": 1
+    },
+    {
+      "name": "Journal of Forensic Research",
+      "count": 1
+    },
+    {
+      "name": "Journal of Forensic Sciences",
+      "count": 8
+    },
+    {
+      "name": "Journal of forensic sciences",
+      "count": 10
+    },
+    {
+      "name": "Journal of Forensic Toxicology and Pharmacology",
+      "count": 1
+    },
+    {
+      "name": "Journal of fungi (Basel, Switzerland)",
+      "count": 9
+    },
+    {
+      "name": "Journal of Health Science",
+      "count": 1
+    },
+    {
+      "name": "Journal of Health Service Psychology",
+      "count": 1
+    },
+    {
+      "name": "Journal of Healthcare",
+      "count": 1
+    },
+    {
+      "name": "Journal of Hepatology",
+      "count": 4
+    },
+    {
+      "name": "Journal of Heterocyclic Chemistry",
+      "count": 4
+    },
+    {
+      "name": "Journal of High School Science",
+      "count": 1
+    },
+    {
+      "name": "Journal of holistic nursing: official journal of the American Holistic Nurses' Association",
+      "count": 2
+    },
+    {
+      "name": "Journal of hospice and palliative nursing: JHPN: the official journal of the Hospice and Palliative Nurses Association",
+      "count": 2
+    },
+    {
+      "name": "Journal of Humanistic Psychology",
+      "count": 14
+    },
+    {
+      "name": "Journal of Illicit Economies and Development",
+      "count": 1
+    },
+    {
+      "name": "Journal of Indira Gandhi Institute Of Medical Sciences",
+      "count": 1
+    },
+    {
+      "name": "Journal of inflammation research",
+      "count": 1
+    },
+    {
+      "name": "Journal of integrative and complementary medicine",
+      "count": 1
+    },
+    {
+      "name": "Journal of Interior Design",
+      "count": 1
+    },
+    {
+      "name": "Journal of International Crisis and Risk Communication Research",
+      "count": 2
+    },
+    {
+      "name": "Journal of Labelled Compounds and Radiopharmaceuticals",
+      "count": 3
+    },
+    {
+      "name": "Journal of law and health",
+      "count": 1
+    },
+    {
+      "name": "Journal of managed care & specialty pharmacy",
+      "count": 1
+    },
+    {
+      "name": "Journal of Management Inquiry",
+      "count": 1
+    },
+    {
+      "name": "Journal of medical & health sciences review.",
+      "count": 1
+    },
+    {
+      "name": "Journal of Medical and Health Studies",
+      "count": 1
+    },
+    {
+      "name": "Journal of medical ethics",
+      "count": 2
+    },
+    {
+      "name": "Journal of medical Internet research",
+      "count": 1
+    },
+    {
+      "name": "Journal of medical toxicology: official journal of the American College of Medical Toxicology",
+      "count": 1
+    },
+    {
+      "name": "Journal of Medicinal Chemistry",
+      "count": 3
+    },
+    {
+      "name": "Journal of medicinal chemistry",
+      "count": 4
+    },
+    {
+      "name": "Journal of mental health (Abingdon, England)",
+      "count": 1
+    },
+    {
+      "name": "Journal of Mental Health Counseling",
+      "count": 1
+    },
+    {
+      "name": "Journal of Mental Health Disorders",
+      "count": 1
+    },
+    {
+      "name": "Journal of Microbiology Biotechnology and Food Sciences",
+      "count": 1
+    },
+    {
+      "name": "Journal of midwifery & women's health",
+      "count": 1
+    },
+    {
+      "name": "Journal of military, veteran and family health",
+      "count": 3
+    },
+    {
+      "name": "Journal of molecular graphics & modelling",
+      "count": 1
+    },
+    {
+      "name": "Journal of Molecular Liquids",
+      "count": 1
+    },
+    {
+      "name": "Journal of mood and anxiety disorders",
+      "count": 1
+    },
+    {
+      "name": "Journal of music therapy",
+      "count": 2
+    },
+    {
+      "name": "Journal of natural products",
+      "count": 3
+    },
+    {
+      "name": "Journal of Natural Products",
+      "count": 3
+    },
+    {
+      "name": "Journal of Natural Remedies",
+      "count": 1
+    },
+    {
+      "name": "Journal of neurochemistry",
+      "count": 5
+    },
+    {
+      "name": "Journal of Neurogenetics",
+      "count": 1
+    },
+    {
+      "name": "Journal of neurology",
+      "count": 1
+    },
+    {
+      "name": "Journal of Neurology Neurosurgery & Psychiatry",
+      "count": 2
+    },
+    {
+      "name": "Journal of Neurophysiology",
+      "count": 1
+    },
+    {
+      "name": "Journal of neurophysiology",
+      "count": 1
+    },
+    {
+      "name": "Journal of neuropsychiatry",
+      "count": 1
+    },
+    {
+      "name": "Journal of neuroscience methods",
+      "count": 1
+    },
+    {
+      "name": "Journal of neuroscience research",
+      "count": 1
+    },
+    {
+      "name": "Journal of Pain",
+      "count": 3
+    },
+    {
+      "name": "Journal of pain and symptom management",
+      "count": 5
+    },
+    {
+      "name": "Journal of Pain and Symptom Management",
+      "count": 3
+    },
+    {
+      "name": "Journal of pain research",
+      "count": 1
+    },
+    {
+      "name": "Journal of Pakistan Psychiatric Society",
+      "count": 1
+    },
+    {
+      "name": "Journal of palliative medicine",
+      "count": 9
+    },
+    {
+      "name": "Journal of Palliative Medicine",
+      "count": 1
+    },
+    {
+      "name": "Journal of Parkinson's disease",
+      "count": 1
+    },
+    {
+      "name": "Journal of personalized medicine",
+      "count": 1
+    },
+    {
+      "name": "Journal of Pharma Insights and Research.",
+      "count": 1
+    },
+    {
+      "name": "Journal of Pharmaceutical and Biomedical Analysis",
+      "count": 3
+    },
+    {
+      "name": "Journal of pharmaceutical and biomedical analysis",
+      "count": 1
+    },
+    {
+      "name": "Journal of Pharmaceutical Sciences",
+      "count": 2
+    },
+    {
+      "name": "Journal of pharmaceutical sciences",
+      "count": 6
+    },
+    {
+      "name": "Journal of Pharmacological and Toxicological Methods",
+      "count": 1
+    },
+    {
+      "name": "Journal of Pharmacology and Experimental Therapeutics",
+      "count": 4
+    },
+    {
+      "name": "Journal of Pharmacy and Pharmacology",
+      "count": 2
+    },
+    {
+      "name": "Journal of physiology and pharmacology: an official journal of the Polish Physiological Society",
+      "count": 1
+    },
+    {
+      "name": "Journal of Police and Criminal Psychology",
+      "count": 1
+    },
+    {
+      "name": "Journal of Posthuman Studies",
+      "count": 1
+    },
+    {
+      "name": "Journal of Pre-Clinical and Clinical Research",
+      "count": 1
+    },
+    {
+      "name": "Journal of Prescribing Practice",
+      "count": 1
+    },
+    {
+      "name": "Journal of Psychedelic Drugs",
+      "count": 2
+    },
+    {
+      "name": "Journal of psychedelic drugs",
+      "count": 1
+    },
+    {
+      "name": "Journal of psychedelic studies",
+      "count": 1
+    },
+    {
+      "name": "Journal of Psychedelic Studies",
+      "count": 48
+    },
+    {
+      "name": "Journal of psychiatric practice",
+      "count": 3
+    },
+    {
+      "name": "Journal of psychiatric research",
+      "count": 8
+    },
+    {
+      "name": "Journal of psychiatry & neuroscience: JPN",
+      "count": 2
+    },
+    {
+      "name": "Journal of psychoactive drugs",
+      "count": 100
+    },
+    {
+      "name": "Journal of Psychoactive Drugs",
+      "count": 2
+    },
+    {
+      "name": "Journal of Psychopharmacology",
+      "count": 7
+    },
+    {
+      "name": "Journal of psychopharmacology (Oxford, England)",
+      "count": 153
+    },
+    {
+      "name": "Journal of psychosocial nursing and mental health services",
+      "count": 2
+    },
+    {
+      "name": "Journal of psychosocial oncology",
+      "count": 1
+    },
+    {
+      "name": "Journal of psychosomatic research",
+      "count": 1
+    },
+    {
+      "name": "Journal of Public Policy & Marketing",
+      "count": 1
+    },
+    {
+      "name": "Journal of racial and ethnic health disparities",
+      "count": 1
+    },
+    {
+      "name": "Journal of Raman Spectroscopy",
+      "count": 2
+    },
+    {
+      "name": "Journal of Science Policy & Governance",
+      "count": 1
+    },
+    {
+      "name": "Journal of Scientific Exploration",
+      "count": 1
+    },
+    {
+      "name": "Journal of Scientific Innovations in Anesthesiology",
+      "count": 1
+    },
+    {
+      "name": "Journal of Sociology Psychology & Religious Studies",
+      "count": 1
+    },
+    {
+      "name": "Journal of Student Research",
+      "count": 1
+    },
+    {
+      "name": "Journal of studies on alcohol and drugs",
+      "count": 4
+    },
+    {
+      "name": "Journal of substance abuse treatment",
+      "count": 1
+    },
+    {
+      "name": "Journal of the Academy of Consultation-Liaison Psychiatry",
+      "count": 4
+    },
+    {
+      "name": "Journal of the American Academy of Child & Adolescent Psychiatry",
+      "count": 7
+    },
+    {
+      "name": "Journal of the American Academy of Child and Adolescent Psychiatry",
+      "count": 2
+    },
+    {
+      "name": "Journal of the American College of Emergency Physicians open",
+      "count": 1
+    },
+    {
+      "name": "Journal of the American Society for Mass Spectrometry",
+      "count": 2
+    },
+    {
+      "name": "Journal of the American Society of Nephrology",
+      "count": 1
+    },
+    {
+      "name": "Journal of the Brazilian Chemical Society",
+      "count": 1
+    },
+    {
+      "name": "Journal of the Chemical Society Perkin Transactions 2",
+      "count": 1
+    },
+    {
+      "name": "Journal of the Chemical Society, Perkin Transactions 1",
+      "count": 1
+    },
+    {
+      "name": "Journal of the Forensic Science Society",
+      "count": 1
+    },
+    {
+      "name": "Journal of the History of Medicine and Allied Sciences",
+      "count": 1
+    },
+    {
+      "name": "Journal of the history of the behavioral sciences",
+      "count": 1
+    },
+    {
+      "name": "Journal of the National Medical Association",
+      "count": 1
+    },
+    {
+      "name": "Journal of the Netherlands Society of Toxicology",
+      "count": 1
+    },
+    {
+      "name": "Journal of the neurological sciences",
+      "count": 5
+    },
+    {
+      "name": "Journal of the Royal Society of New Zealand",
+      "count": 1
+    },
+    {
+      "name": "Journal of the Royal Society, Interface",
+      "count": 1
+    },
+    {
+      "name": "Journal of toxicology. Clinical toxicology",
+      "count": 1
+    },
+    {
+      "name": "Journal of vision",
+      "count": 1
+    },
+    {
+      "name": "Journal of Vision",
+      "count": 3
+    },
+    {
+      "name": "Journal of xenobiotics",
+      "count": 1
+    },
+    {
+      "name": "Journal watch",
+      "count": 1
+    },
+    {
+      "name": "JPMA. The Journal of the Pakistan Medical Association",
+      "count": 1
+    },
+    {
+      "name": "JUNIOR RESEARCHERS",
+      "count": 1
+    },
+    {
+      "name": "Jurnal Kedokteran Diponegoro (Diponegoro Medical Journal)",
+      "count": 2
+    },
+    {
+      "name": "Jurnal Kimia",
+      "count": 1
+    },
+    {
+      "name": "Kennedy Institute of Ethics journal",
+      "count": 1
+    },
+    {
+      "name": "Klinická farmakologie a farmacie",
+      "count": 1
+    },
+    {
+      "name": "Knowable Magazine",
+      "count": 1
+    },
+    {
+      "name": "KTH Publication Database DiVA (KTH Royal Institute of Technology)",
+      "count": 3
+    },
+    {
+      "name": "L'Encephale",
+      "count": 7
+    },
+    {
+      "name": "La Revue du praticien",
+      "count": 2
+    },
+    {
+      "name": "La semaine des hopitaux: organe fonde par l'Association d'enseignement medical des hopitaux de Paris",
+      "count": 1
+    },
+    {
+      "name": "Lab animal",
+      "count": 1
+    },
+    {
+      "name": "Lab Animal",
+      "count": 2
+    },
+    {
+      "name": "Laeknabladid",
+      "count": 2
+    },
+    {
+      "name": "Lakartidningen",
+      "count": 2
+    },
+    {
+      "name": "Lancet (London, England)",
+      "count": 1
+    },
+    {
+      "name": "Langmuir: the ACS journal of surfaces and colloids",
+      "count": 1
+    },
+    {
+      "name": "Law Democracy & Development",
+      "count": 1
+    },
+    {
+      "name": "Leber, Magen, Darm",
+      "count": 1
+    },
+    {
+      "name": "Legal medicine (Tokyo, Japan)",
+      "count": 1
+    },
+    {
+      "name": "Letters in Applied NanoBioScience",
+      "count": 2
+    },
+    {
+      "name": "Lewis & Clark Law Review",
+      "count": 1
+    },
+    {
+      "name": "Life (Basel, Switzerland)",
+      "count": 2
+    },
+    {
+      "name": "Life Sciences",
+      "count": 1
+    },
+    {
+      "name": "Life sciences",
+      "count": 3
+    },
+    {
+      "name": "Lithuanian University of Health Sciences",
+      "count": 1
+    },
+    {
+      "name": "Living World, Journal of the Trinidad and Tobago Field Naturalists' Club",
+      "count": 1
+    },
+    {
+      "name": "Lloydia",
+      "count": 7
+    },
+    {
+      "name": "Lund University Publications (Lund University)",
+      "count": 1
+    },
+    {
+      "name": "Lynchburg Journal of Medical Science",
+      "count": 1
+    },
+    {
+      "name": "Maastricht Student Journal of Psychology and Neuroscience",
+      "count": 1
+    },
+    {
+      "name": "MacEwan University Student eJournal",
+      "count": 1
+    },
+    {
+      "name": "Magna Scientia Advanced Research and Reviews",
+      "count": 1
+    },
+    {
+      "name": "Malaysian Journal of Psychiatry",
+      "count": 1
+    },
+    {
+      "name": "MAPS Bulletin",
+      "count": 1
+    },
+    {
+      "name": "Matters",
+      "count": 1
+    },
+    {
+      "name": "Mayo Clinic proceedings",
+      "count": 1
+    },
+    {
+      "name": "Mayo Clinic Proceedings",
+      "count": 1
+    },
+    {
+      "name": "Med (New York, N.Y.)",
+      "count": 4
+    },
+    {
+      "name": "Medical Entomology and Zoology",
+      "count": 5
+    },
+    {
+      "name": "Medical Hypotheses",
+      "count": 3
+    },
+    {
+      "name": "Medical hypotheses",
+      "count": 5
+    },
+    {
+      "name": "Medical mycology case reports",
+      "count": 1
+    },
+    {
+      "name": "Medical Science",
+      "count": 1
+    },
+    {
+      "name": "Medical science monitor: international medical journal of experimental and clinical research",
+      "count": 1
+    },
+    {
+      "name": "Medical sciences (Basel, Switzerland)",
+      "count": 1
+    },
+    {
+      "name": "Medical toxicology and adverse drug experience",
+      "count": 1
+    },
+    {
+      "name": "Medical Writing",
+      "count": 1
+    },
+    {
+      "name": "Medicina (Kaunas, Lithuania)",
+      "count": 2
+    },
+    {
+      "name": "Medicina Experimentalis",
+      "count": 1
+    },
+    {
+      "name": "Medicina experimentalis: International journal of experimental medicine",
+      "count": 1
+    },
+    {
+      "name": "Medicine, health care, and philosophy",
+      "count": 2
+    },
+    {
+      "name": "Medicinska istrazivanja",
+      "count": 1
+    },
+    {
+      "name": "Medicom Conference Report ECNP 2022",
+      "count": 3
+    },
+    {
+      "name": "medRxiv",
+      "count": 44
+    },
+    {
+      "name": "medRxiv: the preprint server for health sciences",
+      "count": 3
+    },
+    {
+      "name": "Meeting on Recent Developments in Pharmaceutical Analysis",
+      "count": 1
+    },
+    {
+      "name": "Mental Health Weekly",
+      "count": 11
+    },
+    {
+      "name": "Mental Wellness",
+      "count": 1
+    },
+    {
+      "name": "Metabolic engineering",
+      "count": 5
+    },
+    {
+      "name": "Metabolic Engineering",
+      "count": 1
+    },
+    {
+      "name": "Metabolic engineering communications",
+      "count": 1
+    },
+    {
+      "name": "Methods in molecular biology (Clifton, N.J.)",
+      "count": 1
+    },
+    {
+      "name": "Mexican Journal of Medical Research ICSA",
+      "count": 1
+    },
+    {
+      "name": "Microbial biotechnology",
+      "count": 2
+    },
+    {
+      "name": "Microbiology resource announcements",
+      "count": 2
+    },
+    {
+      "name": "Middle East Research Journal of Biological Sciences",
+      "count": 1
+    },
+    {
+      "name": "Mikologiya i Fitopatologiya",
+      "count": 1
+    },
+    {
+      "name": "Military medicine",
+      "count": 2
+    },
+    {
+      "name": "Mindfulness",
+      "count": 1
+    },
+    {
+      "name": "Mini reviews in medicinal chemistry",
+      "count": 1
+    },
+    {
+      "name": "Mini-Reviews in Medicinal Chemistry",
+      "count": 1
+    },
+    {
+      "name": "Mitochondrial DNA. Part B, Resources",
+      "count": 1
+    },
+    {
+      "name": "MMW - Fortschritte der Medizin",
+      "count": 1
+    },
+    {
+      "name": "MMW Fortschritte der Medizin",
+      "count": 2
+    },
+    {
+      "name": "MMWR. Morbidity and mortality weekly report",
+      "count": 1
+    },
+    {
+      "name": "Modern Applied Science",
+      "count": 1
+    },
+    {
+      "name": "Molecular & cellular proteomics: MCP",
+      "count": 1
+    },
+    {
+      "name": "Molecular and cellular neurosciences",
+      "count": 1
+    },
+    {
+      "name": "Molecular biotechnology",
+      "count": 1
+    },
+    {
+      "name": "Molecular brain",
+      "count": 1
+    },
+    {
+      "name": "Molecular neurobiology",
+      "count": 2
+    },
+    {
+      "name": "Molecular pharmacology",
+      "count": 4
+    },
+    {
+      "name": "Molecular psychiatry",
+      "count": 31
+    },
+    {
+      "name": "Molecular Psychiatry",
+      "count": 1
+    },
+    {
+      "name": "Molecules",
+      "count": 4
+    },
+    {
+      "name": "Molecules (Basel, Switzerland)",
+      "count": 6
+    },
+    {
+      "name": "Motivation Science",
+      "count": 1
+    },
+    {
+      "name": "Mycobiology",
+      "count": 1
+    },
+    {
+      "name": "MycoKeys",
+      "count": 1
+    },
+    {
+      "name": "Mycologia",
+      "count": 5
+    },
+    {
+      "name": "Mycological Progress",
+      "count": 1
+    },
+    {
+      "name": "Mycologist",
+      "count": 1
+    },
+    {
+      "name": "Mycosphere",
+      "count": 1
+    },
+    {
+      "name": "Mycotaxon",
+      "count": 1
+    },
+    {
+      "name": "Nan fang yi ke da xue xue bao = Journal of Southern Medical University",
+      "count": 1
+    },
+    {
+      "name": "National Academies Press (US), Washington (DC)",
+      "count": 1
+    },
+    {
+      "name": "National University System Repository (National University System)",
+      "count": 1
+    },
+    {
+      "name": "Natural product reports",
+      "count": 1
+    },
+    {
+      "name": "Natural Product Research",
+      "count": 1
+    },
+    {
+      "name": "Natural product research",
+      "count": 1
+    },
+    {
+      "name": "Nature",
+      "count": 21
+    },
+    {
+      "name": "Nature Biotechnology",
+      "count": 1
+    },
+    {
+      "name": "Nature communications",
+      "count": 8
+    },
+    {
+      "name": "Nature Communications",
+      "count": 4
+    },
+    {
+      "name": "Nature medicine",
+      "count": 8
+    },
+    {
+      "name": "Nature Mental Health",
+      "count": 4
+    },
+    {
+      "name": "Nature neuroscience",
+      "count": 5
+    },
+    {
+      "name": "Nature reviews. Drug discovery",
+      "count": 1
+    },
+    {
+      "name": "Nature reviews. Neuroscience",
+      "count": 4
+    },
+    {
+      "name": "Nature. Mental health",
+      "count": 2
+    },
+    {
+      "name": "Naunyn-Schmiedeberg's Archives of Pharmacology",
+      "count": 1
+    },
+    {
+      "name": "Naunyn-Schmiedeberg's archives of pharmacology",
+      "count": 2
+    },
+    {
+      "name": "Nederlands tijdschrift voor geneeskunde",
+      "count": 4
+    },
+    {
+      "name": "Nervenheilkunde",
+      "count": 3
+    },
+    {
+      "name": "Netherlands Journal of Critical Care",
+      "count": 1
+    },
+    {
+      "name": "Network Neuroscience",
+      "count": 1
+    },
+    {
+      "name": "Network neuroscience (Cambridge, Mass.)",
+      "count": 2
+    },
+    {
+      "name": "Neural computation",
+      "count": 1
+    },
+    {
+      "name": "Neuro endocrinology letters",
+      "count": 1
+    },
+    {
+      "name": "Neuro-Oncology",
+      "count": 1
+    },
+    {
+      "name": "Neurobiology of learning and memory",
+      "count": 2
+    },
+    {
+      "name": "Neurobiology of stress",
+      "count": 1
+    },
+    {
+      "name": "Neurocase",
+      "count": 1
+    },
+    {
+      "name": "Neurochemical research",
+      "count": 1
+    },
+    {
+      "name": "Neuroethics",
+      "count": 2
+    },
+    {
+      "name": "NeuroImage",
+      "count": 9
+    },
+    {
+      "name": "NeuroImage. Clinical",
+      "count": 2
+    },
+    {
+      "name": "Neurologia (Barcelona, Spain)",
+      "count": 1
+    },
+    {
+      "name": "Neurologic clinics",
+      "count": 1
+    },
+    {
+      "name": "Neurology",
+      "count": 5
+    },
+    {
+      "name": "Neurology Bulletin",
+      "count": 1
+    },
+    {
+      "name": "Neurology international",
+      "count": 1
+    },
+    {
+      "name": "Neuromodulation Technology at the Neural Interface",
+      "count": 1
+    },
+    {
+      "name": "Neuron",
+      "count": 5
+    },
+    {
+      "name": "Neuropharmacology",
+      "count": 31
+    },
+    {
+      "name": "Neuropsihijatrija",
+      "count": 1
+    },
+    {
+      "name": "Neuropsychiatric disease and treatment",
+      "count": 5
+    },
+    {
+      "name": "Neuropsychiatrie: Klinik, Diagnostik, Therapie und Rehabilitation: Organ der Gesellschaft Osterreichischer Nervenarzte und Psychiater",
+      "count": 1
+    },
+    {
+      "name": "Neuropsychobiology",
+      "count": 1
+    },
+    {
+      "name": "Neuropsychopharmacologia Hungarica: a Magyar Pszichofarmakologiai Egyesulet lapja = official journal of the Hungarian Association of Psychopharmacology",
+      "count": 1
+    },
+    {
+      "name": "Neuropsychopharmacology",
+      "count": 5
+    },
+    {
+      "name": "Neuropsychopharmacology reports",
+      "count": 1
+    },
+    {
+      "name": "Neuropsychopharmacology: official publication of the American College of Neuropsychopharmacology",
+      "count": 30
+    },
+    {
+      "name": "NeuroQuantology",
+      "count": 2
+    },
+    {
+      "name": "Neuroreport",
+      "count": 2
+    },
+    {
+      "name": "Neuroscience",
+      "count": 4
+    },
+    {
+      "name": "Neuroscience & Biobehavioral Reviews",
+      "count": 1
+    },
+    {
+      "name": "Neuroscience and biobehavioral reviews",
+      "count": 24
+    },
+    {
+      "name": "Neuroscience and Neurological Surgery",
+      "count": 1
+    },
+    {
+      "name": "Neuroscience applied",
+      "count": 9
+    },
+    {
+      "name": "Neuroscience Applied",
+      "count": 57
+    },
+    {
+      "name": "Neuroscience bulletin",
+      "count": 2
+    },
+    {
+      "name": "Neuroscience letters",
+      "count": 5
+    },
+    {
+      "name": "Neuroscience of consciousness",
+      "count": 8
+    },
+    {
+      "name": "Neuroscience Research",
+      "count": 1
+    },
+    {
+      "name": "Neurosurgery",
+      "count": 1
+    },
+    {
+      "name": "Neurotherapeutics: the journal of the American Society for Experimental NeuroTherapeutics",
+      "count": 3
+    },
+    {
+      "name": "Neurotoxicology and teratology",
+      "count": 1
+    },
+    {
+      "name": "Neurotrauma reports",
+      "count": 1
+    },
+    {
+      "name": "New England Journal of Medicine",
+      "count": 1
+    },
+    {
+      "name": "New Scientist",
+      "count": 1
+    },
+    {
+      "name": "NIDA research monograph",
+      "count": 1
+    },
+    {
+      "name": "Nihon yakurigaku zasshi. Folia pharmacologica Japonica",
+      "count": 4
+    },
+    {
+      "name": "Nordic journal of psychiatry",
+      "count": 3
+    },
+    {
+      "name": "Nordisk alkohol- & narkotikatidskrift: NAT",
+      "count": 1
+    },
+    {
+      "name": "Nordisk psykiatrisk tidsskrift. Nordic journal of psychiatry",
+      "count": 1
+    },
+    {
+      "name": "North Carolina medical journal",
+      "count": 1
+    },
+    {
+      "name": "Northumbria Research Link (Northumbria University)",
+      "count": 2
+    },
+    {
+      "name": "npj Aging",
+      "count": 1
+    },
+    {
+      "name": "npj aging",
+      "count": 1
+    },
+    {
+      "name": "Npj mental health research",
+      "count": 5
+    },
+    {
+      "name": "npj Mental Health Research",
+      "count": 3
+    },
+    {
+      "name": "NPP-Digital Psychiatry and Neuroscience",
+      "count": 1
+    },
+    {
+      "name": "Nurse education today",
+      "count": 1
+    },
+    {
+      "name": "OBM Neurobiology",
+      "count": 1
+    },
+    {
+      "name": "Ochsner journal",
+      "count": 1
+    },
+    {
+      "name": "Oncology Times",
+      "count": 2
+    },
+    {
+      "name": "Online Journal of Complementary & Alternative Medicine",
+      "count": 1
+    },
+    {
+      "name": "Open Access CRIS of the University of Bern",
+      "count": 3
+    },
+    {
+      "name": "Open Access Government",
+      "count": 2
+    },
+    {
+      "name": "Open Access Indonesian Journal of Medical Reviews",
+      "count": 1
+    },
+    {
+      "name": "Open Collections",
+      "count": 1
+    },
+    {
+      "name": "Open Journal of Medical Psychology",
+      "count": 1
+    },
+    {
+      "name": "Open Life Sciences",
+      "count": 1
+    },
+    {
+      "name": "Open MIND",
+      "count": 8
+    },
+    {
+      "name": "Open Repository and Bibliography (University of Liège)",
+      "count": 1
+    },
+    {
+      "name": "Open Science Framework",
+      "count": 2
+    },
+    {
+      "name": "OPUS FAU - Online publication system of Friedrich-Alexander-Universität Erlangen-Nürnberg",
+      "count": 1
+    },
+    {
+      "name": "Orbital: The Electronic Journal of Chemistry",
+      "count": 1
+    },
+    {
+      "name": "Organic Letters",
+      "count": 1
+    },
+    {
+      "name": "Orvosi hetilap",
+      "count": 1
+    },
+    {
+      "name": "OSF",
+      "count": 1
+    },
+    {
+      "name": "OSF Preprints",
+      "count": 3
+    },
+    {
+      "name": "OSF Preprints (OSF Preprints)",
+      "count": 1
+    },
+    {
+      "name": "Otolaryngologic clinics of North America",
+      "count": 1
+    },
+    {
+      "name": "Oxidative medicine and cellular longevity",
+      "count": 1
+    },
+    {
+      "name": "Pacific University CommonKnowledge",
+      "count": 1
+    },
+    {
+      "name": "Pain",
+      "count": 1
+    },
+    {
+      "name": "Pain management",
+      "count": 1
+    },
+    {
+      "name": "Pain Medicine",
+      "count": 1
+    },
+    {
+      "name": "Pain practice: the official journal of World Institute of Pain",
+      "count": 1
+    },
+    {
+      "name": "Palliative & supportive care",
+      "count": 5
+    },
+    {
+      "name": "Palliative Medicine",
+      "count": 1
+    },
+    {
+      "name": "Palliative medicine",
+      "count": 3
+    },
+    {
+      "name": "Palliative medicine reports",
+      "count": 1
+    },
+    {
+      "name": "Palliative Medicine Reports",
+      "count": 1
+    },
+    {
+      "name": "PARIPEX-INDIAN JOURNAL OF RESEARCH",
+      "count": 1
+    },
+    {
+      "name": "Patienthåndbogen",
+      "count": 1
+    },
+    {
+      "name": "PCN reports: psychiatry and clinical neurosciences",
+      "count": 2
+    },
+    {
+      "name": "PDXScholar (Portland State University)",
+      "count": 3
+    },
+    {
+      "name": "Pediatric clinics of North America",
+      "count": 1
+    },
+    {
+      "name": "Pediatrics in Review",
+      "count": 1
+    },
+    {
+      "name": "PeerJ",
+      "count": 1
+    },
+    {
+      "name": "Perceptual and motor skills",
+      "count": 1
+    },
+    {
+      "name": "Performance Enhancement & Health",
+      "count": 1
+    },
+    {
+      "name": "Personality and individual differences",
+      "count": 1
+    },
+    {
+      "name": "Persoonia",
+      "count": 1
+    },
+    {
+      "name": "Perspectives in biology and medicine",
+      "count": 3
+    },
+    {
+      "name": "Perspectives in psychiatric care",
+      "count": 1
+    },
+    {
+      "name": "Pharmaceutica Acta Helvetiae",
+      "count": 1
+    },
+    {
+      "name": "Pharmaceutical Sciences",
+      "count": 1
+    },
+    {
+      "name": "Pharmaceuticals",
+      "count": 3
+    },
+    {
+      "name": "Pharmaceuticals (Basel, Switzerland)",
+      "count": 12
+    },
+    {
+      "name": "Pharmaceutics",
+      "count": 1
+    },
+    {
+      "name": "Pharmacogenomics",
+      "count": 1
+    },
+    {
+      "name": "Pharmacological Reports",
+      "count": 1
+    },
+    {
+      "name": "Pharmacological reports: PR",
+      "count": 8
+    },
+    {
+      "name": "Pharmacological Research",
+      "count": 1
+    },
+    {
+      "name": "Pharmacological research",
+      "count": 6
+    },
+    {
+      "name": "Pharmacological reviews",
+      "count": 5
+    },
+    {
+      "name": "Pharmacology",
+      "count": 2
+    },
+    {
+      "name": "Pharmacology & therapeutics",
+      "count": 5
+    },
+    {
+      "name": "Pharmacology Biochemistry and Behavior",
+      "count": 1
+    },
+    {
+      "name": "Pharmacology research & perspectives",
+      "count": 2
+    },
+    {
+      "name": "Pharmacology Research & Perspectives",
+      "count": 2
+    },
+    {
+      "name": "Pharmacology, biochemistry, and behavior",
+      "count": 15
+    },
+    {
+      "name": "Pharmacopsychiatry",
+      "count": 13
+    },
+    {
+      "name": "Pharmacotherapy in Psychiatry and Neurology",
+      "count": 1
+    },
+    {
+      "name": "Pharmakopsychiatrie, Neuro-Psychopharmakologie",
+      "count": 2
+    },
+    {
+      "name": "PhilArchive",
+      "count": 1
+    },
+    {
+      "name": "Philosophical Psychology",
+      "count": 4
+    },
+    {
+      "name": "Philosophical transactions of the Royal Society of London. Series B, Biological sciences",
+      "count": 1
+    },
+    {
+      "name": "PhilPapers (PhilPapers Foundation)",
+      "count": 1
+    },
+    {
+      "name": "Physical chemistry chemical physics: PCCP",
+      "count": 1
+    },
+    {
+      "name": "Physiology & behavior",
+      "count": 3
+    },
+    {
+      "name": "Phytochemistry Letters",
+      "count": 1
+    },
+    {
+      "name": "Pilot and feasibility studies",
+      "count": 2
+    },
+    {
+      "name": "Planta Medica",
+      "count": 4
+    },
+    {
+      "name": "Planta medica",
+      "count": 7
+    },
+    {
+      "name": "Plants (Basel, Switzerland)",
+      "count": 2
+    },
+    {
+      "name": "PLoS medicine",
+      "count": 1
+    },
+    {
+      "name": "PLOS mental health",
+      "count": 1
+    },
+    {
+      "name": "PloS one",
+      "count": 17
+    },
+    {
+      "name": "PLOS One",
+      "count": 1
+    },
+    {
+      "name": "PLoS ONE",
+      "count": 2
+    },
+    {
+      "name": "Polish journal of pharmacology",
+      "count": 1
+    },
+    {
+      "name": "Polymatheia.",
+      "count": 1
+    },
+    {
+      "name": "Porto biomedical journal",
+      "count": 1
+    },
+    {
+      "name": "Postepy higieny i medycyny doswiadczalnej (Online)",
+      "count": 1
+    },
+    {
+      "name": "Postepy psychiatrii neurologii",
+      "count": 1
+    },
+    {
+      "name": "Poster Abstracts",
+      "count": 1
+    },
+    {
+      "name": "Postgraduate medical journal",
+      "count": 2
+    },
+    {
+      "name": "Premier Journal of Neuroscience",
+      "count": 1
+    },
+    {
+      "name": "Premier Journal of Science",
+      "count": 1
+    },
+    {
+      "name": "Preprints.org",
+      "count": 16
+    },
+    {
+      "name": "Presse medicale (Paris, France: 1983)",
+      "count": 1
+    },
+    {
+      "name": "Problems of Forensic Sciences",
+      "count": 1
+    },
+    {
+      "name": "Proceedings for Annual Meeting of The Japanese Pharmacological Society",
+      "count": 2
+    },
+    {
+      "name": "Proceedings of the 2020 CHI Conference on Human Factors in Computing Systems",
+      "count": 1
+    },
+    {
+      "name": "Proceedings of the Annual Conference of CAIS / Actes du congrès annuel de l ACSI",
+      "count": 1
+    },
+    {
+      "name": "Proceedings of the National Academy of Sciences of the United States of America",
+      "count": 7
+    },
+    {
+      "name": "Proceedings of the Society for Experimental Biology and Medicine. Society for Experimental Biology and Medicine (New York, N.Y.)",
+      "count": 1
+    },
+    {
+      "name": "Proceedings on CD-ROM - International Society for Magnetic Resonance in Medicine. Scientific Meeting and Exhibition/Proceedings of the International Society for Magnetic Resonance in Medicine, Scientific Meeting and Exhibition",
+      "count": 2
+    },
+    {
+      "name": "Proceedings. Biological sciences",
+      "count": 1
+    },
+    {
+      "name": "Professional Psychology Research and Practice",
+      "count": 1
+    },
+    {
+      "name": "Progress in brain research",
+      "count": 7
+    },
+    {
+      "name": "Progress in neuro-psychopharmacology & biological psychiatry",
+      "count": 28
+    },
+    {
+      "name": "Progress in Neuro-Psychopharmacology and Biological Psychiatry",
+      "count": 3
+    },
+    {
+      "name": "Progress in Palliative Care",
+      "count": 1
+    },
+    {
+      "name": "protocols.io",
+      "count": 1
+    },
+    {
+      "name": "Psi Chi Journal of Psychological Research",
+      "count": 1
+    },
+    {
+      "name": "PsyArXiv",
+      "count": 186
+    },
+    {
+      "name": "PSYCH up2date",
+      "count": 1
+    },
+    {
+      "name": "Psychedelic Medicine",
+      "count": 8
+    },
+    {
+      "name": "Psychedelic medicine (New Rochelle, N.Y.)",
+      "count": 39
+    },
+    {
+      "name": "Psychedelics",
+      "count": 11
+    },
+    {
+      "name": "Psychedelics.",
+      "count": 11
+    },
+    {
+      "name": "Psychiatria Danubina",
+      "count": 3
+    },
+    {
+      "name": "Psychiatria et neurologia",
+      "count": 2
+    },
+    {
+      "name": "Psychiatria et Neurologia",
+      "count": 3
+    },
+    {
+      "name": "Psychiatria Hungarica: A Magyar Pszichiatriai Tarsasag tudomanyos folyoirata",
+      "count": 1
+    },
+    {
+      "name": "Psychiatria i Psychologia Kliniczna",
+      "count": 1
+    },
+    {
+      "name": "Psychiatria polska",
+      "count": 2
+    },
+    {
+      "name": "Psychiatric Annals",
+      "count": 2
+    },
+    {
+      "name": "Psychiatric News",
+      "count": 33
+    },
+    {
+      "name": "Psychiatric Research and Clinical Practice",
+      "count": 1
+    },
+    {
+      "name": "Psychiatric research and clinical practice",
+      "count": 1
+    },
+    {
+      "name": "Psychiatric services (Washington, D.C.)",
+      "count": 2
+    },
+    {
+      "name": "Psychiatrische Praxis",
+      "count": 1
+    },
+    {
+      "name": "Psychiatry",
+      "count": 1
+    },
+    {
+      "name": "Psychiatry and Clinical Neurosciences",
+      "count": 1
+    },
+    {
+      "name": "Psychiatry and clinical neurosciences",
+      "count": 1
+    },
+    {
+      "name": "Psychiatry and Clinical Neurosciences Reports",
+      "count": 1
+    },
+    {
+      "name": "Psychiatry and clinical psychopharmacology",
+      "count": 1
+    },
+    {
+      "name": "Psychiatry and Clinical Psychopharmacology",
+      "count": 1
+    },
+    {
+      "name": "Psychiatry International",
+      "count": 2
+    },
+    {
+      "name": "Psychiatry investigation",
+      "count": 1
+    },
+    {
+      "name": "Psychiatry research",
+      "count": 21
+    },
+    {
+      "name": "Psychiatry Research Case Reports",
+      "count": 2
+    },
+    {
+      "name": "Psychoactives",
+      "count": 16
+    },
+    {
+      "name": "Psychoanalytic review",
+      "count": 1
+    },
+    {
+      "name": "Psychodynamic psychiatry",
+      "count": 1
+    },
+    {
+      "name": "PSYCHOLOGICAL JOURNAL",
+      "count": 1
+    },
+    {
+      "name": "Psychological medicine",
+      "count": 8
+    },
+    {
+      "name": "Psychology and psychotherapy",
+      "count": 1
+    },
+    {
+      "name": "Psychology International",
+      "count": 1
+    },
+    {
+      "name": "Psychology of addictive behaviors: journal of the Society of Psychologists in Addictive Behaviors",
+      "count": 1
+    },
+    {
+      "name": "Psychopharmacologia",
+      "count": 14
+    },
+    {
+      "name": "Psychopharmacology",
+      "count": 87
+    },
+    {
+      "name": "Psychopharmacology bulletin",
+      "count": 2
+    },
+    {
+      "name": "Psychopharmacology communications",
+      "count": 1
+    },
+    {
+      "name": "Psychotherapie, Psychosomatik, medizinische Psychologie",
+      "count": 1
+    },
+    {
+      "name": "Psychotherapy",
+      "count": 1
+    },
+    {
+      "name": "Psychotherapy (Chicago, Ill.)",
+      "count": 1
+    },
+    {
+      "name": "Psychotherapy and Psychosomatics",
+      "count": 1
+    },
+    {
+      "name": "Pure Amsterdam UMC",
+      "count": 1
+    },
+    {
+      "name": "Qeios",
+      "count": 2
+    },
+    {
+      "name": "QSpace (Queen's University Library)",
+      "count": 1
+    },
+    {
+      "name": "Qualitative health research",
+      "count": 1
+    },
+    {
+      "name": "Quality in Sport",
+      "count": 2
+    },
+    {
+      "name": "Queen's University QSpace",
+      "count": 2
+    },
+    {
+      "name": "Queensland's institutional digital repository (The University of Queensland)",
+      "count": 2
+    },
+    {
+      "name": "Radiologic technology",
+      "count": 1
+    },
+    {
+      "name": "Ramiro and Zoran Bujas Days 2024",
+      "count": 1
+    },
+    {
+      "name": "Rand health quarterly",
+      "count": 2
+    },
+    {
+      "name": "Reactions Weekly",
+      "count": 1
+    },
+    {
+      "name": "Recenti progressi in medicina",
+      "count": 1
+    },
+    {
+      "name": "Receptors & Clinical Investigation",
+      "count": 1
+    },
+    {
+      "name": "Regional anesthesia and pain medicine",
+      "count": 1
+    },
+    {
+      "name": "Regulatory toxicology and pharmacology: RTP",
+      "count": 1
+    },
+    {
+      "name": "Religion Brain & Behavior",
+      "count": 2
+    },
+    {
+      "name": "Religions",
+      "count": 6
+    },
+    {
+      "name": "Repositorio Universidad de Caldas",
+      "count": 1
+    },
+    {
+      "name": "Repository for Publications and Research Data (ETH Zurich)",
+      "count": 2
+    },
+    {
+      "name": "Repository of the University of Ljubljana (University of Ljubljana)",
+      "count": 1
+    },
+    {
+      "name": "Research at the University of Copenhagen (University of Copenhagen)",
+      "count": 3
+    },
+    {
+      "name": "Research Directions Depression",
+      "count": 1
+    },
+    {
+      "name": "Research Explorer (The University of Manchester)",
+      "count": 1
+    },
+    {
+      "name": "Research Poster",
+      "count": 1
+    },
+    {
+      "name": "Research Posters",
+      "count": 1
+    },
+    {
+      "name": "Research Society and Development",
+      "count": 2
+    },
+    {
+      "name": "Research square",
+      "count": 4
+    },
+    {
+      "name": "Research Square",
+      "count": 52
+    },
+    {
+      "name": "Research, Society and Development",
+      "count": 1
+    },
+    {
+      "name": "Revista Brasileira de Farmacognosia",
+      "count": 1
+    },
+    {
+      "name": "Revista brasileira de psiquiatria (Sao Paulo, Brazil: 1999)",
+      "count": 1
+    },
+    {
+      "name": "Revista Cacto - Ciência Arte Comunicação em Transdisciplinaridade Online",
+      "count": 1
+    },
+    {
+      "name": "Revista de investigacion clinica; organo del Hospital de Enfermedades de la Nutricion",
+      "count": 1
+    },
+    {
+      "name": "Revista de Neuro-Psiquiatría",
+      "count": 1
+    },
+    {
+      "name": "Revista de neurologia",
+      "count": 2
+    },
+    {
+      "name": "Revista Portuguesa de Psiquiatria e Saúde Mental",
+      "count": 1
+    },
+    {
+      "name": "RevSALUS - Revista Científica da Rede Académica das Ciências da Saúde da Lusofonia",
+      "count": 7
+    },
+    {
+      "name": "Revue de l'infirmiere",
+      "count": 1
+    },
+    {
+      "name": "Revue de Mycologie",
+      "count": 4
+    },
+    {
+      "name": "Revue medicale suisse",
+      "count": 2
+    },
+    {
+      "name": "Risk management and healthcare policy",
+      "count": 1
+    },
+    {
+      "name": "Rivista di neurologia",
+      "count": 1
+    },
+    {
+      "name": "Rivista di psichiatria",
+      "count": 1
+    },
+    {
+      "name": "Rivista sperimentale di freniatria e medicina legale delle alienazioni mentali",
+      "count": 3
+    },
+    {
+      "name": "Rock Art Research",
+      "count": 1
+    },
+    {
+      "name": "RSC medicinal chemistry",
+      "count": 1
+    },
+    {
+      "name": "Rural mental health",
+      "count": 1
+    },
+    {
+      "name": "SA pharmaceutical journal.",
+      "count": 1
+    },
+    {
+      "name": "SAIMSARA Journal",
+      "count": 1
+    },
+    {
+      "name": "Saudi Journal of Medicine and Public Health",
+      "count": 1
+    },
+    {
+      "name": "Sbornik vedeckych praci Lekarske fakulty Karlovy university v Hradci Kralove",
+      "count": 1
+    },
+    {
+      "name": "Scandinavian journal of clinical and laboratory investigation",
+      "count": 1
+    },
+    {
+      "name": "Schizophrenia bulletin",
+      "count": 2
+    },
+    {
+      "name": "Schizophrenia Bulletin",
+      "count": 1
+    },
+    {
+      "name": "Schizophrenia research",
+      "count": 1
+    },
+    {
+      "name": "ScholarWorks - WMU (Western Michigan University)",
+      "count": 1
+    },
+    {
+      "name": "ScholarWorks @ UTRGV (The University of Texas Rio Grande Valley)",
+      "count": 1
+    },
+    {
+      "name": "Schweizer Archiv fur Neurologie, Neurochirurgie und Psychiatrie = Archives suisses de neurologie, neurochirurgie et de psychiatrie",
+      "count": 5
+    },
+    {
+      "name": "Science & Justice",
+      "count": 2
+    },
+    {
+      "name": "Science & justice: journal of the Forensic Science Society",
+      "count": 1
+    },
+    {
+      "name": "Science (New York, N.Y.)",
+      "count": 8
+    },
+    {
+      "name": "Science advances",
+      "count": 3
+    },
+    {
+      "name": "Science Letters",
+      "count": 3
+    },
+    {
+      "name": "Science translational medicine",
+      "count": 1
+    },
+    {
+      "name": "ScienceOpen Preprints",
+      "count": 2
+    },
+    {
+      "name": "Scientia",
+      "count": 1
+    },
+    {
+      "name": "Scientific American",
+      "count": 3
+    },
+    {
+      "name": "Scientific Data",
+      "count": 1
+    },
+    {
+      "name": "Scientific data",
+      "count": 2
+    },
+    {
+      "name": "Scientific Reports",
+      "count": 5
+    },
+    {
+      "name": "Scientific reports",
+      "count": 37
+    },
+    {
+      "name": "Scottish medical journal",
+      "count": 1
+    },
+    {
+      "name": "Se pu = Chinese journal of chromatography",
+      "count": 1
+    },
+    {
+      "name": "Seattle Pacific University Research Conference",
+      "count": 1
+    },
+    {
+      "name": "Seeing and Perceiving",
+      "count": 1
+    },
+    {
+      "name": "Seishin shinkeigaku zasshi = Psychiatria et neurologia Japonica",
+      "count": 2
+    },
+    {
+      "name": "Sexual & Relationship Therapy",
+      "count": 1
+    },
+    {
+      "name": "Shokuhin eiseigaku zasshi. Journal of the Food Hygienic Society of Japan",
+      "count": 2
+    },
+    {
+      "name": "SLEEP",
+      "count": 1
+    },
+    {
+      "name": "SLEEPJ",
+      "count": 3
+    },
+    {
+      "name": "Social Compass",
+      "count": 1
+    },
+    {
+      "name": "Social Neuroscience",
+      "count": 1
+    },
+    {
+      "name": "Social work",
+      "count": 1
+    },
+    {
+      "name": "Social Work",
+      "count": 1
+    },
+    {
+      "name": "Soudni lekarstvi",
+      "count": 1
+    },
+    {
+      "name": "South African Journal on Human Rights",
+      "count": 1
+    },
+    {
+      "name": "South African medical journal = Suid-Afrikaanse tydskrif vir geneeskunde",
+      "count": 1
+    },
+    {
+      "name": "Southern Cross Research Portal (Southern Cross University)",
+      "count": 1
+    },
+    {
+      "name": "Spectrochimica Acta Part A: Molecular and Biomolecular Spectroscopy",
+      "count": 1
+    },
+    {
+      "name": "Spirituality in Clinical Practice",
+      "count": 1
+    },
+    {
+      "name": "SSP Modern Pharmacy and Medicine",
+      "count": 1
+    },
+    {
+      "name": "SSRN Electronic Journal",
+      "count": 11
+    },
+    {
+      "name": "Stanford Digital Repository",
+      "count": 1
+    },
+    {
+      "name": "Student Research Proceedings",
+      "count": 1
+    },
+    {
+      "name": "Substance abuse treatment, prevention, and policy",
+      "count": 1
+    },
+    {
+      "name": "Substance Use & Misuse",
+      "count": 1
+    },
+    {
+      "name": "Substance use & misuse",
+      "count": 2
+    },
+    {
+      "name": "Substance use: research and treatment",
+      "count": 1
+    },
+    {
+      "name": "SUCHT - Zeitschrift für Wissenschaft und Praxis / Journal of Addiction Research and Practice",
+      "count": 2
+    },
+    {
+      "name": "Suchttherapie",
+      "count": 1
+    },
+    {
+      "name": "Sudebno-meditsinskaia ekspertiza",
+      "count": 2
+    },
+    {
+      "name": "Supportive Care in Cancer",
+      "count": 1
+    },
+    {
+      "name": "Supportive care in cancer: official journal of the Multinational Association of Supportive Care in Cancer",
+      "count": 1
+    },
+    {
+      "name": "SURG Journal",
+      "count": 1
+    },
+    {
+      "name": "Swiss medical weekly",
+      "count": 1
+    },
+    {
+      "name": "Synfacts",
+      "count": 1
+    },
+    {
+      "name": "Synthesis",
+      "count": 2
+    },
+    {
+      "name": "Systematic reviews",
+      "count": 1
+    },
+    {
+      "name": "São Paulo Medical Journal",
+      "count": 1
+    },
+    {
+      "name": "Talanta",
+      "count": 5
+    },
+    {
+      "name": "Tetrahedron",
+      "count": 2
+    },
+    {
+      "name": "Tetrahedron letters",
+      "count": 1
+    },
+    {
+      "name": "The American Journal of Bioethics",
+      "count": 1
+    },
+    {
+      "name": "The American journal of bioethics: AJOB",
+      "count": 1
+    },
+    {
+      "name": "The American journal of drug and alcohol abuse",
+      "count": 5
+    },
+    {
+      "name": "The American journal of emergency medicine",
+      "count": 3
+    },
+    {
+      "name": "The American Journal of Geriatric Psychiatry",
+      "count": 1
+    },
+    {
+      "name": "The American journal of geriatric psychiatry: official journal of the American Association for Geriatric Psychiatry",
+      "count": 3
+    },
+    {
+      "name": "The American journal of hospice & palliative care",
+      "count": 2
+    },
+    {
+      "name": "The American journal of psychiatry",
+      "count": 20
+    },
+    {
+      "name": "The Annals of pharmacotherapy",
+      "count": 2
+    },
+    {
+      "name": "The Australian and New Zealand journal of psychiatry",
+      "count": 11
+    },
+    {
+      "name": "The Biochemist",
+      "count": 3
+    },
+    {
+      "name": "The British Journal of Psychiatry",
+      "count": 3
+    },
+    {
+      "name": "The British journal of psychiatry: the journal of mental science",
+      "count": 7
+    },
+    {
+      "name": "The Chemical Educator",
+      "count": 2
+    },
+    {
+      "name": "The Cochrane database of systematic reviews",
+      "count": 1
+    },
+    {
+      "name": "The Digital Academic Repository of Naturalis Biodiversity Center (Naturalis Biodiversity Center)",
+      "count": 4
+    },
+    {
+      "name": "The European journal of neuroscience",
+      "count": 3
+    },
+    {
+      "name": "The Family Journal",
+      "count": 1
+    },
+    {
+      "name": "The FASEB Journal",
+      "count": 7
+    },
+    {
+      "name": "The International journal of eating disorders",
+      "count": 1
+    },
+    {
+      "name": "The international journal of neuropsychopharmacology",
+      "count": 32
+    },
+    {
+      "name": "The International Journal of Neuropsychopharmacology",
+      "count": 9
+    },
+    {
+      "name": "The International Journal of Transpersonal Studies",
+      "count": 1
+    },
+    {
+      "name": "The International journal on drug policy",
+      "count": 22
+    },
+    {
+      "name": "The Journal of adolescent health: official publication of the Society for Adolescent Medicine",
+      "count": 1
+    },
+    {
+      "name": "The Journal of antibiotics",
+      "count": 1
+    },
+    {
+      "name": "The Journal of asthma research",
+      "count": 1
+    },
+    {
+      "name": "The Journal of clinical investigation",
+      "count": 1
+    },
+    {
+      "name": "The Journal of Clinical Psychiatry",
+      "count": 2
+    },
+    {
+      "name": "The Journal of clinical psychiatry",
+      "count": 8
+    },
+    {
+      "name": "The journal of headache and pain",
+      "count": 1
+    },
+    {
+      "name": "The Journal of law, medicine & ethics: a journal of the American Society of Law, Medicine & Ethics",
+      "count": 1
+    },
+    {
+      "name": "The Journal of legal medicine",
+      "count": 1
+    },
+    {
+      "name": "The Journal of medicine and philosophy",
+      "count": 1
+    },
+    {
+      "name": "The Journal of nervous and mental disease",
+      "count": 4
+    },
+    {
+      "name": "The Journal of Neuroscience",
+      "count": 1
+    },
+    {
+      "name": "The Journal of neuroscience: the official journal of the Society for Neuroscience",
+      "count": 5
+    },
+    {
+      "name": "The journal of pain",
+      "count": 3
+    },
+    {
+      "name": "The Journal of Pain",
+      "count": 1
+    },
+    {
+      "name": "The Journal of pharmacology and experimental therapeutics",
+      "count": 11
+    },
+    {
+      "name": "The Journal of Pharmacology and Experimental Therapeutics",
+      "count": 4
+    },
+    {
+      "name": "The Journal of Physical Chemistry B",
+      "count": 1
+    },
+    {
+      "name": "The Journal of psychology",
+      "count": 1
+    },
+    {
+      "name": "The Journal of Psychology",
+      "count": 1
+    },
+    {
+      "name": "The Journal of Sexual Medicine",
+      "count": 1
+    },
+    {
+      "name": "The journal of the American Academy of Psychiatry and the Law",
+      "count": 2
+    },
+    {
+      "name": "The Lancet",
+      "count": 1
+    },
+    {
+      "name": "The Lancet Neurology",
+      "count": 1
+    },
+    {
+      "name": "The Lancet Psychiatry",
+      "count": 1
+    },
+    {
+      "name": "The Lancet regional health. Europe",
+      "count": 1
+    },
+    {
+      "name": "The Lancet. Child & adolescent health",
+      "count": 1
+    },
+    {
+      "name": "The lancet. Psychiatry",
+      "count": 8
+    },
+    {
+      "name": "The Linacre Quarterly",
+      "count": 1
+    },
+    {
+      "name": "The Medical journal of Australia",
+      "count": 1
+    },
+    {
+      "name": "The mental health clinician",
+      "count": 1
+    },
+    {
+      "name": "The Microscope",
+      "count": 1
+    },
+    {
+      "name": "The Mouseion at the JAXlibrary (Jackson Laboratory)",
+      "count": 2
+    },
+    {
+      "name": "The New England journal of medicine",
+      "count": 5
+    },
+    {
+      "name": "The New Scientist",
+      "count": 4
+    },
+    {
+      "name": "The New Zealand medical journal",
+      "count": 2
+    },
+    {
+      "name": "The Nursing clinics of North America",
+      "count": 1
+    },
+    {
+      "name": "The Pharmaceutical Society of Japan",
+      "count": 1
+    },
+    {
+      "name": "The poison.",
+      "count": 1
+    },
+    {
+      "name": "The primary care companion for CNS disorders",
+      "count": 5
+    },
+    {
+      "name": "The Primary Care Companion For CNS Disorders",
+      "count": 1
+    },
+    {
+      "name": "The Psychiatric clinics of North America",
+      "count": 2
+    },
+    {
+      "name": "The Study of Phenomena Related to Health",
+      "count": 1
+    },
+    {
+      "name": "The Therapeutic Conversation",
+      "count": 1
+    },
+    {
+      "name": "The Tohoku journal of experimental medicine",
+      "count": 1
+    },
+    {
+      "name": "The Transmitter",
+      "count": 4
+    },
+    {
+      "name": "The Veterinary clinics of North America. Small animal practice",
+      "count": 1
+    },
+    {
+      "name": "The Veterinary record",
+      "count": 2
+    },
+    {
+      "name": "The world journal of biological psychiatry: the official journal of the World Federation of Societies of Biological Psychiatry",
+      "count": 1
+    },
+    {
+      "name": "Theoretical and Natural Science",
+      "count": 1
+    },
+    {
+      "name": "Therapeutic advances in drug safety",
+      "count": 1
+    },
+    {
+      "name": "Therapeutic advances in psychopharmacology",
+      "count": 22
+    },
+    {
+      "name": "Therapeutic Advances in Psychopharmacology",
+      "count": 1
+    },
+    {
+      "name": "Therapeutic Drug Monitoring",
+      "count": 2
+    },
+    {
+      "name": "Therapeutic drug monitoring",
+      "count": 1
+    },
+    {
+      "name": "Therapeutische Umschau. Revue therapeutique",
+      "count": 3
+    },
+    {
+      "name": "TheScientificWorldJournal",
+      "count": 1
+    },
+    {
+      "name": "ThinkIR: The University of Louisville's Institutional Repository (University of Louisville)",
+      "count": 1
+    },
+    {
+      "name": "Tidsskrift for den Norske laegeforening: tidsskrift for praktisk medicin, ny raekke",
+      "count": 1
+    },
+    {
+      "name": "Tidsskrift for Den norske legeforening",
+      "count": 2
+    },
+    {
+      "name": "Tidsskrift for Norsk psykologforening",
+      "count": 1
+    },
+    {
+      "name": "Tijdschrift voor psychiatrie",
+      "count": 3
+    },
+    {
+      "name": "Tikkun",
+      "count": 2
+    },
+    {
+      "name": "TNU Journal of Science and Technology",
+      "count": 1
+    },
+    {
+      "name": "Tobacco induced diseases",
+      "count": 1
+    },
+    {
+      "name": "Toxicology and applied pharmacology",
+      "count": 1
+    },
+    {
+      "name": "Toxicology Letters",
+      "count": 4
+    },
+    {
+      "name": "Toxicon",
+      "count": 1
+    },
+    {
+      "name": "Toxicon: official journal of the International Society on Toxinology",
+      "count": 3
+    },
+    {
+      "name": "Toxics",
+      "count": 1
+    },
+    {
+      "name": "Toxins",
+      "count": 1
+    },
+    {
+      "name": "Transactions of the British Mycological Society",
+      "count": 1
+    },
+    {
+      "name": "Transcultural psychiatry",
+      "count": 5
+    },
+    {
+      "name": "Translational behavioral medicine",
+      "count": 2
+    },
+    {
+      "name": "Translational Food Sciences",
+      "count": 1
+    },
+    {
+      "name": "Translational Psychiatry",
+      "count": 7
+    },
+    {
+      "name": "Translational psychiatry",
+      "count": 17
+    },
+    {
+      "name": "Trends in Anaesthesia and Critical Care",
+      "count": 1
+    },
+    {
+      "name": "Trends in cognitive sciences",
+      "count": 1
+    },
+    {
+      "name": "Trends in Medical Research",
+      "count": 1
+    },
+    {
+      "name": "Trends in molecular medicine",
+      "count": 1
+    },
+    {
+      "name": "Trends in neurosciences",
+      "count": 1
+    },
+    {
+      "name": "Trends in pharmacological sciences",
+      "count": 5
+    },
+    {
+      "name": "Trends in psychiatry and psychotherapy",
+      "count": 3
+    },
+    {
+      "name": "Trials",
+      "count": 2
+    },
+    {
+      "name": "Turkish journal of emergency medicine",
+      "count": 1
+    },
+    {
+      "name": "Turkish Journal of Forensic Medicine",
+      "count": 1
+    },
+    {
+      "name": "Työväentutkimus Vuosikirja",
+      "count": 6
+    },
+    {
+      "name": "Tạp chí Y học Quân sự",
+      "count": 1
+    },
+    {
+      "name": "UA Campus Repository (The University of Arizona)",
+      "count": 1
+    },
+    {
+      "name": "UAJY Repository (University of Southampton)",
+      "count": 1
+    },
+    {
+      "name": "UC Merced Undergraduate Research Journal",
+      "count": 1
+    },
+    {
+      "name": "UCC Student Medical Journal",
+      "count": 1
+    },
+    {
+      "name": "UF Journal of Undergraduate Research",
+      "count": 1
+    },
+    {
+      "name": "Ugeskrift for laeger",
+      "count": 3
+    },
+    {
+      "name": "UKnowledge (University of Kentucky)",
+      "count": 1
+    },
+    {
+      "name": "UNC Libraries",
+      "count": 4
+    },
+    {
+      "name": "Undergraduate Research in Natural and Clinical Science and Technology (URNCST) Journal",
+      "count": 4
+    },
+    {
+      "name": "Undergraduate Research in Natural and Clinical Science and Technology Journal",
+      "count": 1
+    },
+    {
+      "name": "Universitas Padjadjaran Repository",
+      "count": 1
+    },
+    {
+      "name": "University of Bremen",
+      "count": 1
+    },
+    {
+      "name": "University of Debrecen Electronic Archive",
+      "count": 2
+    },
+    {
+      "name": "University of Groningen research database (University of Groningen / Centre for Information Technology)",
+      "count": 1
+    },
+    {
+      "name": "University of Innsbruck",
+      "count": 1
+    },
+    {
+      "name": "University of Oxford",
+      "count": 1
+    },
+    {
+      "name": "University of Strathclyde",
+      "count": 1
+    },
+    {
+      "name": "University of Zagreb University Computing Centre (SRCE)",
+      "count": 1
+    },
+    {
+      "name": "Universität Zürich, ZORA",
+      "count": 3
+    },
+    {
+      "name": "Uppsala University Publications (Uppsala University)",
+      "count": 1
+    },
+    {
+      "name": "UVic's Research and Learning Repository",
+      "count": 2
+    },
+    {
+      "name": "UWA Profiles and Research Repository (University of Western Australia)",
+      "count": 1
+    },
+    {
+      "name": "Value in Health",
+      "count": 3
+    },
+    {
+      "name": "Value in Health Regional Issues",
+      "count": 1
+    },
+    {
+      "name": "Vanderbilt Undergraduate Research Journal",
+      "count": 1
+    },
+    {
+      "name": "VCU Scholars Compass (Virginia Commonwealth University)",
+      "count": 2
+    },
+    {
+      "name": "Vertex (Buenos Aires, Argentina)",
+      "count": 2
+    },
+    {
+      "name": "Veterinary and animal science",
+      "count": 1
+    },
+    {
+      "name": "Visual Journal of Emergency Medicine",
+      "count": 1
+    },
+    {
+      "name": "VIUspace",
+      "count": 1
+    },
+    {
+      "name": "Voices of Forensic Science",
+      "count": 1
+    },
+    {
+      "name": "Vojnosanitetski pregled",
+      "count": 1
+    },
+    {
+      "name": "VTechWorks (Virginia Tech)",
+      "count": 1
+    },
+    {
+      "name": "Wei sheng wu xue tong bao",
+      "count": 1
+    },
+    {
+      "name": "Wellcome Open Res",
+      "count": 2
+    },
+    {
+      "name": "Wellcome open research",
+      "count": 1
+    },
+    {
+      "name": "Western CEDAR (Western Washington University)",
+      "count": 1
+    },
+    {
+      "name": "Western Michigan University ScholarWorks",
+      "count": 1
+    },
+    {
+      "name": "World Futures",
+      "count": 1
+    },
+    {
+      "name": "World journal of clinical oncology",
+      "count": 1
+    },
+    {
+      "name": "World journal of microbiology & biotechnology.",
+      "count": 1
+    },
+    {
+      "name": "World journal of psychiatry",
+      "count": 1
+    },
+    {
+      "name": "World Psychiatry",
+      "count": 5
+    },
+    {
+      "name": "Yakugaku zasshi: Journal of the Pharmaceutical Society of Japan",
+      "count": 3
+    },
+    {
+      "name": "Yale School of Medicine Physician Associate Program Thesis",
+      "count": 1
+    },
+    {
+      "name": "Yearbook of Psychiatry and Applied Mental Health",
+      "count": 1
+    },
+    {
+      "name": "Zebrafish",
+      "count": 1
+    },
+    {
+      "name": "Zeitschrift fur Psycho-somatische Medizin",
+      "count": 1
+    },
+    {
+      "name": "Zeitschrift für Naturforschung C",
+      "count": 1
+    },
+    {
+      "name": "Zeitschrift für Phytotherapie",
+      "count": 1
+    },
+    {
+      "name": "Zenodo (CERN European Organization for Nuclear Research)",
+      "count": 20
+    },
+    {
+      "name": "Zhongguo Yike Daxue xuebao",
+      "count": 1
+    },
+    {
+      "name": "Zygon®",
+      "count": 2
+    },
+    {
+      "name": "The Ballarat naturalist.",
+      "count": 1
+    },
+    {
+      "name": "The journal of desk research review and analysis.",
+      "count": 1
+    },
+    {
+      "name": "The proceedings of sliit international conference on advancements in science and humanities",
+      "count": 1
+    },
+    {
+      "name": "新潟医学会雑誌",
+      "count": 1
+    },
+    {
+      "name": "精神身体医学",
+      "count": 1
+    }
+  ],
+  "selected_journals": [
+    {
+      "name": "Psychopharmacology",
+      "count": 87
+    },
+    {
+      "name": "Frontiers in psychiatry",
+      "count": 92
+    },
+    {
+      "name": "Journal of psychoactive drugs",
+      "count": 100
+    },
+    {
+      "name": "Journal of Psychedelic Studies",
+      "count": 48
+    },
+    {
+      "name": "Neuroscience Applied",
+      "count": 57
+    },
+    {
+      "name": "Scientific reports",
+      "count": 37
+    }
+  ],
+  "venue_semantics": "Distinct stored venue labels, including repositories, registry labels and name variants; not a count of unique journals",
+  "film_duration_seconds": 46,
+  "slides": [
+    {
+      "name": "Domain reveal",
+      "start": 0,
+      "end": 5,
+      "hold": 0.2
+    },
+    {
+      "name": "Sources",
+      "start": 5,
+      "end": 14,
+      "hold": 13
+    },
+    {
+      "name": "Annual counts",
+      "start": 14,
+      "end": 23,
+      "hold": 20
+    },
+    {
+      "name": "Research topics",
+      "start": 23,
+      "end": 34,
+      "hold": 30
+    },
+    {
+      "name": "Trial registrations",
+      "start": 34,
+      "end": 40,
+      "hold": 38.5
+    },
+    {
+      "name": "Return to the domain",
+      "start": 40,
+      "end": 46,
+      "hold": 45.7
+    }
+  ],
+  "uploaded_utc": "2026-10-11T17:48:44.393642+00:00"
+}

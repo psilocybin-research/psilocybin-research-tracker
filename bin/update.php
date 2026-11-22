@@ -45,7 +45,33 @@ Heartbeat::beat('update-' . $mode, $updateStatus, [
     'sources' => $sources,
 ]);
 OperationalLogger::info('update.finished', ['mode' => $mode, 'status' => $updateStatus, 'inserted' => $summary['inserted'], 'updated' => $summary['updated'], 'skipped' => $summary['skipped'], 'errors' => $summary['errors'], 'sources' => $sources]);
-if ($sendPush && $summary['errors'] === 0 && $summary['inserted'] > 0) {
+try {
+    $datasetSummary = (new DatasetDiscoveryService($db))->discover(160, true, false);
+    $catalogSummary = (new DatasetDiscoveryService($db))->discoverCatalog();
+    echo 'Dataset scan: ' . $datasetSummary['scanned'] . ' publications; ' . ($datasetSummary['verified'] + $catalogSummary['verified']) . ' verified, ' . $datasetSummary['quarantined'] . " quarantined.\n";
+    $datasetSummary['catalog'] = $catalogSummary;
+    $datasetStatus = count($datasetSummary['errors']) > 0 ? 'fail' : 'ok';
+    Heartbeat::beat('datasets-discovery', $datasetStatus, $datasetSummary);
+    OperationalLogger::info('datasets.discovery_incremental', ['status' => $datasetStatus] + $datasetSummary);
+} catch (Throwable $e) {
+    Heartbeat::beat('datasets-discovery', 'fail', ['message' => $e->getMessage()]);
+    OperationalLogger::exception('datasets.discovery_incremental_failed', $e);
+    echo "Dataset discovery deferred; the publication update remains valid.\n";
+}
+// Build deterministic public projections after ingestion, before notification queries.
+// A failed optional rebuild must not undo committed source updates or send twice.
+try {
+    $warm = CachePrewarmer::run($db);
+    Heartbeat::beat('prewarm-caches', 'ok', $warm);
+    echo 'Public cache prewarm completed in ' . $warm['elapsed_ms'] . " ms.\n";
+} catch (Throwable $error) {
+    Heartbeat::beat('prewarm-caches', 'fail', ['message'=>'Prewarming failed; current-source fallbacks remain available.']);
+    OperationalLogger::exception('cache.prewarm_failed', $error);
+    echo "Public cache prewarm deferred; ingestion remains valid.\n";
+}
+
+// Process saved notification queues even when an individual source is unavailable.
+if ($sendPush) {
     $push = new PushService($db, new PublicationRepository($db));
     $pushSummary = $push->notifyNewPublications($startedAt);
     echo 'Push subscriptions: ' . $pushSummary['subscriptions'] . ' Sent: ' . $pushSummary['sent'] . ' Failed: ' . $pushSummary['failed'] . ' Expired: ' . $pushSummary['expired'] . "\n";
@@ -55,7 +81,7 @@ if ($sendPush && $summary['errors'] === 0 && $summary['inserted'] > 0) {
     Heartbeat::beat('push-latest', $pushSummary['failed'] > 0 ? 'fail' : 'ok', $pushSummary);
     OperationalLogger::info('push.finished', $pushSummary);
 }
-if ($sendAlerts && $summary['errors'] === 0) {
+if ($sendAlerts) {
     $alerts = new AlertService($db, new PublicationRepository($db));
     $alertSummary = $alerts->deliverDue('daily');
     echo 'Alerts generated: ' . $alertSummary['generated'] . ' Sent: ' . $alertSummary['sent'] . ' Failed: ' . $alertSummary['failed'] . "\n";

@@ -5,12 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#123c31">
   <title>Offline | Psilocybin Research Tracker</title>
-  <link rel="icon" href="assets/logo.png?v=20260809-network-first-v94">
-  <link rel="manifest" href="manifest.webmanifest?v=20260809-network-first-v94">
-  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260809-network-first-v94">
+  <meta name="robots" content="noindex, follow">
+  <base href="/">
+  <script src="/assets/offline-library.min.js?v=20261106-mobile-film-above-v335" defer></script>
+  <link rel="icon" href="favicon.ico">
+  <link rel="manifest" href="manifest.webmanifest?v=20261012-android-safe-area-v255">
+  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20261012-android-safe-area-v255">
   <style>
+    .app-toast { position:fixed; bottom:20px; left:18px; z-index:100; max-width:calc(100vw - 36px); padding:12px 14px; border:1px solid #123c31; border-radius:8px; background:#123c31; color:white; }
     :root {
       color-scheme: light;
+      --mushroom-theme-image: url("assets/preloader-mushroom-desktop.webp");
       --bg: #f6f3ea;
       --surface: #fffdf7;
       --surface-soft: #f3efe2;
@@ -25,6 +30,10 @@
       --shadow: 0 24px 70px rgba(18, 60, 49, .14);
     }
 
+    @media (max-width: 700px) {
+      :root { --mushroom-theme-image: url("assets/preloader-mushroom-mobile.webp"); }
+    }
+
     * { box-sizing: border-box; }
 
     body {
@@ -32,7 +41,7 @@
       margin: 0;
       background:
         linear-gradient(180deg, rgba(18, 60, 49, .82), rgba(18, 60, 49, .08) 34%, rgba(246, 243, 234, .98) 70%),
-        none center top / cover no-repeat fixed,
+        var(--mushroom-theme-image) center top / cover no-repeat fixed,
         var(--bg);
       color: var(--ink);
       font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
@@ -290,51 +299,45 @@
         padding: 16px 0;
       }
 
-      .offline-brand {
-        color: var(--ink);
-      }
-
-      .offline-brand em {
-        color: var(--ink-soft);
-      }
-
       .offline-actions a,
       .offline-actions button {
         width: 100%;
       }
     }
   </style>
+  <script src="/assets/pwa-freshness.min.js?v=20261106-mobile-film-above-v335" defer></script>
 </head>
 <body>
   <main class="offline-shell" aria-labelledby="offline-title">
     <a class="offline-brand" href="./" aria-label="Psilocybin Research Tracker">
-      <img src="assets/mushroom-brand-mark.webp" alt="">
+      <img src="assets/mushroom-brand-mark-96.webp" alt="">
       <span>
         <strong>Psilocybin Research Tracker</strong>
         <em>Installed research app shell</em>
       </span>
     </a>
 
+    <section data-offline-library aria-label="Offline catalogue" style="margin-bottom:24px"></section>
     <div class="offline-layout">
       <section class="offline-hero">
         <span class="offline-eyebrow">Offline mode</span>
-        <h1 id="offline-title">The live database needs a connection.</h1>
-        <p class="offline-lede">Search, exports, analytics, alerts, and fresh publication records run on the server-side SQLite index. This installed PWA keeps the app shell available and shows a few orientation references until the network returns.</p>
+        <h1 id="offline-title">Research wherever you are.</h1>
+        <p class="offline-lede">Your downloaded catalogue supports offline metadata search, filters, reading lists and BibTeX/RIS/CSV/JSON exports above. Connect to download your first copy or refresh it. Alerts, live analytics and external full texts require a connection.</p>
         <div class="offline-actions" aria-label="Offline actions">
-          <a href="./">Try the tracker again</a>
+          <a href="./">Try the database again</a>
           <button type="button" onclick="location.reload()">Reload page</button>
         </div>
         <div class="offline-status-grid" aria-label="Offline capability summary">
-          <div><span>Available</span><strong>App shell, logo, cached static assets</strong></div>
-          <div><span>Needs network</span><strong>Search, filters, exports, API, alerts</strong></div>
-          <div><span>For full offline use</span><strong>Download the SQLite database when online</strong></div>
+          <div><span>Available</span><strong>Saved catalogue, metadata search, reading list and citation exports</strong></div>
+          <div><span>Needs network</span><strong>Updates, live analytics, API and alerts</strong></div>
+          <div><span>Save for offline use</span><strong>Choose Download in the offline library</strong></div>
         </div>
       </section>
 
       <aside class="offline-panel" aria-labelledby="offline-references-title">
         <div>
           <h2 id="offline-references-title">Reference examples kept on this page</h2>
-          <p>These are static examples for orientation only; reconnect for the complete indexed database and current metadata.</p>
+          <p>These are static examples for orientation only; use your downloaded catalogue above, or reconnect for current metadata.</p>
         </div>
         <ol class="reference-list">
           <li>
@@ -360,10 +363,11 @@
         </ol>
         <div class="offline-note">
           <span>Important boundary</span>
-          <p>The installed PWA cannot run PHP or query the server SQLite database in the browser. Reconnect for live search, or use the database download while online for local research workflows.</p>
+          <p>The local catalogue contains public bibliographic metadata, not source abstracts or full texts. Its snapshot date is shown above. You can also download the SQLite export while online for use in external research tools.</p>
         </div>
       </aside>
     </div>
   </main>
+<script>if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: standalone)').matches){document.querySelector('meta[name="theme-color"]').content='#fafbf7';}</script>
 </body>
 </html>

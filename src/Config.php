@@ -168,7 +168,7 @@ final class Config
     public static function alertFromName(): string
     {
         $name = getenv('PUBLICATION_TRACKER_ALERT_FROM_NAME');
-        return is_string($name) && trim($name) !== '' ? trim($name) : 'Psilocybin Research Publication Tracker';
+        return is_string($name) && trim($name) !== '' ? trim($name) : 'Psilocybin Research Database';
     }
 
     public static function contactEmail(): string

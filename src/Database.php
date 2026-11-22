@@ -19,6 +19,7 @@ final class Database
         );
 
         if (str_starts_with(Config::databaseDsn(), 'sqlite:')) {
+            $this->pdo->exec('PRAGMA busy_timeout = 5000');
             $this->pdo->exec('PRAGMA foreign_keys = ON');
             $this->pdo->exec('PRAGMA journal_mode = WAL');
         }
@@ -35,14 +36,51 @@ final class Database
         if ($schema === false) {
             throw new RuntimeException('Unable to load schema.sql');
         }
-        $this->pdo->exec($schema);
-        $this->migrate();
+        if ($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'sqlite') {
+            $this->pdo->exec($schema);
+            $this->migrate();
+            return;
+        }
+        // A completed schema revision avoids DDL, backfills and FTS checks on
+        // every public request. Include migration code in the revision.
+        $revision = hash('sha256', $schema . file_get_contents(__FILE__));
+        if ($this->schemaIsCurrent($revision)) return;
+        $this->pdo->exec('BEGIN IMMEDIATE');
+        try {
+            if (!$this->schemaIsCurrent($revision)) {
+                $this->pdo->exec($schema);
+                $this->migrate();
+                $this->pdo->exec('CREATE TABLE IF NOT EXISTS app_schema_revision (id INTEGER PRIMARY KEY CHECK(id = 1), revision TEXT NOT NULL)');
+                $stmt = $this->pdo->prepare('INSERT OR REPLACE INTO app_schema_revision (id, revision) VALUES (1, ?)');
+                $stmt->execute([$revision]);
+            }
+            $this->pdo->exec('COMMIT');
+        } catch (Throwable $e) {
+            $this->pdo->exec('ROLLBACK');
+            throw $e;
+        }
+    }
+
+    private function schemaIsCurrent(string $revision): bool
+    {
+        if (!$this->pdo->query("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'app_schema_revision'")->fetchColumn()) return false;
+        return $this->pdo->query('SELECT revision FROM app_schema_revision WHERE id = 1')->fetchColumn() === $revision;
     }
 
     private function migrate(): void
     {
         if (!str_starts_with(Config::databaseDsn(), 'sqlite:')) {
             return;
+        }
+        // Earlier CHECK constraints rejected the newer install-prompt metrics.
+        // Validation belongs to PwaMetrics so adding a category cannot strand clients.
+        $metricSql = (string)$this->pdo->query("SELECT sql FROM sqlite_master WHERE type='table' AND name='engagement_daily_metrics'")->fetchColumn();
+        if (stripos($metricSql, 'CHECK') !== false) {
+            $this->pdo->exec("INSERT OR IGNORE INTO pwa_funnel_daily(metric_date, strategy, platform, surface, metric, count) SELECT metric_date, 'legacy', 'unknown', 'unknown', metric, count FROM engagement_daily_metrics");
+            $this->pdo->exec('CREATE TABLE engagement_daily_metrics_upgrade (metric_date TEXT NOT NULL, metric TEXT NOT NULL, count INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(metric_date, metric))');
+            $this->pdo->exec('INSERT INTO engagement_daily_metrics_upgrade SELECT metric_date, metric, count FROM engagement_daily_metrics');
+            $this->pdo->exec('DROP TABLE engagement_daily_metrics');
+            $this->pdo->exec('ALTER TABLE engagement_daily_metrics_upgrade RENAME TO engagement_daily_metrics');
         }
         $columns = $this->pdo->query('PRAGMA table_info(fetch_runs)')->fetchAll();
         $names = array_map(function (array $column): string {
@@ -106,6 +144,24 @@ final class Database
         $this->backfillAlertPublicUuids();
         $this->migrateAlertUniqueness();
         $this->migrateSensitiveTables();
+        $pushColumns = $this->pdo->query('PRAGMA table_info(push_subscriptions)')->fetchAll();
+        $pushNames = array_map(fn (array $column): string => (string)$column['name'], $pushColumns);
+        $pushAdds = [
+            'frequency' => "ALTER TABLE push_subscriptions ADD COLUMN frequency TEXT NOT NULL DEFAULT 'daily'",
+            'substances' => "ALTER TABLE push_subscriptions ADD COLUMN substances TEXT NOT NULL DEFAULT 'psilocybin,psilocin'",
+            'keywords' => 'ALTER TABLE push_subscriptions ADD COLUMN keywords TEXT',
+            'author' => 'ALTER TABLE push_subscriptions ADD COLUMN author TEXT',
+            'journal' => 'ALTER TABLE push_subscriptions ADD COLUMN journal TEXT',
+            'topic' => 'ALTER TABLE push_subscriptions ADD COLUMN topic TEXT',
+            'cited_doi' => 'ALTER TABLE push_subscriptions ADD COLUMN cited_doi TEXT',
+            'last_checked_at' => 'ALTER TABLE push_subscriptions ADD COLUMN last_checked_at TEXT',
+        ];
+        foreach ($pushAdds as $name => $sql) {
+            if (!in_array($name, $pushNames, true)) {
+                $this->pdo->exec($sql);
+            }
+        }
+        $this->pdo->exec('UPDATE push_subscriptions SET last_checked_at = COALESCE(last_checked_at, last_sent_at, updated_at, created_at) WHERE last_checked_at IS NULL');
         $this->dropLegacySensitiveIndexes();
         $this->pdo->exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_alert_subscriptions_token_blind ON alert_subscriptions(token_blind_index)');
         $this->pdo->exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_alert_subscriptions_confirmation_token_blind ON alert_subscriptions(confirmation_token_blind_index)');
@@ -122,8 +178,25 @@ final class Database
         $this->pdo->exec('CREATE INDEX IF NOT EXISTS idx_publications_visible_source_date ON publications(hidden, false_positive, source_name, publication_date DESC, id DESC)');
         $this->pdo->exec('CREATE INDEX IF NOT EXISTS idx_publications_visible_status_date ON publications(hidden, false_positive, publication_status, publication_date DESC, id DESC)');
         $this->pdo->exec('CREATE INDEX IF NOT EXISTS idx_publications_visible_journal_date ON publications(hidden, false_positive, journal, publication_date DESC, id DESC)');
+        $eventColumns=array_column($this->pdo->query('PRAGMA table_info(alert_subscriptions)')->fetchAll(),'name');
+        if(!in_array('event_types',$eventColumns,true))$this->pdo->exec("ALTER TABLE alert_subscriptions ADD COLUMN event_types TEXT NOT NULL DEFAULT ''");
+        if(!in_array('events_since',$eventColumns,true))$this->pdo->exec('ALTER TABLE alert_subscriptions ADD COLUMN events_since TEXT');
+        $this->pdo->exec("CREATE TABLE IF NOT EXISTS research_change_state(nct_id TEXT PRIMARY KEY,snapshot_json TEXT NOT NULL,observed_at TEXT NOT NULL)");
+        $this->pdo->exec("CREATE TABLE IF NOT EXISTS research_changes(id INTEGER PRIMARY KEY AUTOINCREMENT,publication_id INTEGER NOT NULL,nct_id TEXT NOT NULL,event_type TEXT NOT NULL,facts_json TEXT NOT NULL,observed_at TEXT NOT NULL)");
+        $this->pdo->exec("CREATE TABLE IF NOT EXISTS research_change_deliveries(subscription_id INTEGER NOT NULL,change_id INTEGER NOT NULL,delivered_at TEXT NOT NULL,PRIMARY KEY(subscription_id,change_id))");
+        $this->pdo->exec('CREATE INDEX IF NOT EXISTS idx_research_changes_observed ON research_changes(observed_at,id)');
+        // Match the selected-evidence lookup expression without scanning every visible DOI.
+        $this->pdo->exec('CREATE INDEX IF NOT EXISTS idx_publications_visible_doi_identity ON publications(hidden, false_positive, LOWER(TRIM(doi)), id)');
         $this->migratePublicationMetadataIndexes();
         $this->migratePublicationFts();
+        $this->pdo->exec('CREATE TABLE IF NOT EXISTS app_cache_revision (id INTEGER PRIMARY KEY CHECK(id = 1), revision INTEGER NOT NULL DEFAULT 0)');
+        $this->pdo->exec('INSERT OR IGNORE INTO app_cache_revision (id, revision) VALUES (1, 0)');
+        foreach (['publications', 'publication_authors', 'publication_topics'] as $table) {
+            foreach (['INSERT', 'UPDATE', 'DELETE'] as $event) {
+                $name = 'cache_revision_' . $table . '_' . strtolower($event);
+                $this->pdo->exec("CREATE TRIGGER IF NOT EXISTS $name AFTER $event ON $table BEGIN UPDATE app_cache_revision SET revision = revision + 1 WHERE id = 1; END");
+            }
+        }
     }
 
     private function migratePublicationMetadataIndexes(): void
@@ -435,14 +508,22 @@ final class Database
             user_agent TEXT,
             user_agent_cipher TEXT,
             active INTEGER NOT NULL DEFAULT 1,
+            frequency TEXT NOT NULL DEFAULT "daily",
+            substances TEXT NOT NULL DEFAULT "psilocybin,psilocin",
+            keywords TEXT,
+            author TEXT,
+            journal TEXT,
+            topic TEXT,
+            cited_doi TEXT,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
             last_sent_at TEXT,
+            last_checked_at TEXT,
             last_error TEXT
         )');
         $stmt = $this->pdo->prepare('INSERT OR REPLACE INTO push_subscriptions_new
-            (id,endpoint,endpoint_cipher,endpoint_blind_index,p256dh,p256dh_cipher,auth,auth_cipher,user_agent,user_agent_cipher,active,created_at,updated_at,last_sent_at,last_error)
-            VALUES (:id,:endpoint,:endpoint_cipher,:endpoint_blind_index,:p256dh,:p256dh_cipher,:auth,:auth_cipher,:user_agent,:user_agent_cipher,:active,:created_at,:updated_at,:last_sent_at,:last_error)');
+            (id,endpoint,endpoint_cipher,endpoint_blind_index,p256dh,p256dh_cipher,auth,auth_cipher,user_agent,user_agent_cipher,active,frequency,substances,keywords,author,journal,topic,cited_doi,created_at,updated_at,last_sent_at,last_checked_at,last_error)
+            VALUES (:id,:endpoint,:endpoint_cipher,:endpoint_blind_index,:p256dh,:p256dh_cipher,:auth,:auth_cipher,:user_agent,:user_agent_cipher,:active,:frequency,:substances,:keywords,:author,:journal,:topic,:cited_doi,:created_at,:updated_at,:last_sent_at,:last_checked_at,:last_error)');
         foreach ($rows as $row) {
             $endpoint = isset($row['endpoint_cipher']) && $row['endpoint_cipher'] !== null ? SensitiveData::decrypt((string)$row['endpoint_cipher']) : (string)($row['endpoint'] ?? '');
             $p256dh = isset($row['p256dh_cipher']) && $row['p256dh_cipher'] !== null ? SensitiveData::decrypt((string)$row['p256dh_cipher']) : (string)($row['p256dh'] ?? '');
@@ -460,9 +541,17 @@ final class Database
                 'user_agent' => $userAgent === null ? null : '[encrypted]',
                 'user_agent_cipher' => $userAgent === null ? null : SensitiveData::encrypt((string)$userAgent),
                 'active' => (int)$row['active'],
+                'frequency' => in_array((string)($row['frequency'] ?? ''), ['daily', 'weekly', 'monthly'], true) ? (string)$row['frequency'] : 'daily',
+                'substances' => (string)($row['substances'] ?? 'psilocybin,psilocin'),
+                'keywords' => $row['keywords'] ?? null,
+                'author' => $row['author'] ?? null,
+                'journal' => $row['journal'] ?? null,
+                'topic' => $row['topic'] ?? null,
+                'cited_doi' => $row['cited_doi'] ?? null,
                 'created_at' => (string)$row['created_at'],
                 'updated_at' => (string)$row['updated_at'],
                 'last_sent_at' => $row['last_sent_at'] ?? null,
+                'last_checked_at' => $row['last_checked_at'] ?? null,
                 'last_error' => $row['last_error'] ?? null,
             ]);
         }

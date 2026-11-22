@@ -778,9 +778,23 @@ $openAlexFallbackJournal = OpenAlexFetcher::paperFromWork([
 assert_true($openAlexFallbackJournal !== null && $openAlexFallbackJournal['journal'] === 'Fallback Journal', 'OpenAlex journal-type location fallback should be mapped');
 
 $index = file_get_contents(__DIR__ . '/../index.php');
-$js = file_get_contents(__DIR__ . '/../assets/app.js');
+// The current public UI is split across page-specific and feature modules.
+// Check the complete shipped source, not only the legacy monolithic entrypoint.
+$js = implode("\n", array_map(static fn(string $path): string => (string)file_get_contents(__DIR__ . '/../' . $path), [
+    'assets/app.js',
+    'assets/citation-network.js',
+    'assets/features/analytics.js',
+    'assets/features/research-film.js',
+    'assets/features/trial-pipeline.js',
+    'assets/citation-paper.js',
+]));
 $sw = file_get_contents(__DIR__ . '/../sw.js');
-$css = file_get_contents(__DIR__ . '/../assets/styles.css');
+$css = implode("\n", array_map(static fn(string $path): string => (string)file_get_contents(__DIR__ . '/../' . $path), [
+    'assets/styles.css',
+    'assets/home.css',
+    'assets/citation-network.css',
+    'assets/citation-paper.css',
+]));
 $manifestJson = file_get_contents(__DIR__ . '/../manifest.webmanifest');
 $htaccess = file_get_contents(__DIR__ . '/../.htaccess');
 $dataHtaccess = file_get_contents(__DIR__ . '/../data/.htaccess');
@@ -799,14 +813,14 @@ preg_match('/const CACHE_VERSION = "([^"]+)";/', $sw, $cacheVersionMatch);
 preg_match('/const ASSET_VERSION = "([^"]+)";/', $sw, $assetVersionMatch);
 $cacheVersion = $cacheVersionMatch[1] ?? '';
 $assetVersion = $assetVersionMatch[1] ?? '';
-assert_true(str_contains($index, 'app-preloader') && str_contains($index, 'id="scroll-progress"') && str_contains($index, 'id="scroll-top"') && str_contains($index, 'preloader-title">Loading') && !str_contains($index, 'Loading the local research index, filters, analytics, and alert tools.') && str_contains($css, '.preloader-meter'), 'preloader or scroll controls should be present and styled');
-assert_true(str_contains($index, 'Search all years') && str_contains($index, "'range' => 'all'") && str_contains($index, "'from' => null") && str_contains($index, "'to' => null"), 'zero-result all-years affordance missing');
+assert_true(str_contains($index, 'app-preloader') && str_contains($index, 'id="scroll-top"') && str_contains($index, 'aria-label="Scroll to top"') && str_contains($index, 'preloader-title">Loading') && str_contains($css, '.preloader-meter') && str_contains($css, '.scroll-top') && str_contains($js, 'function initScrollTop()') && str_contains($js, "document.querySelector('#scroll-progress')?.remove()"), 'accessible preloader and scroll-to-top behavior missing');
+assert_true(str_contains($index, 'search-context-reset') && str_contains($index, 'Review filters') && str_contains($index, '$resetFiltersUrl') && str_contains($viewHelpers, 'function reset_search_filters_url') && str_contains($viewHelpers, "'range'=>'all'"), 'zero-result filter reset must return to all years');
 assert_true(str_contains($helpers, "ViewHelpers.php") && str_contains($viewHelpers, 'function query_with') && str_contains($viewHelpers, 'function source_filter_url') && !str_contains($index, 'function query_with(') && !str_contains($index, 'function source_filter_url('), 'view helper split should keep rendering helpers out of index.php');
-assert_true(str_contains($index, 'paper-results-title') && str_contains($index, 'Latest publications') && str_contains($index, 'Search results') && str_contains($index, 'publication-timeline'), 'single publication result surface or timeline missing');
-assert_true(str_contains($index, 'result-title-block') && str_contains($index, 'results-toolbar') && str_contains($index, 'Updated <strong id="last-updated-text"') && str_contains($css, '.result-title-block') && str_contains($css, '.result-display-controls label > span') && !str_contains($index, 'latest-panel-toggle') && !str_contains($index, 'latest-next') && !str_contains($index, 'latest-list'), 'homepage should use one canonical results list without a duplicate latest panel');
+assert_true(str_contains($index, 'paper-results-title') && str_contains($index, 'Publications and trials') && str_contains($index, 'Search results') && str_contains($index, 'publication-timeline'), 'single publication result surface or timeline missing');
+assert_true(str_contains($index, 'result-title-block') && str_contains($index, 'results-toolbar') && str_contains($index, 'Updated <time id="hero-updated-text"') && str_contains($css, '.result-title-block') && str_contains($css, '.result-display-controls label > span') && !str_contains($index, 'latest-panel-toggle') && !str_contains($index, 'latest-next') && !str_contains($index, 'latest-list'), 'homepage should use one canonical results list without a duplicate latest panel');
 assert_true(str_contains($index, 'public_refresh') && str_contains($index, 'public_refresh.lock') && !str_contains($index, 'Refresh recent papers') && !str_contains($index, 'hero-refresh-form') && !str_contains($index, 'public-refresh-form'), 'public refresh backend should remain but visible refresh buttons should be removed');
 assert_true(str_contains($index, '$_POST[\'admin_token\'] ?? \'\'') && !str_contains($index, '$_GET[\'admin_token\']'), 'admin token should be accepted from POST only');
-assert_true(str_contains($index, 'result-display-controls') && str_contains($index, 'name="per_page"') && str_contains($index, '[10, 20, 50, 100, 200]') && str_contains($index, 'value="all"') && str_contains($index, 'All results') && str_contains($index, 'Sort matching results') && str_contains($index, 'Copy BibTeX'), 'results page-size, sorting, all-results option, or BibTeX copy UI missing');
+assert_true(str_contains($index, 'data-smart-result-bar') && str_contains($index, 'name="per_page"') && str_contains($index, '[10, 20, 50, 100, 200]') && str_contains($index, 'value="all"') && str_contains($index, 'Entries per page') && str_contains($index, 'Sort matching results') && str_contains($index, 'Copy BibTeX'), 'results page-size, sorting, all-results option, or BibTeX copy UI missing');
 assert_true(str_contains($index, 'Evidence status') && str_contains($viewHelpers, 'PREPRINT (not peer reviewed)') && str_contains($index, 'Source database'), 'source/status filter UI missing');
 assert_true(str_contains($index, 'database.php') && str_contains($index, 'SQLite database') && str_contains($index, 'application/vnd.sqlite3'), 'full SQLite database download UI or dataset metadata missing');
 assert_true(str_contains($index, 'hero-evidence') && str_contains($index, 'aria-label="Database summary" open') && str_contains($css, '.hero-evidence-grid') && str_contains($css, '.hero-evidence-summary-metrics') && str_contains($css, 'grid-template-columns: repeat(3, minmax(0, 1fr))') && str_contains($index, 'Database summary') && str_contains($index, '<span>Database</span>') && !str_contains($index, 'Database evidence') && str_contains($index, 'database-summary-metric') && !str_contains($index, 'Total Publications') && str_contains($index, 'Psilocybin Records') && str_contains($index, 'Psilocin Records') && !str_contains($index, 'Search Matches') && str_contains($index, 'Journals') && str_contains($index, 'Research Topics') && str_contains($index, 'Source coverage') && str_contains($index, 'source-coverage-table evidence-accordion') && str_contains($index, '<table>') && str_contains($index, '<th scope="col">Count</th>') && str_contains($viewHelpers, 'function source_filter_url') && str_contains($index, 'class="source-filter-link"') && str_contains($index, 'publication-growth-mini evidence-accordion') && str_contains($index, 'publication-growth-data') && str_contains($index, 'since <?= h((string)($publicationGrowthFirstYear ?? 2020)) ?>') && str_contains($index, 'Cumulative line'), 'academic open database summary, source coverage accordion, source links, or growth timeline missing');

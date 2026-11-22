@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 96 96">
+  <title>Latest papers</title>
+  <path fill="#123c31" d="M0 0 H96 V96 H0 Z"/>
+  <path d="M31 26 H53 L65 38 V70 H31 Z M53 26 V38 H65 M39 47 H57 M39 55 H57 M39 63 H50" fill="none" stroke="#f6f3ea" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

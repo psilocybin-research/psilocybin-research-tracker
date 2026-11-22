@@ -38,7 +38,7 @@ final class CrossrefFetcher implements FetcherInterface
                     'filter' => implode(',', $filters),
                     'rows' => (string)min($pageSize, $remaining),
                     'cursor' => $cursor,
-                    'sort' => 'published',
+                    'sort' => 'indexed',
                     'order' => 'desc',
                 ]);
                 $data = json_decode($this->http->get($url), true);

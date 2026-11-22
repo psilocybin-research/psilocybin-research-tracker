@@ -99,10 +99,19 @@
             "in": "query",
             "description": "CSV export bound; a reached bound may truncate the output. JSON clients should use per_page.",
             "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 50000,
-              "default": 5000
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "all"
+                  ]
+                }
+              ],
+              "default": "all"
             }
           }
         ],
@@ -831,10 +840,19 @@
             "in": "query",
             "description": "Maximum matching records.",
             "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 50000,
-              "default": 5000
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "all"
+                  ]
+                }
+              ],
+              "default": "all"
             }
           },
           {
@@ -895,7 +913,7 @@
       "get": {
         "operationId": "downloadCompleteCatalogue",
         "summary": "Download the complete public catalogue as compact JSON or titles-and-years TXT",
-        "description": "No pagination or filtering. All visible psilocybin/psilocin publications, preprints and trial registrations, including missing years. Uses one database snapshot. Check complete and record_count == total_records == records.length. Explicit error above 50000 records; never a silently truncated success. TXT contains one YEAR — TITLE line per record, with n.d. for missing years. Response SHA-256 describes uncompressed UTF-8 body bytes. This is a complete directory of records with a compact field set, not all database fields. Use /database.php for public SQL metadata or /export.php?format=json&limit=50000 for broader public record objects.",
+        "description": "No pagination or filtering. All visible psilocybin/psilocin publications, preprints and trial registrations, including missing years. Uses one database snapshot. Check complete and record_count == total_records == records.length. No fixed record-count cap. TXT contains one YEAR \u2014 TITLE line per record, with n.d. for missing years. Response SHA-256 describes uncompressed UTF-8 body bytes. This is a complete directory of records with a compact field set, not all database fields. Use /database.php for public SQL metadata or /export.php?format=json&limit=all for broader public record objects.",
         "parameters": [
           {
             "name": "format",
@@ -1050,7 +1068,7 @@
             "description": "Unsupported format or query filters; use the paginated papers API for searches."
           },
           "413": {
-            "description": "Catalogue exceeds 50000 records; use the full public SQLite download."
+            "description": "Catalogue temporarily unavailable; use the full public SQLite download."
           },
           "429": {
             "description": "Downloads busy; respect Retry-After."
@@ -1451,7 +1469,7 @@
       "get": {
         "operationId": "downloadVerifiedDatasetArtifact",
         "summary": "Retrieve exact existing file bytes for a published snapshot",
-        "description": "Use the URLs in dataset-manifest.json. GET serves the exact completed file; HEAD gives its real size and SHA-256 without rebuilding. SHA-256 and byte counts describe the downloaded file bytes after HTTP transfer decoding. For XZ/RDS, verify the compressed file before opening it. SQLite-XZ additionally records the underlying SQLite size/hash; RDS contains publications and metadata data frames from that SQLite. A retired/missing snapshot returns 404; no replacement snapshot is silently substituted. The manifest format returns the frozen manifest without the current endpoint’s is_current field.",
+        "description": "Use the URLs in dataset-manifest.json. GET serves the exact completed file; HEAD gives its real size and SHA-256 without rebuilding. SHA-256 and byte counts describe the downloaded file bytes after HTTP transfer decoding. For XZ/RDS, verify the compressed file before opening it. SQLite-XZ additionally records the underlying SQLite size/hash; RDS contains publications and metadata data frames from that SQLite. A retired/missing snapshot returns 404; no replacement snapshot is silently substituted. The manifest format returns the frozen manifest without the current endpoint\u2019s is_current field.",
         "parameters": [
           {
             "name": "snapshot",
