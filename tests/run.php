@@ -778,9 +778,23 @@ $openAlexFallbackJournal = OpenAlexFetcher::paperFromWork([
 assert_true($openAlexFallbackJournal !== null && $openAlexFallbackJournal['journal'] === 'Fallback Journal', 'OpenAlex journal-type location fallback should be mapped');
 
 $index = file_get_contents(__DIR__ . '/../index.php');
-$js = file_get_contents(__DIR__ . '/../assets/app.js');
+// The current public UI is split across page-specific and feature modules.
+// Check the complete shipped source, not only the legacy monolithic entrypoint.
+$js = implode("\n", array_map(static fn(string $path): string => (string)file_get_contents(__DIR__ . '/../' . $path), [
+    'assets/app.js',
+    'assets/citation-network.js',
+    'assets/features/analytics.js',
+    'assets/features/research-film.js',
+    'assets/features/trial-pipeline.js',
+    'assets/citation-paper.js',
+]));
 $sw = file_get_contents(__DIR__ . '/../sw.js');
-$css = file_get_contents(__DIR__ . '/../assets/styles.css');
+$css = implode("\n", array_map(static fn(string $path): string => (string)file_get_contents(__DIR__ . '/../' . $path), [
+    'assets/styles.css',
+    'assets/home.css',
+    'assets/citation-network.css',
+    'assets/citation-paper.css',
+]));
 $manifestJson = file_get_contents(__DIR__ . '/../manifest.webmanifest');
 $htaccess = file_get_contents(__DIR__ . '/../.htaccess');
 $dataHtaccess = file_get_contents(__DIR__ . '/../data/.htaccess');
