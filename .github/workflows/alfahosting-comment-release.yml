@@ -1,0 +1,116 @@
+name: Controlled release from GitHub comment
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alfahosting-release
+  cancel-in-progress: false
+
+jobs:
+  authorize:
+    if: >-
+      github.event.issue.number == 38 &&
+      github.event.issue.pull_request != null &&
+      github.event.comment.user.login == 'psilocybin-research' &&
+      github.event.comment.author_association == 'OWNER'
+    runs-on: ubuntu-latest
+    outputs:
+      valid: ${{ steps.command.outputs.valid }}
+      mode: ${{ steps.command.outputs.mode }}
+      sha: ${{ steps.command.outputs.sha }}
+    steps:
+      - name: Check out the default branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Validate exact command and current main commit
+        id: command
+        env:
+          RELEASE_COMMENT: ${{ github.event.comment.body }}
+          RELEASE_ACTOR: ${{ github.event.comment.user.login }}
+          RELEASE_ASSOCIATION: ${{ github.event.comment.author_association }}
+        run: python3 .github/scripts/alfahosting_release_command.py
+
+  release:
+    needs: authorize
+    if: needs.authorize.outputs.valid == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 25
+    steps:
+      - name: Check out authorized release commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.authorize.outputs.sha }}
+          persist-credentials: false
+
+      - name: Verify commit still matches main after approval
+        env:
+          RELEASE_SHA: ${{ needs.authorize.outputs.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$RELEASE_SHA"
+          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$RELEASE_SHA"
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.2'
+          extensions: sqlite3, pdo_sqlite, mbstring, json
+          coverage: none
+
+      - name: Run release validation tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p test_alfahosting_release.py -v
+          python3 -m unittest discover -s tests -p test_alfahosting_release_command.py -v
+          find . -name '*.php' -print0 | xargs -0 -n1 php -l
+          php tests/run.php
+
+      - name: Authorize production operation
+        env:
+          RELEASE_MODE: ${{ needs.authorize.outputs.mode }}
+          RELEASE_SHA: ${{ needs.authorize.outputs.sha }}
+          BACKUP_ATTESTED_SHA: ${{ secrets.ALFA_BACKUP_ATTESTED_SHA }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$RELEASE_MODE" == "deploy" ]]; then
+            if [[ -z "$BACKUP_ATTESTED_SHA" || "$BACKUP_ATTESTED_SHA" != "$RELEASE_SHA" ]]; then
+              echo "A per-commit verified backup attestation is required." >&2
+              exit 1
+            fi
+            echo "ALFA_DEPLOY_APPROVAL=DEPLOY" >> "$GITHUB_ENV"
+            echo "ALFA_BACKUP_CONFIRMED=true" >> "$GITHUB_ENV"
+          fi
+
+      - name: Install pinned SFTP client
+        run: python3 -m pip install --disable-pip-version-check 'paramiko==3.5.1'
+
+      - name: Run approved verification or release
+        env:
+          ALFA_HOST: ${{ secrets.ALFA_HOST }}
+          ALFA_USER: ${{ secrets.ALFA_USER }}
+          ALFA_AUTH_METHOD: ${{ vars.ALFA_AUTH_METHOD }}
+          ALFA_PRIVATE_KEY: ${{ secrets.ALFA_PRIVATE_KEY }}
+          ALFA_PRIVATE_KEY_PASSPHRASE: ${{ secrets.ALFA_PRIVATE_KEY_PASSPHRASE }}
+          ALFA_PASSWORD: ${{ secrets.ALFA_PASSWORD }}
+          ALFA_ALLOW_PASSWORD_AUTH: ${{ secrets.ALFA_ALLOW_PASSWORD_AUTH }}
+          ALFA_HOST_KEY: ${{ secrets.ALFA_HOST_KEY }}
+          ALFA_DOCUMENT_ROOT: ${{ secrets.ALFA_DOCUMENT_ROOT }}
+          ALFA_PRIVATE_RELEASE_ROOT: ${{ secrets.ALFA_PRIVATE_RELEASE_ROOT }}
+          ALFA_PRODUCTION_DEPLOY_ENABLED: ${{ secrets.ALFA_PRODUCTION_DEPLOY_ENABLED }}
+          RELEASE_MODE: ${{ needs.authorize.outputs.mode }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/alfahosting_release.py --mode "$RELEASE_MODE"

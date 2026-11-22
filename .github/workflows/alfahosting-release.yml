@@ -1,0 +1,74 @@
+name: Alfahosting controlled release
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'plan = local file list, verify = read-only comparison, deploy = approved production release'
+        type: choice
+        required: true
+        default: plan
+        options:
+          - plan
+          - verify
+          - deploy
+      confirmation:
+        description: 'For deploy only: enter DEPLOY after reviewing the release'
+        type: string
+        required: false
+      backup_confirmed:
+        description: 'For deploy only: confirm a verified, restorable current backup'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alfahosting-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out reviewed source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.2'
+          extensions: sqlite3, pdo_sqlite, mbstring, json
+          coverage: none
+
+      - name: Check deployment source and PHP syntax
+        run: |
+          python3 -m unittest discover -s tests -p test_alfahosting_release.py -v
+          find . -name '*.php' -print0 | xargs -0 -n1 php -l
+          php tests/run.php
+
+      - name: Install SFTP client for remote modes
+        if: inputs.mode != 'plan'
+        run: python3 -m pip install --disable-pip-version-check 'paramiko==3.5.1'
+
+      - name: Build plan or perform guarded operation
+        env:
+          ALFA_HOST: ${{ secrets.ALFA_HOST }}
+          ALFA_USER: ${{ secrets.ALFA_USER }}
+          ALFA_AUTH_METHOD: ${{ vars.ALFA_AUTH_METHOD }}
+          ALFA_PRIVATE_KEY: ${{ secrets.ALFA_PRIVATE_KEY }}
+          ALFA_PRIVATE_KEY_PASSPHRASE: ${{ secrets.ALFA_PRIVATE_KEY_PASSPHRASE }}
+          ALFA_PASSWORD: ${{ secrets.ALFA_PASSWORD }}
+          ALFA_ALLOW_PASSWORD_AUTH: ${{ secrets.ALFA_ALLOW_PASSWORD_AUTH }}
+          ALFA_HOST_KEY: ${{ secrets.ALFA_HOST_KEY }}
+          ALFA_DOCUMENT_ROOT: ${{ secrets.ALFA_DOCUMENT_ROOT }}
+          ALFA_PRIVATE_RELEASE_ROOT: ${{ secrets.ALFA_PRIVATE_RELEASE_ROOT }}
+          ALFA_DEPLOY_APPROVAL: ${{ inputs.confirmation }}
+          ALFA_BACKUP_CONFIRMED: ${{ inputs.backup_confirmed }}
+          ALFA_PRODUCTION_DEPLOY_ENABLED: ${{ secrets.ALFA_PRODUCTION_DEPLOY_ENABLED }}
+        run: python3 .github/scripts/alfahosting_release.py --mode "${{ inputs.mode }}"
