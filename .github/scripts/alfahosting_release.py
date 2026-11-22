@@ -42,12 +42,22 @@ def allowed_path(name: str) -> bool:
         return False
     if p.as_posix() != name or any(part in (".", "..") for part in p.parts):
         return False
+    if name.startswith("assets/msca-impact/"):
+        return False
     if len(p.parts) == 1:
         return name.endswith(".php") or name in ROOT_FILES
     if name in CONFIG_FILES | ALLOWED_DOCS | ALLOWED_BIN:
         return True
-    if p.parts[0] in PUBLISHED_DIRS:
-        return not any(part.startswith(".") for part in p.parts[1:])
+    if p.parts[0] == "src":
+        return name.endswith(".php")
+    if p.parts[0] == "assets":
+        return (
+            not any(part.startswith(".") for part in p.parts[1:])
+            and Path(name).suffix.lower()
+            in {".css", ".js", ".json", ".map", ".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".ico", ".woff", ".woff2", ".ttf", ".otf", ".txt", ".html", ".md"}
+        )
+    if p.parts[0] == ".well-known":
+        return len(p.parts) >= 2 and not any(part.startswith(".") for part in p.parts[1:])
     return False
 
 
