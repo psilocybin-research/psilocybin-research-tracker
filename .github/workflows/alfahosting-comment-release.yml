@@ -100,7 +100,11 @@ jobs:
         env:
           ALFA_HOST: ${{ secrets.ALFA_HOST }}
           ALFA_USER: ${{ secrets.ALFA_USER }}
+          ALFA_AUTH_METHOD: ${{ vars.ALFA_AUTH_METHOD }}
+          ALFA_PRIVATE_KEY: ${{ secrets.ALFA_PRIVATE_KEY }}
+          ALFA_PRIVATE_KEY_PASSPHRASE: ${{ secrets.ALFA_PRIVATE_KEY_PASSPHRASE }}
           ALFA_PASSWORD: ${{ secrets.ALFA_PASSWORD }}
+          ALFA_ALLOW_PASSWORD_AUTH: ${{ secrets.ALFA_ALLOW_PASSWORD_AUTH }}
           ALFA_HOST_KEY: ${{ secrets.ALFA_HOST_KEY }}
           ALFA_DOCUMENT_ROOT: ${{ secrets.ALFA_DOCUMENT_ROOT }}
           ALFA_PRIVATE_RELEASE_ROOT: ${{ secrets.ALFA_PRIVATE_RELEASE_ROOT }}
