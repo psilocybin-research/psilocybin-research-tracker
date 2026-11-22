@@ -1,9 +1,11 @@
 import importlib.util
 from pathlib import Path
+import sys
 import unittest
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / ".github/scripts/alfahosting_preflight.py"
+sys.path.insert(0, str(SCRIPT.parent))
 SPEC = importlib.util.spec_from_file_location("alfahosting_preflight", SCRIPT)
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
