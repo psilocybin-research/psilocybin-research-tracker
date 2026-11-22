@@ -153,6 +153,17 @@ def remote_matches(sftp, source: Path, target: str) -> bool:
     return remote_digest.hexdigest() == digest(source)
 
 
+def remote_hash(sftp, path: str) -> str:
+    hasher = hashlib.sha256()
+    with sftp.open(path, "rb") as remote:
+        while True:
+            chunk = remote.read(256 * 1024)
+            if not chunk:
+                break
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+
 def connect():
     import paramiko
 
@@ -250,10 +261,7 @@ def publish(sftp, site: str, private: str, changed) -> None:
         if previous is not None:
             backup = create_nested(sftp, old_root, name)
             copy_sftp(sftp, destination, backup)
-            if not remote_matches(sftp, local, destination):
-                # The current version is intentionally expected to differ from the release.
-                pass
-            if sftp.lstat(backup).st_size != previous.st_size:
+            if remote_hash(sftp, backup) != remote_hash(sftp, destination):
                 raise RuntimeError("Unable to verify backed-up version")
 
     applied = []
@@ -300,6 +308,7 @@ def main() -> None:
     if args.mode == "deploy" and (
         os.environ.get("ALFA_DEPLOY_APPROVAL") != "DEPLOY"
         or os.environ.get("ALFA_BACKUP_CONFIRMED") != "true"
+        or os.environ.get("ALFA_PRODUCTION_DEPLOY_ENABLED") != "yes"
     ):
         raise RuntimeError("Deployment approval and verified backup are required")
     client = connect()
@@ -308,6 +317,8 @@ def main() -> None:
             verify_target(sftp, site, private)
             changed = remote_changes(sftp, site, files)
             print(f"Preflight passed. {len(changed)} tracked files differ from production.")
+            for name, _ in changed:
+                print(f"Change: {name}")
             if args.mode == "deploy" and changed:
                 publish(sftp, site, private, changed)
     finally:
