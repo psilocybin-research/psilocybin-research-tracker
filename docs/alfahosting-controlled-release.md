@@ -43,3 +43,23 @@ The deployment stages changed files and copies old versions to a private release
 **This is not an atomic multi-file deployment**, and automated rollback is best-effort: a network failure, disk exhaustion, file-locking conflict, or server crash can interrupt recovery. Preserved snapshots can help an administrator restore files, but the workflow does not restore or migrate SQLite automatically. Do not deploy breaking schema changes or destructive migrations through this workflow without a separate tested plan. No production database or private runtime state is altered or backed up by the SFTP release helper.
 
 The workflow refuses to proceed if the site markers are unexpected, paths overlap, the host key cannot be verified, or mandatory approval conditions are absent. Avoid enabling `ALFA_PRODUCTION_DEPLOY_ENABLED` until you've confirmed that the verified comparison matches your intended release.
+
+
+## Release requests from ChatGPT via GitHub comments
+
+After both deployment pull requests are reviewed, merged into `main`, and the protected environment is configured, the connected GitHub integration can submit a **top-level comment on PR #38**. The GitHub Actions workflow on `main` recognizes exactly these commands:
+
+`/release verify <40-character-current-main-SHA>`
+
+`/release deploy <40-character-current-main-SHA>`
+
+Only comments created on PR #38 by repository owner `psilocybin-research` are considered. The authorization job rejects nonmatching commands, stale SHA values, and commenters without owner association. The deployment job checks that `main` still points to the approved SHA after the environment-review hold. It then runs tests and proceeds to read-only verification or deployment.
+
+**Deployment has two additional independent locks:**
+
+- The GitHub protected `production` environment must approve the job. A GitHub account permitted to approve must be configured, and bypass must be disabled.
+- The environment secret `ALFA_BACKUP_ATTESTED_SHA` must equal the requested commit SHA. Set it *only after* confirming a fresh SQLite-safe backup has actually been created and restore-tested. This value must be updated for each distinct release commit. The normal `ALFA_PRODUCTION_DEPLOY_ENABLED` secret must also be exactly `yes`.
+
+A comment alone cannot publish without all required protections. **Do not add secrets to comments.** This workflow does not enable releases by itself: it is part of a draft PR and is inactive until reviewed and merged to the default branch.
+
+The GitHub integration can add comments to PRs, but does not expose a direct Actions `workflow_dispatch` invocation. Use only PR #38 for this automated trigger; the separate issue titled "Release control" has no active release trigger.
