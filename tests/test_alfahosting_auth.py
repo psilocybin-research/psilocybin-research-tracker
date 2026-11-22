@@ -142,9 +142,21 @@ class AuthenticationTests(unittest.TestCase):
             raise RuntimeError("authentication failed")
         client.connect = fail_connect
         with patch.dict(sys.modules, {"paramiko": self.fake_paramiko(client)}):
-            with self.assertRaises(RuntimeError):
+            with self.assertRaises(AUTH.AlfahostingAuthError):
                 AUTH.connect({**BASE, "ALFA_PRIVATE_KEY": "FAKE TEST KEY"})
         self.assertTrue(client.closed)
+
+    def test_password_unlock_is_exact_and_no_private_key_is_used(self):
+        client = FakeClient()
+        with patch.dict(sys.modules, {"paramiko": self.fake_paramiko(client)}):
+            AUTH.connect({
+                **BASE,
+                "ALFA_AUTH_METHOD": "password",
+                "ALFA_PASSWORD": "test-only",
+                "ALFA_ALLOW_PASSWORD_AUTH": "yes",
+            })
+        self.assertNotIn("pkey", client.connected)
+        self.assertEqual(client.connected["password"], "test-only")
 
 
 if __name__ == "__main__":
