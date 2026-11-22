@@ -2,13 +2,15 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/src/helpers.php';
+WebRequestSecurity::protectPost(false);
 
 $db = new Database();
 $db->initialize();
 $repo = new PublicationRepository($db);
 $alerts = new AlertService($db, $repo);
 $topics = $repo->topics();
-$assetVersion = '20260809-network-first-v94';
+$journals = $repo->journals();
+$assetVersion = '20261101-network-ux-v287';
 
 $token = request_value('token', '');
 $message = null;
@@ -31,9 +33,10 @@ try {
             request_array('substances'),
             request_value('keywords'),
             request_value('author'),
-            request_value('journal'),
-            request_value('topic'),
-            request_value('cited_doi')
+            AlertFilters::request('journal'),
+            AlertFilters::request('topic'),
+            request_value('cited_doi'),
+            request_array('event_types')
         );
         $message = 'Alert preferences updated.';
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && request_value('action') === 'pause') {
@@ -52,6 +55,7 @@ try {
             $subscription = $alerts->findByToken((string)$token);
         }
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && request_value('action') === 'resend_confirmation') {
+        WebRequestSecurity::rateLimit([['alert-resend', (string)$token, 3, 3600]]);
         $subscription = $alerts->findByToken((string)$token);
         if ($subscription && empty($subscription['confirmed_at']) && $alerts->sendConfirmation($subscription)) {
             $message = 'Confirmation email sent again.';
@@ -81,7 +85,8 @@ try {
         $subscription = $alerts->findByToken((string)$token);
     }
 } catch (Throwable $e) {
-    $error = $e->getMessage();
+    if (!$e instanceof InvalidArgumentException) OperationalLogger::exception('web.request_failed', $e);
+    $error = $e instanceof InvalidArgumentException ? $e->getMessage() : 'The request could not be completed. Please try again later.';
     $subscription = $alerts->findByToken((string)$token);
 }
 
@@ -89,15 +94,23 @@ $substances = array_filter(explode(',', (string)($subscription['substances'] ?? 
 $isConfirmed = $subscription && !empty($subscription['confirmed_at']);
 $isActive = $subscription && (int)($subscription['active'] ?? 0) === 1 && $isConfirmed;
 $statusLabel = $subscription ? ($isActive ? 'Active' : ($isConfirmed ? 'Paused' : 'Needs confirmation')) : 'Unavailable';
+$deliveryHistory = [];
+if ($subscription) {
+    $historyQuery = $db->pdo()->prepare('SELECT d.generated_at, d.frequency, p.id, p.title FROM alert_deliveries d JOIN publications p ON p.id = d.publication_id WHERE d.subscription_id = :id ORDER BY d.generated_at DESC, d.id DESC');
+    $historyQuery->execute(['id' => (int)$subscription['id']]);
+    $deliveryHistory = $historyQuery->fetchAll();
+}
 ?>
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123c31">
+  <meta name="color-scheme" content="light">
   <title>Manage Publication Alert | Psilocybin Research</title>
-  <link rel="icon" href="favicon.ico?v=20261104-original-brand">
-  <link rel="stylesheet" href="assets/styles.min.css?v=<?= h($assetVersion) ?>">
+  <link rel="icon" href="assets/logo.png?v=20260906-loader-bar-v140">
+  <link rel="stylesheet" href="<?= h(FrontendAssets::url('assets/styles.min.css')) ?>">
   <script>
     document.documentElement.classList.add('js');
     try {
@@ -112,37 +125,7 @@ $statusLabel = $subscription ? ($isActive ? 'Active' : ($isConfirmed ? 'Paused' 
 </head>
 <body class="alert-manage-page">
 <div class="alert-vanta-bg" id="alert-vanta-bg" aria-hidden="true"></div>
-<header class="topbar">
-  <button class="nav-sidebar-toggle" id="nav-sidebar-toggle" type="button" aria-expanded="true" aria-controls="primary-sidebar-content" title="Collapse sidebar">
-    <i data-icon="chevron-left" aria-hidden="true"></i>
-    <span class="sr-only">Collapse sidebar</span>
-  </button>
-  <div class="primary-sidebar-content" id="primary-sidebar-content">
-  <a class="brand brand-lockup" href="/" aria-label="Psilocybin-Research.com publication tracker">
-    <img class="brand-icon brand-icon-mushroom" src="assets/mushroom-brand-mark.webp" alt="" width="46" height="46">
-    <span class="brand-text">
-      <strong>Psilocybin-Research.com</strong>
-      <em>Searchable psilocybin and psilocin bibliometric database.</em>
-    </span>
-  </a>
-  <nav aria-label="Primary sections">
-    <a href="/#papers"><i data-icon="book-marked" aria-hidden="true"></i><span>Publications</span></a>
-    <a href="evidence.php"><i data-icon="grid-3x3" aria-hidden="true"></i><span>Evidence</span></a>
-    <a href="trials.php"><i data-icon="clipboard-list" aria-hidden="true"></i><span>Trials</span></a>
-    <a href="authors.php"><i data-icon="users" aria-hidden="true"></i><span>Authors</span></a>
-    <a href="citation-network.php"><i data-icon="network" aria-hidden="true"></i><span>Citation Network</span></a>
-    <a href="/#analytics"><i data-icon="network" aria-hidden="true"></i><span>Analytics</span></a>
-    <a href="tools/psilocybin_bibliometrics_visnetwork.R" download><i data-icon="r-script" aria-hidden="true"></i><span>R script</span></a>
-    <a href="/#alerts" aria-current="location"><i data-icon="bell-plus" aria-hidden="true"></i><span>Alerts</span></a>
-    <a href="export.php?format=json" target="_blank" rel="noopener"><i data-icon="download" aria-hidden="true"></i><span>Export data</span></a>
-    <a href="api.php" target="_blank" rel="noopener"><i data-icon="braces" aria-hidden="true"></i><span>API</span></a>
-    <a href="https://github.com/psilocybin-research/psilocybin-research-tracker" target="_blank" rel="noopener me"><i data-icon="github" aria-hidden="true"></i><span>GitHub</span></a>
-    <a href="https://doi.org/10.5281/zenodo.21293525" target="_blank" rel="noopener" title="Latest version of the citable dataset on Zenodo"><i data-icon="zenodo" aria-hidden="true"></i><span>Zenodo DOI</span></a>
-    <a href="about.php"><i data-icon="circle-alert" aria-hidden="true"></i><span>About</span></a>
-    <a href="data-protection.php"><i data-icon="shield" aria-hidden="true"></i><span>Data protection</span></a>
-  </nav>
-  </div>
-</header>
+<?= detail_page_header('alert') ?>
 
 <main class="alert-manage-shell">
   <section class="panel alert-manage-card">
@@ -153,7 +136,7 @@ $statusLabel = $subscription ? ($isActive ? 'Active' : ($isConfirmed ? 'Paused' 
     <?php if (!$subscription): ?>
       <div class="state">
         <strong>Alert link not found.</strong>
-        <p>This manage link is invalid or no longer available. Create a new alert from the publication tracker if needed.</p>
+        <p>This manage link is invalid or no longer available. Create a new alert from the research database if needed.</p>
       </div>
     <?php else: ?>
       <div class="alert-manage-status">
@@ -175,6 +158,10 @@ $statusLabel = $subscription ? ($isActive ? 'Active' : ($isConfirmed ? 'Paused' 
         </div>
       </div>
 
+      <details class="push-device-settings"><summary>Publication delivery history</summary><div class="accordion-body">
+        <?php if (!$deliveryHistory): ?><p>No publication records yet.</p><?php else: ?><ul>
+        <?php foreach ($deliveryHistory as $entry): ?><li><a href="publication.php?id=<?= (int)$entry['id'] ?>"><?= h((string)$entry['title']) ?></a> · <?= h((string)$entry['generated_at']) ?> UTC</li><?php endforeach; ?>
+        </ul><?php endif; ?><p class="field-note">Recorded publication entries; inbox delivery is not confirmed.</p></div></details>
       <p class="alert-manage-intro">Use this secure manage link from your email to adjust delivery frequency, research filters, pause delivery, unsubscribe, or delete the alert data.</p>
 
       <?php if (!$isConfirmed): ?>
@@ -197,11 +184,14 @@ $statusLabel = $subscription ? ($isActive ? 'Active' : ($isConfirmed ? 'Paused' 
         </fieldset>
         <label class="field"><span>Keywords</span><input type="text" name="keywords" value="<?= h((string)($subscription['keywords'] ?? '')) ?>"></label>
         <label class="field"><span>Author</span><input type="text" name="author" value="<?= h((string)($subscription['author'] ?? '')) ?>"></label>
-        <label class="field"><span>Journal</span><input type="text" name="journal" value="<?= h((string)($subscription['journal'] ?? '')) ?>"></label>
-        <label class="field"><span>Topic</span><select name="topic"><option value="">Any topic</option><?php foreach ($topics as $topic): ?><option value="<?= h($topic['name']) ?>" <?= (string)($subscription['topic'] ?? '') === (string)$topic['name'] ? 'selected' : '' ?>><?= h($topic['name']) ?></option><?php endforeach; ?></select></label>
+        <?= AlertFilters::picker('journal', 'Journals', array_column($journals, 'journal'), $subscription['journal'] ?? null) ?>
+        <?= AlertFilters::picker('topic', 'Topics', array_column($topics, 'name'), $subscription['topic'] ?? null) ?>
         <label class="field"><span>Cites DOI</span><input type="text" name="cited_doi" value="<?= h((string)($subscription['cited_doi'] ?? '')) ?>" placeholder="10.1038/..."></label>
         <p class="field-note">Citation alerts match publications whose available reference metadata contains this DOI.</p>
-        <button class="primary iconed" type="submit"><span>Update preferences</span></button>
+        <details class="alert-research-changes">
+          <summary>Optional research-change notifications</summary>
+          <fieldset><legend class="sr-only">Research-change notification types</legend><?php foreach(ResearchChanges::TYPES as $value=>$label): ?><label><input type="checkbox" name="event_types[]" value="<?= h($value) ?>" <?= isset($subscription)&&in_array($value,explode(',',(string)($subscription['event_types']??'')),true)?'checked':'' ?>> <?= h($label) ?></label><?php endforeach; ?><p class="field-note">Observed after signup: registry changes and newly linked result references. A registry reference may point to an older paper. Journal and citation filters apply to publications; changes use keywords, author/sponsor and topic filters.</p></fieldset>
+        </details><button class="primary iconed" type="submit"><span>Update preferences</span></button>
       </form>
 
       <div class="alert-management-actions">
@@ -246,6 +236,6 @@ $statusLabel = $subscription ? ($isActive ? 'Active' : ($isConfirmed ? 'Paused' 
 <?= detail_scroll_top() ?>
 <script src="assets/vendor/three.r134.min.js?v=<?= h($assetVersion) ?>"></script>
 <script src="assets/vendor/vanta.net.min.js?v=<?= h($assetVersion) ?>"></script>
-<script src="assets/app.min.js?v=<?= h($assetVersion) ?>" defer></script>
+<script src="<?= h(FrontendAssets::url('assets/app.min.js')) ?>" defer></script>
 </body>
 </html>

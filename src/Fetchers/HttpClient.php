@@ -36,7 +36,6 @@ final class HttpClient
             $body = curl_exec($ch);
             $code = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
             $error = curl_error($ch);
-            curl_close($ch);
             if ($body === false || $code >= 400) {
                 throw new RuntimeException('HTTP request failed: ' . $code . ' ' . $error);
             }

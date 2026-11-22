@@ -3,11 +3,11 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/src/helpers.php';
 
-$assetVersion = '20260809-network-first-v94';
+$assetVersion = '20261101-network-ux-v287';
 $baseUrl = Config::publicBaseUrl();
 $canonicalUrl = $baseUrl . 'data-protection.php';
-$shareImageUrl = $baseUrl . 'assets/pwa/icon-512.png?v=20260809-network-first-v94';
-$description = 'Data protection notice for the Psilocybin Research Publication Tracker, including user data, source context, alerts, push notifications, logs, and automated updates.';
+$shareImageUrl = $baseUrl . 'assets/social/psilocybin-research-eu-restored-20261102.png';
+$description = 'Data protection notice for the Psilocybin Research Database, including user data, source context, alerts, push notifications, logs, and automated updates.';
 $contactEmail = Config::contactEmail();
 ?>
 <!doctype html>
@@ -15,6 +15,9 @@ $contactEmail = Config::contactEmail();
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <?= funding_meta_tags() ?>
+  <meta name="theme-color" content="#123c31">
+  <meta name="color-scheme" content="light">
   <title>Data Protection Notice | Psilocybin Research</title>
   <meta name="description" content="<?= h($description) ?>">
   <link rel="canonical" href="<?= h($canonicalUrl) ?>">
@@ -28,18 +31,18 @@ $contactEmail = Config::contactEmail();
   <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="512">
   <meta property="og:image:height" content="512">
-  <meta property="og:image:alt" content="Psilocybin Research Publication Tracker logo">
+  <meta property="og:image:alt" content="Psilocybin mushroom with a small European Union emblem acknowledging historical FP7 CogNovo support, grant 604764.">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Data Protection Notice">
   <meta name="twitter:description" content="<?= h($description) ?>">
   <meta name="twitter:image" content="<?= h($shareImageUrl) ?>">
-  <meta name="twitter:image:alt" content="Psilocybin Research Publication Tracker logo">
-  <link rel="icon" href="favicon.ico?v=20261104-original-brand">
-  <link rel="icon" type="image/png" sizes="192x192" href="assets/pwa/icon-192.png?v=20260809-network-first-v94">
-  <link rel="icon" type="image/png" sizes="512x512" href="assets/pwa/icon-512.png?v=20260809-network-first-v94">
-  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260809-network-first-v94">
-  <link rel="manifest" href="manifest.webmanifest?v=20260809-network-first-v94">
-  <link rel="stylesheet" href="assets/styles.min.css?v=<?= h($assetVersion) ?>">
+  <meta name="twitter:image:alt" content="Psilocybin mushroom with a small European Union emblem acknowledging historical FP7 CogNovo support, grant 604764.">
+  <link rel="icon" href="assets/logo.png?v=20260906-loader-bar-v140">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/pwa/icon-192.png?v=20260906-loader-bar-v140">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/pwa/icon-512.png?v=20260906-loader-bar-v140">
+  <link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png?v=20260906-loader-bar-v140">
+  <link rel="manifest" href="manifest.webmanifest?v=20260906-loader-bar-v140">
+  <link rel="stylesheet" href="<?= h(FrontendAssets::url('assets/styles.min.css')) ?>">
   <script>
     document.documentElement.classList.add('js');
     try {
@@ -60,7 +63,7 @@ $contactEmail = Config::contactEmail();
     'description' => $description,
     'isPartOf' => [
         '@type' => 'WebApplication',
-        'name' => 'Psilocybin Research Publication Tracker',
+        'name' => 'Psilocybin Research Database',
         'url' => $baseUrl,
         'applicationCategory' => 'ResearchApplication',
     ],
@@ -68,47 +71,17 @@ $contactEmail = Config::contactEmail();
   </script>
 </head>
 <body class="about-page data-protection-page">
-<header class="topbar">
-  <button class="nav-sidebar-toggle" id="nav-sidebar-toggle" type="button" aria-expanded="true" aria-controls="primary-sidebar-content" title="Collapse sidebar">
-    <i data-icon="chevron-left" aria-hidden="true"></i>
-    <span class="sr-only">Collapse sidebar</span>
-  </button>
-  <div class="primary-sidebar-content" id="primary-sidebar-content">
-    <a class="brand brand-lockup" href="/" aria-label="Psilocybin-Research.com publication tracker">
-      <img class="brand-icon brand-icon-mushroom" src="assets/mushroom-brand-mark.webp" alt="" width="46" height="46">
-      <span class="brand-text">
-        <strong>Psilocybin-Research.com</strong>
-        <em>Searchable psilocybin and psilocin bibliometric database.</em>
-      </span>
-    </a>
-    <nav aria-label="Primary sections">
-      <a href="/"><i data-icon="book-marked" aria-hidden="true"></i><span>Publications</span></a>
-      <a href="evidence.php"><i data-icon="grid-3x3" aria-hidden="true"></i><span>Evidence</span></a>
-      <a href="trials.php"><i data-icon="clipboard-list" aria-hidden="true"></i><span>Trials</span></a>
-      <a href="authors.php"><i data-icon="users" aria-hidden="true"></i><span>Authors</span></a>
-      <a href="citation-network.php"><i data-icon="network" aria-hidden="true"></i><span>Citation Network</span></a>
-      <a href="/#analytics"><i data-icon="network" aria-hidden="true"></i><span>Analytics</span></a>
-      <a href="tools/psilocybin_bibliometrics_visnetwork.R" download><i data-icon="r-script" aria-hidden="true"></i><span>R script</span></a>
-      <a href="/#alerts"><i data-icon="bell-plus" aria-hidden="true"></i><span>Alerts</span></a>
-      <a href="export.php?format=json" target="_blank" rel="noopener"><i data-icon="download" aria-hidden="true"></i><span>Export data</span></a>
-      <a href="api.php" target="_blank" rel="noopener"><i data-icon="braces" aria-hidden="true"></i><span>API</span></a>
-      <a href="https://github.com/psilocybin-research/psilocybin-research-tracker" target="_blank" rel="noopener me"><i data-icon="github" aria-hidden="true"></i><span>GitHub</span></a>
-      <a href="https://doi.org/10.5281/zenodo.21293525" target="_blank" rel="noopener" title="Latest version of the citable dataset on Zenodo"><i data-icon="zenodo" aria-hidden="true"></i><span>Zenodo DOI</span></a>
-      <a href="about.php"><i data-icon="circle-alert" aria-hidden="true"></i><span>About</span></a>
-      <a href="data-protection.php" aria-current="location"><i data-icon="shield" aria-hidden="true"></i><span>Data protection</span></a>
-    </nav>
-  </div>
-</header>
+<?= detail_page_header('data-protection') ?>
 
 <main class="about-shell" id="main">
   <section class="about-hero" aria-labelledby="data-protection-title">
     <p class="eyebrow">Data protection notice</p>
     <h1 id="data-protection-title">What data is processed, where it goes, and why.</h1>
     <p>
-      This notice describes the data processing of the Psilocybin Research Publication Tracker.
+      This notice describes the data processing of the Psilocybin Research Database.
       The app is designed as a self-contained PHP and SQLite research tool with local frontend
       assets, no third-party analytics scripts, no CDN JavaScript, no CDN CSS, and no tracking
-      pixels in alert emails. Last updated: July 13, 2026.
+      pixels in alert emails. Last updated: 9 November 2026.
     </p>
   </section>
 
@@ -116,7 +89,7 @@ $contactEmail = Config::contactEmail();
     <article class="about-panel about-panel-wide">
       <h2>Controller and contact</h2>
       <p>
-        The publication tracker is operated for Psilocybin-Research.com by Dr. Christopher B.
+        The research database is operated for Psilocybin-Research.com by Dr. Christopher B.
         Germann. Data protection questions, access requests, correction requests, deletion
         requests, and objections can be sent to
         <a href="mailto:<?= h($contactEmail) ?>"><?= h($contactEmail) ?></a>.
@@ -124,18 +97,22 @@ $contactEmail = Config::contactEmail();
       <p>
         The website imprint/legal notice provides the authoritative provider-identification
         information. This page describes the data processing activities of the Psilocybin Research
-        Tracker application.
+        Database application.
       </p>
     </article>
 
     <article class="about-panel">
       <h2>Core App Use</h2>
       <p>
-        When a visitor opens the tracker, the server receives normal HTTP request data required to
+        When a visitor opens the database, the server receives normal HTTP request data required to
         deliver the page: IP address, request time, requested URL, HTTP method, response status,
         user agent, and referrer if the browser sends one. The application uses this data for
         secure delivery, abuse prevention, debugging, operational reliability, and server log
-        analysis.
+        analysis. Private research-task reports aggregate successful search, API and export responses from existing host logs. They retain no IP addresses, user agents, referrers, search text, reading lists or user identifiers; repeated and automated requests may still affect counts. These measures do not identify people or prove completed downloads. Private daily aggregate snapshots are retained for up to 90 days. No third-party browser analytics are installed. The public visitor-statistics page uses only aggregated log measures; it never
+        displays IP addresses and excludes the two most frequent human-browser addresses before
+        calculating its figures. From September 2026, the app also stores daily aggregate PWA
+        installation and standalone-launch counts. Those counters contain no IP address, user
+        agent, device identifier, or event-level timestamp.
       </p>
       <ul class="about-list">
         <li>No third-party frontend analytics script is loaded by the app.</li>
@@ -233,18 +210,20 @@ $contactEmail = Config::contactEmail();
       <p>
         PWA installation is handled by the browser. If a user enables Web Push, the app stores the
         browser push endpoint, public key, auth secret, content encoding, optional user-agent
-        information, timestamps, and active state needed to send notifications about newly imported
-        publications. Push endpoints and browser push keys are encrypted at rest where present.
+        information, timestamps, active state, selected delivery frequency, and selected research
+        filters needed to send notifications about newly imported publications. Push endpoints and
+        browser push keys are encrypted at rest where present.
       </p>
       <ul class="about-list">
         <li>Web Push delivery uses the browser vendor's push service associated with the subscription endpoint.</li>
         <li>Push payloads are encrypted for the browser subscription and signed with VAPID keys.</li>
+        <li>Delivery frequency and research filters are used only to select the publication notifications requested for that device; they can be revised or stopped from the Push preferences panel.</li>
         <li>The service worker caches local app-shell assets and uses network-first requests for runtime data.</li>
         <li>Users can revoke push permission in their browser or operating-system notification settings.</li>
       </ul>
     </article>
 
-    <article class="about-panel about-panel-wide">
+    <article class="about-panel about-panel-wide" id="public-data-rights">
       <h2>Publication Data Sources And Source Context</h2>
       <p>
         The database contains publication and registry metadata from public bibliographic and
@@ -305,6 +284,13 @@ $contactEmail = Config::contactEmail();
       </p>
     </article>
 
+    <article class="about-panel"><h2>Optional offline catalogue and PWA measurements</h2><p>If you choose Download in Offline library, public bibliographic metadata and reference DOI identifiers are kept in IndexedDB on this device. Cache Storage also retains the normal app pages, local images and scripts, public chart and trial-map data, world geometry, research network data, the sanitized SQLite download and reuse scripts. These support the normal interface, local record details, reading lists, saved searches, metadata filters, maps, research graphs and BibTeX, LaTeX, RIS, CSV and JSON exports. Search covers downloaded metadata; videos, video previews, external abstracts, full texts and server services require a connection. Videos and preview clips are excluded from the offline download. Offline saved searches use the same device-only workspace storage as saved online views; search text and reading-list contents are not sent by the offline library. When this app is open and connected it checks for catalogue changes and replaces the saved snapshot after a complete download. Remove offline copy deletes the catalogue and its offline app bundle and turns automatic updates off; your reading list and saved searches remain separate. The browser may remove site storage, including this copy, and controls whether persistent storage is granted.</p><p>Daily aggregate counters distinguish installation invitations, choices, browser install dialogs, installation signals, subsequent installed-mode launches and active browser-days. Device-local markers estimate browser profiles reached by each invitation strategy and reduce repeated reports. Reports include an allowlisted event category, UTC date, strategy version, broad platform category and whether installation was initiated through an invitation or manually. A random identifier for each event prevents duplicate counting during retries; it does not identify a person or device, and server-side receipt identifiers expire after eight days and are removed during daily maintenance. A local queue retries reports for up to seven days. No persistent device identifier, search text, reading list or cross-site identifier is transmitted. Counts describe observed events and estimated browser profiles, rather than exact installations or unique people; normal hosting request logs still apply. Private daily aggregate reports are retained for up to 90 days.</p></article>
+
+    <article class="about-panel"><h2>Research workspace</h2><p>Visitors can save record IDs and search links in this browser without an account. If you sign in, your account reading list and saved searches synchronize across your devices. Importing existing device items is optional; your visitor workspace stays separate. Browser copies can remain after signing out or deleting an account until you clear this site’s browser storage.</p></article><article class="about-panel" id="accounts"><h2>Optional research accounts</h2><p>Accounts support passkey or verified email-link sign-in and synchronize reading lists, saved searches and saved R analyses. The public R workspace runs code on your device without requiring an account. Online report exports submit the code and results included in the report to this server for formatting; R is not executed by the report service. Temporary compilation files are deleted after the request. Browser-generated downloads, including PDF compilation with the optional downloaded LaTeX engine, are produced on your device without submitting report contents to the server. Anonymous exports are not saved to an account. Saving an analysis stores its encrypted title, code, text output, plots, results table and runtime information, linked to an immutable public metadata snapshot. Do not include sensitive personal data in your code or results. Public snapshots contain no account data and may be shared internally across analyses; saved snapshots remain available while referenced. We store your encrypted email address, an opaque account identifier, passkey public-key records, active session records and an encrypted workspace on this server. We store passkey public keys, credential identifiers and the optional names you give your passkeys. We do not receive passkey private keys, fingerprint scans or face-recognition data. Your device or passkey provider manages authentication and may synchronize passkeys according to its own settings and privacy notice. The legal basis is providing the account service you request under Article 6(1)(b) GDPR; necessary security records support legitimate interests under Article 6(1)(f). We do not use account information for advertising.</p><p>Sign-in links expire after 15 minutes and work once, including in another browser or on another device. Before signing in, the page shows the account email and asks you to confirm. Opening or previewing the link does not sign you in. Essential Secure, HttpOnly session cookies protect sign-in. Security events record the account, event and time, and are retained for up to 90 days. Expired links and sessions are cleared during routine account maintenance. Account records remain until deletion; encrypted backups follow the site’s backup retention. You can download your account data, sign out other sessions or delete your user account from the account page. Deletion removes active account records, passkeys, saved analyses and synchronized saved items; existing email-alert and push subscriptions have separate controls. Contact the controller for the data rights described on this page.</p></article>
+    <article class="about-panel" id="browser-analysis"><h2>Browser-side R, Shinylive and optional offline tools</h2><p>The <a href="/WebR">WebR workspace</a> and <a href="/shinyapp-live">Shinylive explorer</a> execute R code in your browser. Opening these tools or running an analysis downloads interface files, an R runtime and public research data. Installing additional compatible packages may contact the configured package repository; that provider receives normal connection information, including your IP address and requested package URL. User-authored R code can also make network requests: data sent by such code depends on the code you choose to run. The citation-network example requests public bibliographic relationships from this website.</p><p>Optional offline setup lets you select webR and the LaTeX PDF compiler independently. Selected runtimes, a verified public dataset and an anonymous interface are stored in this browser&rsquo;s Cache Storage. Online checks can verify and repair the selected files; downloading a newer dataset or adding a component requires an explicit update. Clearing browser storage or removing the offline download removes these local resources. Browser storage can also be evicted. An offline download does not include private account data or provide offline account sign-in or synchronization.</p><p>Running analyses and downloading results does not require an account. Choosing to save an analysis online sends its contents to your account storage as described above. Signing out does not necessarily erase downloads, browser-saved drafts or device-only reading lists; use the application&rsquo;s removal controls or clear this website&rsquo;s browser storage on shared devices.</p></article>
+
+    <article class="about-panel" id="offline-shiny"><h2>Optional offline Shiny Explorer</h2><p>You can separately download the complete Shiny Explorer, its browser-side R runtime, network packages and a dated public citation snapshot to this browser’s Cache Storage. Filtering, plots, CSV exports and the Citation Network then work without contacting an external service. New citation data, external papers and additional packages require a connection. This optional download contains no account data. Its setup controls show the measured size and let you remove it independently of webR and LaTeX. Clearing or eviction of browser storage removes offline availability.</p></article>
+
     <article class="about-panel">
       <h2>Security Measures</h2>
       <ul class="about-list">
@@ -341,7 +327,7 @@ $contactEmail = Config::contactEmail();
     <article class="about-panel about-panel-wide">
       <h2>Important Limits</h2>
       <p>
-        The tracker is a bibliographic discovery and monitoring tool. Source metadata can be
+        The database is a bibliographic discovery and monitoring tool. Source metadata can be
         incomplete or contain errors, source APIs can change, and deterministic classification is a
         navigation aid rather than a scientific conclusion. Users should verify records at the DOI,
         publisher, PubMed, registry, or source database before relying on them for citation,
@@ -349,14 +335,13 @@ $contactEmail = Config::contactEmail();
       </p>
     </article>
   </section>
+<section class="panel detail-card"><h2>Search performance reporting</h2><p>The site owner can authorise a private reporting application to read this site’s Google Search Console performance data. It uses read-only access to query, page, date, country and device reports to evaluate discoverability and improve research resources. Credentials and reports are kept in access-restricted storage and are not published, sold or used for advertising. This owner-only integration does not require visitors to sign in to Google or add browser tracking. The owner can revoke its access through Google Account permissions.</p></section>
+<section class="panel detail-card"><h2>Optional research-change alerts</h2><p>You can separately opt in to observed recruitment changes, registry-status changes, posted registry results and newly linked result references. These preferences remain attached to your confirmed email alert and can be changed or stopped through its management link. Existing alerts do not receive these additional notifications unless selected.</p><p>Registry snapshots retain allowlisted status and reference facts to detect changes. Delivery records associate an alert subscription with a change to prevent duplicate notifications. Publication and trial metadata are public research facts; email addresses and access tokens remain protected by the existing encryption and access controls. Changes observed before the selected preferences were enabled are excluded from these notifications.</p></section>
 </main>
 
-<footer class="footer about-footer">
-  <span>Application created by Dr. Christopher B. Germann · <a href="/">Open tracker</a> · <a href="about.php">About</a> · <a href="api.php" target="_blank" rel="noopener">API</a>.</span>
-  <?= funding_acknowledgement() ?>
-</footer>
+<?= detail_footer() ?>
 
 <?= detail_scroll_top() ?>
-<script src="assets/app.min.js?v=<?= h($assetVersion) ?>" defer></script>
+<script src="<?= h(FrontendAssets::url('assets/app.min.js')) ?>" defer></script>
 </body>
 </html>

@@ -1,22 +1,171 @@
 document.documentElement.classList.add("js");
 
-const updateCheck = document.querySelector("#update-check");
-const lastUpdatedText = document.querySelector("#last-updated-text");
+// Installed Android PWAs paint their own navigation safe area in edge-to-edge mode.
+function initAndroidInstalledViewport() {
+  if (!/Android/i.test(navigator.userAgent)) return;
+  const installed = window.matchMedia("(display-mode: standalone)");
+  const update = () => {
+    if (!installed.matches) return;
+    const viewport = document.querySelector('meta[name="viewport"]');
+    if (!viewport) return;
+    const settings = viewport.content.split(',').map(item => item.trim()).filter(item => !/^viewport-fit\s*=/i.test(item));
+    viewport.content = [...settings, 'viewport-fit=cover'].join(', ');
+    document.documentElement.classList.add('android-installed-app');
+    // Non edge-to-edge Android windows keep a light native bar outside CSS.
+    // Match its theme so Chrome chooses dark, readable system buttons.
+    const inset = document.createElement('span');
+    inset.style.cssText = 'position:fixed;visibility:hidden;height:env(safe-area-inset-bottom,0px)';
+    document.body.append(inset);
+    const edgeToEdge = inset.getBoundingClientRect().height > 0;
+    inset.remove();
+    if (!edgeToEdge) document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#fafbf7');
+  };
+  update();
+  installed.addEventListener?.('change', update);
+}
+initAndroidInstalledViewport();
+
+
+function initScrollbarHoldState() {
+  const root = document.documentElement;
+  const release = () => root.classList.remove("scrollbar-is-held");
+  window.addEventListener("pointerdown", (event) => {
+    const scrollbarWidth = Math.max(0, window.innerWidth - root.clientWidth);
+    const scrollbarStart = window.innerWidth - Math.max(scrollbarWidth, 18);
+    if (root.scrollHeight > root.clientHeight && event.clientX >= scrollbarStart) {
+      root.classList.add("scrollbar-is-held");
+    }
+  }, { passive: true });
+  window.addEventListener("pointerup", release, { passive: true });
+  window.addEventListener("pointercancel", release, { passive: true });
+  window.addEventListener("blur", release);
+}
+
+initScrollbarHoldState();
+
+const DAY_MS = 86400000;
+const deferredOptionCatalog = new Map();
 const heroUpdatedText = document.querySelector("#hero-updated-text");
 let collapsePrimaryNavSidebarOnCompact = () => {};
 
+let preloaderHideTimer = null;
 function hidePreloader() {
+  window.clearTimeout(preloaderHideTimer);
   const preloader = document.querySelector("#app-preloader");
   document.documentElement.classList.remove("is-loading");
   if (!preloader || preloader.hidden) return;
   preloader.classList.add("is-hidden");
-  window.setTimeout(() => {
-    preloader.hidden = true;
+  preloaderHideTimer = window.setTimeout(() => {
+    if (preloader.classList.contains("is-hidden")) preloader.hidden = true;
   }, 260);
 }
 
-window.addEventListener("load", hidePreloader);
-window.setTimeout(hidePreloader, 2800);
+function matchingSearchKey(params) {
+  const values = new URLSearchParams(params);
+  const query = (values.get("search") || values.get("q") || "").trim();
+  values.delete("search"); values.delete("q");
+  if (query) values.set("q", query);
+  ["page", "per_page", "sort"].forEach((key) => values.delete(key));
+  if (!values.get("range") || values.get("range") === "all") values.delete("range");
+  if (params.has("range") && params.get("range") !== "custom") { values.delete("from"); values.delete("to"); }
+  if (!values.has("substances[]") && !values.has("substances")) {
+    values.append("substances[]", "psilocybin"); values.append("substances[]", "psilocin");
+  }
+  return JSON.stringify([...values.entries()].filter(([,value]) => value !== "").sort((a,b) => a[0].localeCompare(b[0]) || a[1].localeCompare(b[1])));
+}
+
+function setPreloaderContext(title, description = "") {
+  const preloader = document.querySelector("#app-preloader");
+  if (!preloader) return null;
+  preloader.querySelector(".preloader-title")?.replaceChildren(document.createTextNode(title));
+  const detail = preloader.querySelector(".preloader-detail");
+  if (detail) { detail.hidden = !description; detail.replaceChildren(document.createTextNode(description)); }
+  preloader.setAttribute("aria-label", [title, description].filter(Boolean).join(" "));
+  return preloader;
+}
+
+function showSearchPreloader(url) {
+  const params = url.searchParams;
+  window.clearTimeout(preloaderHideTimer);
+  const requested = params.get("per_page") || "20";
+  const all = requested === "all";
+  const size = Math.min(200, Math.max(5, Number.parseInt(requested, 10) || 5));
+  const format = (value) => new Intl.NumberFormat("en-US").format(value);
+  const results = document.querySelector("#papers");
+  const sameSelection = results && matchingSearchKey(params) === matchingSearchKey(new URLSearchParams(results.dataset.searchQuery || ""));
+  const total = sameSelection ? Number(results.dataset.resultTotal) : null;
+  const count = total !== null ? Math.min(size, total) : size;
+  const label = all ? "Loading all matching records…" : `Loading up to ${format(count)} matching records…`;
+  const descriptions = [all ? "Selection: all matching records" : `Selection: ${format(size)} records per page`, `Requested page: ${all ? 1 : Math.max(1, Number.parseInt(params.get("page") || "1", 10) || 1)}`];
+  descriptions.push(total !== null ? `Last confirmed matching total: ${format(total)}` : "Calculating matching total");
+  const fields = { search: "Query", q: "Query", author: "Author", journal: "Journal", topic: "Topic", study_type: "Study type", cited_doi: "Cites DOI", year: "Year", from: "From", to: "To", added_from: "Added from", added_to: "Added to", range: "Range", "substances[]": "Substances", "sources[]": "Sources", "publication_statuses[]": "Evidence" };
+  for (const [key, name] of Object.entries(fields)) {
+    const values = [...params.entries()].filter(([k,v])=>(k===key||k.startsWith(key+'['))&&v).flatMap(([,v])=>{try{const a=JSON.parse(v);return Array.isArray(a)?a:[v];}catch{return [v];}});
+    if ((key === "from" || key === "to") && params.has("range") && params.get("range") !== "custom") continue;
+    if (values.length && !(key === "q" && params.get("search"))) descriptions.push(`${name}: ${values.join(", ")}`);
+  }
+  const sort = {newest:"Newest first",oldest:"Oldest first",newly_added:"Recently added first"};
+  descriptions.push(sort[params.get("sort")] || "Recently added first");
+  const preloader = setPreloaderContext(label, descriptions.join(" · "));
+  if (!preloader) return null;
+  preloader.hidden = false; preloader.classList.remove("is-hidden");
+  document.documentElement.classList.add("is-loading");
+  return preloader;
+}
+
+window.addEventListener("load", () => { if (!document.documentElement.classList.contains("is-searching")) hidePreloader(); });
+window.setTimeout(() => { if (!document.documentElement.classList.contains("is-searching")) hidePreloader(); }, 2800);
+
+function initImmediatePageTransitions() {
+  document.addEventListener("click", (event) => {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const link = event.target.closest?.("a[href]");
+    if (!link || link.hasAttribute("download") || link.target === "_blank") return;
+    let destination;
+    try {
+      destination = new URL(link.href, window.location.href);
+    } catch (error) {
+      return;
+    }
+    if (destination.origin !== window.location.origin || !destination.pathname.endsWith("/citation-network.php")) return;
+    if (destination.pathname === window.location.pathname && destination.search === window.location.search) return;
+    if (destination.href === window.location.href) return;
+
+    event.preventDefault();
+    pendingSearchController?.abort();
+    pendingSearchController = null;
+    window.clearTimeout(preloaderHideTimer);
+    let preloader = document.querySelector("#app-preloader");
+    if (!preloader) {
+      preloader = document.createElement("div");
+      preloader.id = "app-preloader";
+      preloader.className = "app-preloader navigation-preloader";
+      preloader.setAttribute("role", "status");
+      preloader.setAttribute("aria-live", "polite");
+      preloader.setAttribute("aria-label", "Loading the interactive citation network");
+      preloader.innerHTML = '<div class="preloader-shell"><strong class="preloader-title">Loading citation network…</strong><span class="preloader-meter" aria-hidden="true"><span></span></span></div>';
+      document.body.append(preloader);
+    } else {
+      const title = preloader.querySelector(".preloader-title");
+      if (title) title.textContent = "Loading citation network…";
+      const detail = preloader.querySelector(".preloader-detail");
+      if (detail) { detail.hidden = true; detail.textContent = ""; }
+      preloader.setAttribute("aria-label", "Loading the interactive citation network");
+    }
+    window.clearTimeout(preloaderHideTimer);
+    preloader.hidden = false;
+    preloader.classList.remove("is-hidden");
+    document.documentElement.classList.add("is-loading");
+    try {
+      window.sessionStorage.setItem("citationNetworkTransitionPreloaded", "1");
+    } catch (error) {}
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => window.location.assign(destination.href)));
+  });
+
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) hidePreloader();
+  });
+}
 
 function scheduleIdleTask(callback, timeout = 1600) {
   if ("requestIdleCallback" in window) {
@@ -27,6 +176,25 @@ function scheduleIdleTask(callback, timeout = 1600) {
 }
 
 const ICONS = {
+  "user-round": '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg>',
+  "fingerprint": '<svg viewBox="0 0 24 24"><path d="M5 11a7 7 0 0 1 14 0v3M8 15v-4a4 4 0 0 1 8 0v3c0 3-1 5-2 7M11 21c1-3 1-5 1-10M5 15c0 2-.5 4-1 5M8 18l-1 4M19 18l-1 3"/></svg>',
+  "more-horizontal": '<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>',
+  "globe": '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></svg>',
+  "calendar-clock": '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="14" height="15" rx="2"/><path d="M7 3v4m6-4v4M3 10h14"/><circle cx="17" cy="17" r="5"/><path d="M17 14v3l2 1"/></svg>',
+  "wine": '<svg viewBox="0 0 24 24"><path d="M8 3h8l1 6a5 5 0 0 1-10 0zM12 14v7m-4 0h8M7 8h10"/></svg>',
+  "heart-pulse": '<svg viewBox="0 0 24 24"><path d="M20 5a5 5 0 0 0-8 1 5 5 0 0 0-8-1c-4 5 3 11 8 15 5-4 12-10 8-15Z"/><path d="M3 12h5l2-4 3 8 2-4h6"/></svg>',
+  "cigarette-off": '<svg viewBox="0 0 24 24"><path d="M4 14h12v4H4zm9 0v4m6-4v4m3-4v4M17 4c-2 3 3 3 1 6M21 3c-2 3 3 4 1 7M3 3l18 18"/></svg>',
+  "coins": '<svg viewBox="0 0 24 24"><ellipse cx="9" cy="6" rx="6" ry="3"/><path d="M3 6v6c0 4 12 4 12 0V6M3 10c0 4 12 4 12 0"/><path d="M15 10c4 0 6 1 6 3v5c0 4-12 4-12 0v-3m6-1c3 1 6 0 6-1"/></svg>',
+  "folders": '<svg viewBox="0 0 24 24"><path d="M3 7V4h6l2 3h9v3M6 10h6l2 3h8v8H6zM3 7v11"/></svg>',
+  "chart-line": '<svg viewBox="0 0 24 24"><path d="M4 3v17h17M7 15l4-5 4 2 5-7"/><circle cx="7" cy="15" r="1"/><circle cx="11" cy="10" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="20" cy="5" r="1"/></svg>',
+  "compass": '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m16 8-3 5-5 3 3-5z"/></svg>',
+  "evidence-scale": '<svg viewBox="0 0 24 24"><path d="M12 3v18m-5 0h10M4 7h16M6 7l-4 7h8zm12 0-4 7h8zM2 14c0 4 8 4 8 0m4 0c0 4 8 4 8 0"/></svg>',
+  "quote-document": '<svg viewBox="0 0 24 24"><path d="M5 3h10l4 4v14H5zM14 3v5h5M8 12h3v3H8v-3m0 3v2m5-5h3v3h-3v-3m0 3v2"/></svg>',
+  "badge-info": '<svg viewBox="0 0 24 24"><path d="m12 2 3 2 4 1 1 4 2 3-2 3-1 4-4 1-3 2-3-2-4-1-1-4-2-3 2-3 1-4 4-1zM12 11v6m0-10v.01"/></svg>',
+  "scroll-text": '<svg viewBox="0 0 24 24"><path d="M6 4h14v13a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-2h11v2a3 3 0 0 0 3 3M6 15V4a2 2 0 0 0-4 0v3h4M9 8h8m-8 3h6"/></svg>',
+  "lock": '<svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg>',
+  "chart-bars": '<svg viewBox="0 0 24 24"><path d="M3 3v18h18M7 17v-5h3v5zm5 0V7h3v10zm5 0V4h3v13z"/></svg>',
+  "tools": '<svg viewBox="0 0 24 24"><path d="m14.5 6.5 3 3L21 6a5 5 0 0 1-6.5 6.5L6 21a2.1 2.1 0 0 1-3-3l8.5-8.5A5 5 0 0 1 18 3z"></path><path d="m5 3 4 4-2 2-4-4z"></path><path d="m8 8 3 3m4 4 5.5 5.5a1.4 1.4 0 0 1-2 2L13 17"></path></svg>',
   "search": '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4.2-4.2"></path></svg>',
   "microscope": '<svg viewBox="0 0 24 24"><path d="M6 18h8"></path><path d="M3 22h18"></path><path d="M14 22a7 7 0 0 0 0-14h-1"></path><path d="M9 14h2"></path><path d="M8 6h4"></path><path d="M7 10h6"></path><path d="M10 6V3"></path><path d="M9 3h2"></path><path d="M6 10v4a2 2 0 0 0 2 2h4"></path></svg>',
   "settings": '<svg viewBox="0 0 24 24"><path d="M4 7h10"></path><path d="M18 7h2"></path><circle cx="16" cy="7" r="2"></circle><path d="M4 17h2"></path><path d="M10 17h10"></path><circle cx="8" cy="17" r="2"></circle></svg>',
@@ -34,6 +202,7 @@ const ICONS = {
   "book-open": '<svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v18H6.5A2.5 2.5 0 0 0 4 18.5z"></path><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v18h4.5a2.5 2.5 0 0 1 2.5-2.5z"></path></svg>',
   "users": '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><path d="M3 20a6 6 0 0 1 12 0"></path><circle cx="17" cy="9" r="2.5"></circle><path d="M15 15.5A5 5 0 0 1 21 20"></path></svg>',
   "clipboard-list": '<svg viewBox="0 0 24 24"><path d="M9 4h6l1 2h3v15H5V6h3z"></path><path d="M9 11h6"></path><path d="M9 15h6"></path><path d="M8 4h8"></path></svg>',
+  "wrench": '<svg viewBox="0 0 24 24"><path d="M14.7 6.3a5 5 0 0 0-6.4 6.4L3 18a2.1 2.1 0 0 0 3 3l5.3-5.3a5 5 0 0 0 6.4-6.4l-3 3-3-3z"></path></svg>',
   "grid-3x3": '<svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"></path><path d="M4 9.3h16"></path><path d="M4 14.7h16"></path><path d="M9.3 4v16"></path><path d="M14.7 4v16"></path></svg>',
   "library": '<svg viewBox="0 0 24 24"><path d="M4 19V5"></path><path d="M8 19V5"></path><path d="M12 19V5"></path><path d="M16 19V5"></path><path d="M20 19V5"></path></svg>',
   "table": '<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="1.5"></rect><path d="M4 10h16"></path><path d="M10 5v14"></path></svg>',
@@ -53,17 +222,26 @@ const ICONS = {
   "link": '<svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"></path><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"></path></svg>',
   "external-link": '<svg viewBox="0 0 24 24"><path d="M14 5h5v5"></path><path d="m19 5-8 8"></path><path d="M19 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h4"></path></svg>',
   "network": '<svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.5"></circle><circle cx="17" cy="6" r="2.5"></circle><circle cx="18" cy="18" r="2.5"></circle><path d="m8.2 10.8 6.6-3.6"></path><path d="m8.4 13.2 7.2 3.6"></path><path d="m17.4 8.5.4 7"></path></svg>',
+  "map-pin": '<svg viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>',
+  "brain": '<svg viewBox="0 0 24 24"><path d="M9.5 4.5A3.5 3.5 0 0 0 6 8v.4A3.5 3.5 0 0 0 4.5 15a3.5 3.5 0 0 0 5 3.2V5.5a2 2 0 0 1 2-2"></path><path d="M14.5 4.5A3.5 3.5 0 0 1 18 8v.4a3.5 3.5 0 0 1 1.5 6.6 3.5 3.5 0 0 1-5 3.2V5.5a2 2 0 0 0-2-2"></path><path d="M6 8.5h2"></path><path d="M16 8.5h2"></path><path d="M6.5 15.5H9"></path><path d="M15 15.5h2.5"></path></svg>',
+  "target": '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="4"></circle><circle cx="12" cy="12" r="1"></circle><path d="M12 2v3"></path><path d="M22 12h-3"></path><path d="M12 22v-3"></path><path d="M2 12h3"></path></svg>',
+  "molecule": '<svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.5"></circle><circle cx="16.5" cy="6" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle><path d="m8.2 10.7 6.1-3.5"></path><path d="m8.4 13.1 6.9 3.3"></path><path d="m16.7 8.5.6 6.5"></path></svg>',
+  "sparkles": '<svg viewBox="0 0 24 24"><path d="m12 3 1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2z"></path><path d="m18.5 14 .7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z"></path><path d="m5.5 13 .6 1.9 1.9.6-1.9.6-.6 1.9-.6-1.9-1.9-.6 1.9-.6z"></path></svg>',
   "copy": '<svg viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="11" rx="2"></rect><path d="M5 15V7a2 2 0 0 1 2-2h8"></path></svg>',
   "check": '<svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"></path></svg>',
   "circle-alert": '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v6"></path><path d="M12 17h.01"></path></svg>',
   "info": '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6"></path><path d="M12 7h.01"></path></svg>',
+  "mail": '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m4 7 8 6 8-6"></path></svg>',
   "shield": '<svg viewBox="0 0 24 24"><path d="M12 3 19 6v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"></path><path d="M12 8v6"></path><path d="M9 11h6"></path></svg>',
   "bell-plus": '<svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path><path d="M19 2v6"></path><path d="M16 5h6"></path></svg>',
+  "volume-2": '<svg viewBox="0 0 24 24"><path d="m11 5-6 4H2v6h3l6 4z"></path><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"></path></svg>',
+  "volume-x": '<svg viewBox="0 0 24 24"><path d="m11 5-6 4H2v6h3l6 4z"></path><path d="m16 9 5 6m0-6-5 6"></path></svg>',
   "play": '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg>',
   "pause": '<svg viewBox="0 0 24 24"><path d="M8 5v14"></path><path d="M16 5v14"></path></svg>',
   "download": '<svg viewBox="0 0 24 24"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path></svg>',
   "printer": '<svg viewBox="0 0 24 24"><path d="M7 8V4h10v4"></path><path d="M7 17H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"></path><path d="M7 14h10v6H7z"></path><path d="M17 12h.01"></path></svg>',
   "maximize": '<svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3"></path><path d="M16 3h3a2 2 0 0 1 2 2v3"></path><path d="M8 21H5a2 2 0 0 1-2-2v-3"></path><path d="M16 21h3a2 2 0 0 0 2-2v-3"></path></svg>',
+  "move": '<svg viewBox="0 0 24 24"><path d="M12 3v18"></path><path d="m8 7 4-4 4 4"></path><path d="m8 17 4 4 4-4"></path><path d="M3 12h18"></path><path d="m7 8-4 4 4 4"></path><path d="m17 8 4 4-4 4"></path></svg>',
   "minimize": '<svg viewBox="0 0 24 24"><path d="M8 3v3a2 2 0 0 1-2 2H3"></path><path d="M16 3v3a2 2 0 0 0 2 2h3"></path><path d="M8 21v-3a2 2 0 0 0-2-2H3"></path><path d="M16 21v-3a2 2 0 0 1 2-2h3"></path></svg>',
   "share-2": '<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.8 6.8-4.6"></path><path d="m8.6 13.2 6.8 4.6"></path></svg>',
   "x": '<svg viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>',
@@ -73,8 +251,10 @@ function refreshIcons() {
   for (const icon of document.querySelectorAll("i[data-icon]")) {
     const name = icon.getAttribute("data-icon") || "";
     if (!ICONS[name]) continue;
+    if (icon.dataset.renderedIcon === name && icon.querySelector("svg")) continue;
     icon.innerHTML = ICONS[name];
     icon.classList.add("svg-icon");
+    icon.dataset.renderedIcon = name;
   }
 }
 
@@ -84,6 +264,7 @@ function updateModalOpenState() {
     document.documentElement.classList.toggle("modal-open", hasOpenDialog);
     document.body?.classList.toggle("modal-open", hasOpenDialog);
   };
+  apply();
   if (typeof window.requestAnimationFrame === "function") {
     window.requestAnimationFrame(apply);
     window.setTimeout(apply, 0);
@@ -113,7 +294,7 @@ function closeOpenDialogsForDomSwap() {
 }
 
 function subtleHaptic(pattern = 8) {
-  if (!("vibrate" in navigator)) return;
+  if (!("vibrate" in navigator) || window.trackerTouchHaptics === false) return;
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   try {
     navigator.vibrate(pattern);
@@ -129,12 +310,8 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-async function checkUpdateStatus() {
-  if (!updateCheck) return;
-  updateCheck.classList.remove("is-done", "is-error", "is-pending");
-  updateCheck.classList.add("is-loading");
-  updateCheck.innerHTML = '<span class="spinner" aria-hidden="true"></span><span>Checking for newly indexed publications...</span>';
-
+async function refreshHeroUpdatedTime() {
+  if (!heroUpdatedText) return;
   try {
     const response = await fetch("status.php", {
       headers: { Accept: "application/json" },
@@ -143,24 +320,52 @@ async function checkUpdateStatus() {
     if (!response.ok) throw new Error("Status request failed");
     const data = await response.json();
     if (!data.ok) throw new Error(data.message || "Status unavailable");
-    if (lastUpdatedText && data.last_updated_display) {
-      lastUpdatedText.textContent = data.last_updated_display;
-    }
     if (heroUpdatedText && data.last_updated_display) {
       heroUpdatedText.textContent = data.last_updated_display;
     }
-    updateCheck.classList.remove("is-loading");
-    updateCheck.classList.add(data.pending ? "is-pending" : "is-done");
-    updateCheck.innerHTML = `<span class="status-dot" aria-hidden="true"></span><span>${data.message}</span>`;
-  } catch (error) {
-    updateCheck.classList.remove("is-loading");
-    updateCheck.classList.add("is-error");
-    updateCheck.innerHTML = '<span class="status-dot" aria-hidden="true"></span><span>Could not check update status. Showing stored publications.</span>';
-  }
+  } catch (error) {}
 }
 
-scheduleIdleTask(checkUpdateStatus, 1800);
 window.addEventListener("load", refreshIcons);
+
+function initMobileSearchViewport(dialog) {
+  if (dialog.dataset.viewportBound === "1") return;
+  dialog.dataset.viewportBound = "1";
+  const sheet = dialog.querySelector(".advanced-filter-sheet");
+  const query = dialog.querySelector("[data-advanced-search-query]");
+  let frame = 0;
+  const update = () => {
+    frame = 0;
+    const mobile = dialog.open && window.matchMedia("(max-width: 760px)").matches;
+    dialog.classList.toggle("mobile-search-viewport", mobile);
+    if (!mobile) return;
+    const viewport = window.visualViewport;
+    dialog.style.setProperty("--search-viewport-top", `${viewport?.offsetTop || 0}px`);
+    dialog.style.setProperty("--search-viewport-height", `${viewport?.height || window.innerHeight}px`);
+    // Scroll the sheet itself; never pan the page behind the modal.
+    if (document.activeElement === query && sheet) {
+      const field = query.getBoundingClientRect();
+      const bounds = sheet.getBoundingClientRect();
+      const head = dialog.querySelector(".advanced-filter-head");
+      const top = Math.max(bounds.top + 8, head?.getBoundingClientRect().bottom || bounds.top);
+      const bottom = bounds.bottom - 12;
+      if (field.top < top) sheet.scrollTop -= top - field.top;
+      else if (field.bottom > bottom) sheet.scrollTop += field.bottom - bottom;
+    }
+  };
+  const schedule = () => {
+    if (!frame) frame = window.requestAnimationFrame(update);
+  };
+  window.visualViewport?.addEventListener("resize", schedule, { passive: true });
+  window.visualViewport?.addEventListener("scroll", schedule, { passive: true });
+  window.addEventListener("resize", schedule, { passive: true });
+  dialog.addEventListener("focusin", update);
+  dialog.addEventListener("close", () => {
+    dialog.classList.remove("mobile-search-viewport");
+    dialog.style.removeProperty("--search-viewport-top");
+    dialog.style.removeProperty("--search-viewport-height");
+  });
+}
 
 function initAppSheets() {
   const bindings = [
@@ -217,8 +422,15 @@ function initAppSheets() {
     if (binding.dialog === "#alert-enrollment") setActiveNavLink("#alerts");
     if (binding.dialog === "#analytics-modal") {
       setActiveNavLink("#analytics");
-      window.requestAnimationFrame(() => renderTimeline({ preset: "10y" }));
+      const summary = dialog.querySelector('#timeline-summary');
+      if (summary) summary.textContent = 'Preparing analytics…';
+      ensureAnalyticsFeature().then(feature => { if (dialog.open) return feature.open(); })
+        .catch(() => {
+          if (summary) summary.textContent = 'Analytics could not load. Close and reopen this dialog to retry.';
+        });
     }
+    if (binding.dialog === "#advanced-filters") initJournalPicker();
+    initAlertMultiselects(dialog);
     refreshIcons();
     const focusTarget = dialog.querySelector("[autofocus], .advanced-filter-close, summary, input, select, button");
     focusTarget?.focus({ preventScroll: true });
@@ -231,7 +443,22 @@ function initAppSheets() {
       const dialog = document.querySelector(binding.dialog);
       if (!dialog) return;
       event.preventDefault();
+      if (binding.dialog === "#advanced-filters") {
+        collapsePrimaryNavSidebarOnCompact();
+        const options = dialog.querySelector(".publication-search-options");
+        if (options) options.open = !event.target.closest("[data-full-search]");
+        const count = Number(document.querySelector("[data-smart-result-bar]")?.dataset.activeFilterCount || 0);
+        const badge = dialog.querySelector("[data-search-filter-count]");
+        if (badge) badge.textContent = count ? `${count} active` : "";
+      }
+      if (binding.dialog === "#advanced-filters") initMobileSearchViewport(dialog);
       openDialog(dialog, binding);
+      if (binding.dialog === "#advanced-filters" && event.target.closest("[data-full-search]")) {
+        const sheet = dialog.querySelector(".advanced-filter-sheet");
+        if (sheet) sheet.scrollTop = 0;
+        // Keep focus within the tap gesture so iOS can open its keyboard.
+        dialog.querySelector("[data-advanced-search-query]")?.focus({ preventScroll: true });
+      }
     });
     const openSheetFromHash = () => {
       const hashBinding = window.location.hash === "#analytics"
@@ -256,6 +483,9 @@ function initAppSheets() {
     });
     if (dialog.dataset.sheetDialogBound === "1") continue;
     dialog.dataset.sheetDialogBound = "1";
+    dialog.addEventListener("keydown", event => {
+      if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); closeDialog(dialog, binding); }
+    }, true);
     dialog.addEventListener("click", (event) => {
       if (event.target === dialog) closeDialog(dialog, binding);
     });
@@ -270,6 +500,97 @@ function initAppSheets() {
       updateModalOpenState();
     });
   }
+}
+
+function initAdvancedFilterSearchSync() {
+  if (document.documentElement.dataset.publicationQuerySyncBound === "1") return;
+  document.documentElement.dataset.publicationQuerySyncBound = "1";
+  document.addEventListener("input", event => {
+    if (event.target.matches("#hero-q")) {
+      const other = document.querySelector("[data-advanced-search-query]");
+      if (other) other.value = event.target.value;
+    } else if (event.target.matches("[data-advanced-search-query]")) {
+      const other = document.querySelector("#hero-q");
+      if (other) other.value = event.target.value;
+    }
+  });
+}
+
+function initJournalPicker() {
+  const root = document.querySelector("[data-journal-picker]");
+  const select = root?.querySelector("select");
+  if (!root || !select || root.dataset.ready === "1") return;
+  root.dataset.ready = "1";
+  const normalize = (value) => value.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+  const journals = [...select.options].filter((o) => o.value && !o.hasAttribute("data-unlisted")).map((o) => {
+    const key = normalize(o.value), words = key.split(" ");
+    return { name: o.value, key, words, count: Number(o.dataset.count || 0), fullAcronym: words.map((w) => w[0]).join(""), acronym: words.filter((w) => !["of", "the", "and", "in", "a"].includes(w)).map((w) => w[0]).join("") };
+  });
+  const byKey = new Map(journals.map((j) => [j.key, j]));
+  const originalValue = select.value;
+  const input = document.createElement("input");
+  input.type = "search"; input.name = "journal"; input.id = "journal-search"; input.value = select.value;
+  input.placeholder = "Type a journal name or abbreviation"; input.autocomplete = "off";
+  input.setAttribute("role", "combobox"); input.setAttribute("aria-autocomplete", "list");
+  input.setAttribute("aria-expanded", "false"); input.setAttribute("aria-controls", "journal-suggestions");
+  input.setAttribute("aria-describedby", "journal-picker-status");
+  const list = document.createElement("ul"); list.id = "journal-suggestions"; list.className = "journal-suggestions";
+  list.setAttribute("role", "listbox"); list.setAttribute("aria-label", "Matching journals"); list.hidden = true;
+  const status = root.querySelector(".journal-picker-help"); status.id = "journal-picker-status"; status.setAttribute("role", "status");
+  const browse = document.createElement("button"); browse.type = "button"; browse.className = "journal-browse";
+  browse.textContent = "Browse all journals"; browse.setAttribute("aria-controls", select.id); browse.setAttribute("aria-expanded", "false");
+  root.querySelector("label").htmlFor = input.id;
+  select.removeAttribute("name"); select.setAttribute("aria-label", "All indexed journals"); select.hidden = true;
+  select.before(input, list); status.before(browse);
+  const collator = new Intl.Collator(undefined, { sensitivity: "base", numeric: true });
+  let matches = [], active = -1;
+  const close = () => { list.hidden = true; input.setAttribute("aria-expanded", "false"); input.removeAttribute("aria-activedescendant"); active = -1; };
+  const validate = () => input.setCustomValidity(!input.value.trim() || byKey.has(normalize(input.value)) || input.value === originalValue ? "" : "Choose a journal from the suggestions or the full list.");
+  const choose = (item) => { input.value = item.name; select.value = item.name; validate(); close(); input.focus(); status.textContent = `Selected: ${item.name}.`; };
+  const render = () => {
+    validate();
+    const query = normalize(input.value), terms = query.split(" ").filter(Boolean);
+    // Keep only the best twelve while scanning the local index once. No
+    // full-list sort or thousands of suggestion nodes on each keystroke.
+    const best = []; let total = 0;
+    const compare = (a, b) => a.score - b.score || (!query ? b.count - a.count : 0) || collator.compare(a.name, b.name);
+    for (const j of journals) {
+      const score = !query ? 6 : j.key === query ? 0 : j.key.startsWith(query) ? 1 : terms.every((t) => j.words.some((w) => w.startsWith(t))) ? 2 : j.key.includes(query) ? 3 : terms.every((t) => j.key.includes(t)) ? 4 : (j.acronym === query.replace(/ /g, "") || j.fullAcronym === query.replace(/ /g, "")) ? 5 : 99;
+      if (score === 99) continue;
+      total++;
+      const candidate = { ...j, score };
+      if (best.length === 12 && compare(candidate, best[11]) >= 0) continue;
+      const index = best.findIndex((existing) => compare(candidate, existing) < 0);
+      best.splice(index < 0 ? best.length : index, 0, candidate);
+      if (best.length > 12) best.pop();
+    }
+    matches = best; active = -1; list.replaceChildren(); input.removeAttribute("aria-activedescendant");
+    matches.forEach((item, i) => {
+      const option = document.createElement("li"); option.id = `journal-option-${i}`; option.setAttribute("role", "option"); option.setAttribute("aria-selected", "false");
+      const name = document.createElement("span"); name.textContent = item.name; option.append(name);
+      if (item.score === 0) { option.classList.add("is-exact"); const badge = document.createElement("strong"); badge.textContent = "Exact match"; option.append(badge); }
+      const count = document.createElement("small"); count.textContent = `${item.count.toLocaleString()} ${item.count === 1 ? "record" : "records"}`; option.append(count);
+      option.addEventListener("pointerdown", (event) => event.preventDefault()); option.addEventListener("click", () => choose(item)); list.append(option);
+    });
+    status.textContent = total ? `${total.toLocaleString()} matching journals${total > 12 ? "; showing 12 — type more to narrow" : ""}.` : "No matching indexed journal. Try fewer words or browse the full list.";
+    list.hidden = !matches.length; input.setAttribute("aria-expanded", matches.length ? "true" : "false");
+  };
+  input.addEventListener("input", render); input.addEventListener("focus", render);
+  input.addEventListener("keydown", (event) => {
+    if (["ArrowDown", "ArrowUp"].includes(event.key)) {
+      event.preventDefault(); if (list.hidden) render(); if (!matches.length) return;
+      active = active < 0 ? (event.key === "ArrowDown" ? 0 : matches.length - 1) : (active + (event.key === "ArrowDown" ? 1 : -1) + matches.length) % matches.length;
+      [...list.children].forEach((o, i) => o.setAttribute("aria-selected", i === active ? "true" : "false"));
+      input.setAttribute("aria-activedescendant", list.children[active].id); list.children[active].scrollIntoView({block:"nearest"});
+    } else if (event.key === "Enter" && !list.hidden && matches.length) { event.preventDefault(); choose(matches[Math.max(0, active)]); }
+    else if (event.key === "Escape" && !list.hidden) { event.preventDefault(); event.stopPropagation(); close(); }
+    else if (event.key === "Tab") close();
+  });
+  browse.addEventListener("click", () => { close(); select.hidden = !select.hidden; browse.setAttribute("aria-expanded", select.hidden ? "false" : "true"); browse.textContent = select.hidden ? "Browse all journals" : "Hide full journal list"; if (!select.hidden) select.focus(); });
+  select.addEventListener("change", () => { input.value = select.value; validate(); close(); status.textContent = input.value ? `Selected: ${input.value}.` : `${journals.length.toLocaleString()} indexed journals available.`; });
+  root.addEventListener("focusout", () => window.setTimeout(() => { if (!root.contains(document.activeElement)) close(); }, 0));
+  root.closest("form")?.addEventListener("submit", () => { const exact = byKey.get(normalize(input.value)); if (exact) input.value = exact.name; });
+  document.querySelector("#advanced-filters")?.addEventListener("close", close);
 }
 
 function setActiveNavLink(hash) {
@@ -339,8 +660,43 @@ function initSectionNavigation() {
     sections.forEach((section) => observer.observe(section));
   }
 
-  const initialHash = window.location.hash && document.querySelector(window.location.hash) ? window.location.hash : "#papers";
+  const initialHash = window.location.hash && document.getElementById(window.location.hash.slice(1)) ? window.location.hash : "#papers";
   setActiveNavLink(initialHash);
+}
+
+function initPublicationSearchFocus() {
+  const focusSearch = () => {
+    const input = document.querySelector("#hero-q");
+    if (!input) return;
+    collapsePrimaryNavSidebarOnCompact();
+    input.focus({ preventScroll: true });
+    input.scrollIntoView({ block: "center", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  };
+  document.addEventListener("click", (event) => {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const link = event.target.closest?.("a[href]");
+    if (!link || link.target === "_blank" || link.hasAttribute("download")) return;
+    const url = new URL(link.href, window.location.href);
+    if (url.origin !== window.location.origin || url.hash !== "#hero-q" || url.pathname !== window.location.pathname || !document.querySelector("#hero-q")) return;
+    event.preventDefault();
+    const current = new URL(window.location.href);
+    current.hash = "hero-q";
+    window.history.pushState({}, "", current);
+    focusSearch();
+  });
+  window.addEventListener("hashchange", () => { if (window.location.hash === "#hero-q") focusSearch(); });
+  const openFullSearch = () => {
+    if (window.location.hash === "#publication-search") document.querySelector("[data-full-search]")?.click();
+  };
+  window.addEventListener("hashchange", openFullSearch);
+  if (window.location.hash === "#publication-search") {
+    if (document.readyState === "complete") openFullSearch();
+    else window.addEventListener("load", openFullSearch, { once: true });
+  }
+  if (window.location.hash === "#hero-q") {
+    if (document.readyState === "complete") focusSearch();
+    else window.addEventListener("load", () => window.setTimeout(focusSearch, 280), { once: true });
+  }
 }
 
 function initSidebarControls() {
@@ -374,6 +730,216 @@ function initSidebarControls() {
   });
 }
 
+let smartResultBarFrame = 0;
+
+function updateSmartResultBar() {
+  smartResultBarFrame = 0;
+  const bar = document.querySelector("[data-smart-result-bar]");
+  const sentinel = document.querySelector("[data-result-bar-sentinel]");
+  const panel = bar?.closest("#publication-results");
+  if (!bar || !sentinel || !panel) return;
+  const mobile = window.matchMedia("(max-width: 760px)").matches;
+  const compact = window.matchMedia("(max-width: 1180px)").matches;
+  const sentinelRect = sentinel.getBoundingClientRect();
+  const panelRect = panel.getBoundingClientRect();
+  const viewportHeight = window.visualViewport?.height || window.innerHeight;
+  const pager = panel.querySelector(".results-bottom-pager")?.getBoundingClientRect();
+  const focused = document.activeElement;
+  const typing = focused?.matches('input:not([type="checkbox"]):not([type="radio"]), textarea, [contenteditable="true"]');
+  const keyboard = typing || viewportHeight < window.innerHeight - 120;
+  const pagerVisible = pager && pager.top < viewportHeight - 24 && pager.bottom > 0;
+  const visible = mobile && panelRect.top < viewportHeight - 100 && panelRect.bottom > 100 && !pagerVisible && !keyboard;
+  const floating = !mobile && sentinelRect.top <= (compact ? 70 : 10) && panelRect.bottom > (compact ? 70 : 10) + bar.offsetHeight + 16;
+  bar.classList.toggle("is-smart-floating", floating);
+  // Keep selected-record actions below the sticky search controls, never behind them.
+  const selectionTop = bar.getClientRects().length ? (parseFloat(getComputedStyle(bar).top) || 0) + bar.offsetHeight + 8 : (compact ? 78 : 12);
+  panel.style.setProperty('--selection-toolbar-top', `${selectionTop}px`);
+  const dock = document.querySelector(".mobile-result-dock");
+  if (dock) dock.hidden = !visible;
+}
+
+function initDesktopResultControls() {
+  const panel = document.querySelector("#publication-results");
+  const bar = panel?.querySelector("[data-smart-result-bar]");
+  if (!bar || bar.dataset.desktopControlsBound === "1") return;
+  bar.dataset.desktopControlsBound = "1";
+  bar.classList.add("has-desktop-result-controls");
+  const heading = bar.querySelector(".result-title-block");
+  if (heading) {
+    heading.classList.add("publication-results-heading");
+    panel.insertBefore(heading, panel.querySelector("[data-result-bar-sentinel]"));
+  }
+  let search = bar.querySelector('.desktop-result-search');
+  if (!search) {
+    search = document.createElement('button');
+    search.type = 'button'; search.className = 'desktop-result-search secondary iconed';
+    search.dataset.openAdvanced = ''; search.dataset.fullSearch = '';
+    search.setAttribute('aria-haspopup', 'dialog'); search.setAttribute('aria-controls', 'advanced-filters');
+    search.innerHTML = '<i data-icon="search" aria-hidden="true"></i><span>Search</span>';
+    bar.prepend(search);
+  }
+  const filters = bar.querySelector(".result-filter-trigger");
+  if (filters) {
+    search.after(filters);
+    const count = Number(bar.dataset.activeFilterCount || 0);
+    if (count) {
+      let badge = filters.querySelector('.desktop-filter-count');
+      if (!badge) { badge = document.createElement('b'); badge.className = 'desktop-filter-count'; filters.append(badge); }
+      badge.textContent = String(count); filters.querySelector('span').textContent = 'Filters';
+      filters.setAttribute("aria-label", `Filters, ${count} active`);
+    }
+  }
+  const menu = bar.querySelector(".result-settings-menu");
+  const summary = menu?.querySelector("summary");
+  if (summary) {
+    summary.setAttribute("aria-label", "Open research tools");
+    summary.innerHTML = '<i data-icon="tools" aria-hidden="true"></i><span>Tools</span>';
+  }
+}
+
+let mobileResultControlsCleanup = null;
+function initMobileResultControls() {
+  const panel = document.querySelector("#publication-results");
+  const bar = panel?.querySelector("[data-smart-result-bar]");
+  const form = bar?.querySelector(".result-quick-controls");
+  if (!form || panel.dataset.mobileControlsBound === "1") return;
+  mobileResultControlsCleanup?.();
+  panel.dataset.mobileControlsBound = "1";
+  const mobile = window.matchMedia("(max-width: 760px)");
+  const labels = [...form.querySelectorAll("label")];
+  const exports = bar.querySelector(".publication-exports");
+  const exportHost = exports?.parentElement;
+  const pageTools = document.querySelector(".page-tools");
+  if (pageTools && pageTools.dataset.mobileSheetBound !== "1") {
+    pageTools.dataset.mobileSheetBound = "1";
+    pageTools.addEventListener("click", event => {
+      if (event.target.closest("button")) pageTools.closest("dialog")?.close();
+    }, true);
+  }
+  const accountDesktop = window.matchMedia("(min-width: 1181px)");
+  const accountHeader = document.querySelector(".primary-sidebar-header");
+  const pageToolsHost = pageTools?.parentElement;
+  const pageToolsNext = pageTools?.nextSibling;
+  const restorePageTools = () => {
+    if (!pageTools) return;
+    const host = pageToolsHost?.isConnected ? pageToolsHost : document.body;
+    host.insertBefore(pageTools, pageToolsNext?.parentNode === host ? pageToolsNext : null);
+  };
+  form.id = "publication-quick-controls";
+  const dock = document.createElement("nav");
+  dock.className = "mobile-result-dock"; dock.hidden = true;
+  dock.setAttribute("aria-label", "Publication result controls");
+  const button = (label, icon) => {
+    const node = document.createElement("button"); node.type = "button";
+    node.innerHTML = `<i data-icon="${icon}" aria-hidden="true"></i><span>${label}</span>`;
+    node.setAttribute("aria-haspopup", "dialog"); return node;
+  };
+  const filters = button("Filters", "list-filter"); filters.dataset.openAdvanced = "";
+  filters.setAttribute("aria-controls", "advanced-filters");
+  const count = Number(bar.dataset.activeFilterCount || 0);
+  if (count) { const badge = document.createElement("b"); badge.className = "mobile-filter-count"; badge.textContent = String(count); filters.append(badge); filters.setAttribute("aria-label", `Filters, ${count} active`); }
+  const sort = document.createElement('div');
+  sort.className = 'mobile-sort-control';
+  sort.innerHTML = '<i data-icon="calendar-clock" aria-hidden="true"></i><span aria-hidden="true">Sort</span>';
+  const sortSelect = labels[0].querySelector('select');
+  sortSelect.setAttribute('aria-label', 'Sort publications');
+  const share = button('Share', 'share-2');
+  share.removeAttribute('aria-haspopup'); share.className = 'mobile-share-results';
+  share.setAttribute('aria-label', 'Share current research results');
+  share.addEventListener('click', shareCurrentResults);
+  const more = button("More", "more-horizontal");
+  dock.append(filters, sort, share, more);
+  const makeSheet = (id, title, description, opener) => {
+    const dialog = document.createElement("dialog"); dialog.id = id; dialog.className = "mobile-result-sheet";
+    dialog.setAttribute("aria-labelledby", id + "-title");
+    const header = document.createElement("div"); header.className = "mobile-result-sheet-head";
+    const heading = document.createElement("h2"); heading.id = id + "-title"; heading.textContent = title;
+    const close = button("Close", "x"); close.removeAttribute("aria-haspopup"); close.className = "mobile-result-sheet-close";
+    close.setAttribute("aria-label", "Close " + title.toLowerCase());
+    header.append(heading, close);
+    const note = document.createElement("p"); note.className = "mobile-result-sheet-note"; note.textContent = description;
+    const body = document.createElement("div"); body.className = "mobile-result-sheet-body";
+    dialog.append(header, note, body); panel.append(dialog);
+    opener.setAttribute("aria-controls", id);
+    const dismiss = () => { dialog.close(); updateModalOpenState(); scheduleSmartResultBarUpdate(); };
+    close.addEventListener("click", dismiss);
+    dialog.addEventListener("click", event => { if (event.target === dialog) { const box = dialog.getBoundingClientRect(); if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) dismiss(); } });
+    dialog.addEventListener("close", () => { updateModalOpenState(); scheduleSmartResultBarUpdate(); });
+    opener.addEventListener("click", () => { dialog.showModal(); updateModalOpenState(); });
+    return { dialog, body };
+  };
+  const moreSheet = makeSheet("mobile-result-more", "Results and exports", "Choose how many records to show, or export your current selection.", more);
+  document.body.append(dock);
+  labels.forEach(label => { const select = label.querySelector("select"); select.setAttribute("form", form.id); select.dataset.mobileResultSelect = ""; });
+  const placeControls = () => {
+    if (!panel.isConnected) { mobile.removeEventListener("change", placeControls); return; }
+    const account = document.querySelector("[data-account-navigation]");
+    const fullscreen = document.querySelector('#sidebar-fullscreen-toggle');
+    const install = document.querySelector('[data-mobile-install-app]');
+    for (const id of ['sidebar-share-results','sidebar-print-results']) { const tool=document.getElementById(id);if(tool)(accountDesktop.matches&&pageTools?pageTools:accountHeader)?.append(tool); }
+    if (account && pageTools && accountDesktop.matches) pageTools.prepend(account);
+    else if (account && accountHeader) accountHeader.append(account);
+    if (fullscreen && pageTools && accountDesktop.matches) pageTools.prepend(fullscreen);
+    else if (fullscreen && accountHeader) accountHeader.append(fullscreen);
+    if (install && pageTools && accountDesktop.matches) pageTools.insertBefore(install, account?.nextSibling || null);
+    else if (install && accountHeader) accountHeader.append(install);
+    panel.classList.toggle("has-mobile-result-controls", mobile.matches);
+    if (mobile.matches) {
+      sort.append(sortSelect); labels[0].remove(); moreSheet.body.append(labels[1]);
+      if (exports) moreSheet.body.append(exports);
+      if (pageTools) moreSheet.body.append(pageTools);
+      // Export links retain their original targets, filter parameters and event handlers.
+      const exportHeading = document.createElement("h3"); exportHeading.textContent = "Export and data tools";
+      if (!moreSheet.body.querySelector("h3") && exports) moreSheet.body.insertBefore(exportHeading, exports);
+    } else {
+      if (moreSheet.dialog.open) moreSheet.dialog.close();
+      labels[0].append(sortSelect);
+      labels.forEach(label => form.insertBefore(label, form.querySelector(".sr-only")));
+      if (exports && exportHost) exportHost.append(exports);
+      if (pageTools && accountDesktop.matches) document.body.append(pageTools);
+      else if (pageTools && exportHost) exportHost.append(pageTools);
+    }
+    scheduleSmartResultBarUpdate();
+  };
+  accountDesktop.addEventListener("change", placeControls);
+  mobile.addEventListener("change", placeControls);
+  mobileResultControlsCleanup = () => { accountDesktop.removeEventListener("change", placeControls); mobile.removeEventListener("change", placeControls); restorePageTools(); dock.remove(); };
+  placeControls(); refreshIcons();
+}
+
+function scheduleSmartResultBarUpdate() {
+  if (smartResultBarFrame) return;
+  smartResultBarFrame = window.requestAnimationFrame(updateSmartResultBar);
+}
+
+function initSmartResultBar() {
+  initDesktopResultControls();
+  initMobileResultControls();
+  if (document.documentElement.dataset.smartResultBarBound !== "1") {
+    document.documentElement.dataset.smartResultBarBound = "1";
+    window.addEventListener("scroll", scheduleSmartResultBarUpdate, { passive: true });
+    window.addEventListener("resize", scheduleSmartResultBarUpdate, { passive: true });
+    window.addEventListener("nav-sidebar-statechange", scheduleSmartResultBarUpdate);
+    window.visualViewport?.addEventListener("resize", scheduleSmartResultBarUpdate);
+    document.addEventListener("focusin", scheduleSmartResultBarUpdate);
+    document.addEventListener("focusout", () => setTimeout(scheduleSmartResultBarUpdate, 0));
+  }
+  scheduleSmartResultBarUpdate();
+}
+
+function initResultQuickControls() {
+  if (document.documentElement.dataset.resultQuickControlsBound === "1") return;
+  document.documentElement.dataset.resultQuickControlsBound = "1";
+  document.addEventListener("change", (event) => {
+    const select = event.target.closest?.(".result-quick-controls select, [data-mobile-result-select]");
+    if (!(select instanceof HTMLSelectElement)) return;
+    const form = select.form;
+    if (!(form instanceof HTMLFormElement)) return;
+    form.querySelector('input[name="page"]')?.setAttribute("value", "1");
+    form.requestSubmit();
+  });
+}
+
 function initSettingsMenus() {
   if (document.documentElement.dataset.settingsMenusBound === "1") return;
   document.documentElement.dataset.settingsMenusBound = "1";
@@ -388,70 +954,371 @@ function initSettingsMenus() {
   });
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
-    document.querySelectorAll(".command-menu[open]").forEach((menu) => menu.removeAttribute("open"));
+    document.querySelectorAll(".command-menu[open]").forEach((menu) => {
+      menu.removeAttribute("open"); menu.querySelector("summary")?.focus({ preventScroll: true });
+    });
   });
 }
 
 function initNavSidebarCollapse() {
   const toggle = document.querySelector("#nav-sidebar-toggle");
   const content = document.querySelector("#primary-sidebar-content");
-  if (!toggle || !content) return;
+  if (!toggle || !content || toggle.dataset.navSidebarBound === "1") return;
+  toggle.dataset.navSidebarBound = "1";
   const compactQuery = window.matchMedia?.("(max-width: 1180px)");
   const isCompact = () => Boolean(compactQuery?.matches);
   const storageKey = () => isCompact() ? "publicationTrackerNavSidebarCollapsedMobile" : "publicationTrackerNavSidebarCollapsedDesktop";
-  const setCollapsed = (collapsed, { persist = true } = {}) => {
-    document.documentElement.classList.toggle("nav-sidebar-collapsed", collapsed);
+  const taskGroups = [...content.querySelectorAll(".research-task-nav > details")];
+  const details = [...content.querySelectorAll('.research-task-nav details, .sidebar-preferences')];
+  const detailKey = (node) => {
+    const label = (element) => element.querySelector(':scope > summary .research-nav-label, :scope > summary > span')?.textContent.trim() || '';
+    const parent=node.parentElement.closest('.research-nav-section');
+    return (parent?label(parent)+'/':'')+label(node);
+  };
+  const disclosureKey='publicationTrackerSidebarDisclosuresV1';
+  let restoring=true;
+  try {const saved=JSON.parse(sessionStorage.getItem(disclosureKey)||'null');if(saved&&typeof saved==='object')details.forEach(node=>{const key=detailKey(node);if(typeof saved[key]==='boolean')node.open=saved[key];});} catch {}
+  const persistDisclosures=()=>{if(restoring)return;try{sessionStorage.setItem(disclosureKey,JSON.stringify(Object.fromEntries(details.map(node=>[detailKey(node),node.open]))));}catch{}};
+  details.forEach(node=>node.addEventListener('toggle',persistDisclosures));
+  window.addEventListener('pagehide',persistDisclosures);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{restoring=false;}));
+
+  content.querySelectorAll(".research-nav-subgroup").forEach((group) => {
+    group.addEventListener("toggle", () => {
+      if (!group.open) return;
+      [...group.parentElement.children].forEach((other) => {
+        if (other !== group && other.matches("details")) other.open = false;
+      });
+    });
+  });
+  const sidebar = content.closest('.topbar') || content;
+  const drawer = content.querySelector('.primary-sidebar-body') || content;
+  const reducedNavigation = matchMedia('(prefers-reduced-motion: reduce)');
+  const scrim = document.createElement('div');
+  scrim.className = 'nav-menu-scrim';
+  scrim.hidden = true;
+  scrim.setAttribute('aria-hidden', 'true');
+  document.body.append(scrim);
+  const originalSemantics = new Map(['role', 'aria-modal', 'aria-label'].map(name => [name, sidebar.getAttribute(name)]));
+  const inerted = new Map();
+  let navAnimation = null, scrimAnimation = null, navigationTarget = null;
+  const syncOverlay = visible => {
+    document.documentElement.classList.toggle('nav-menu-open', visible);
+    scrim.hidden = !visible;
+    if (visible) {
+      sidebar.setAttribute('role', 'dialog');
+      sidebar.setAttribute('aria-modal', 'true');
+      sidebar.setAttribute('aria-label', 'Navigation menu');
+      for (const node of document.body.children) {
+        if (node === sidebar || node === scrim || node.contains(sidebar) || ['SCRIPT', 'STYLE', 'LINK', 'DIALOG'].includes(node.tagName)) continue;
+        if (!inerted.has(node)) inerted.set(node, node.inert);
+        node.inert = true;
+      }
+      if (!sidebar.contains(document.activeElement)) toggle.focus({ preventScroll: true });
+    } else {
+      for (const [node, inert] of inerted) node.inert = inert;
+      inerted.clear();
+      for (const [name, value] of originalSemantics) {
+        if (value === null) sidebar.removeAttribute(name); else sidebar.setAttribute(name, value);
+      }
+    }
+  };
+  let railWasCollapsed = false;
+  const closeRailPanels = () => taskGroups.forEach((group) => { group.open = false; });
+  taskGroups.forEach((group) => group.addEventListener("toggle", () => {
+    if (group.open) {
+      taskGroups.forEach((other) => { if (other !== group) other.open = false; });
+    }
+  }));
+  document.addEventListener("click", (event) => {
+    if (!isCompact() && document.documentElement.classList.contains("nav-sidebar-collapsed") && !event.target.closest(".research-task-nav")) closeRailPanels();
+  });
+  content.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || isCompact() || !document.documentElement.classList.contains("nav-sidebar-collapsed")) return;
+    const openGroup = taskGroups.find((group) => group.open);
+    if (openGroup) { closeRailPanels(); openGroup.querySelector("summary").focus(); event.preventDefault(); }
+  });
+  const syncToggle = collapsed => {
     toggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
-    const compact = isCompact();
-    const label = compact
+    const label = isCompact()
       ? (collapsed ? "Open menu" : "Close menu")
       : (collapsed ? "Expand sidebar" : "Collapse sidebar");
     toggle.setAttribute("title", label);
     toggle.querySelector(".sr-only").textContent = label;
     const icon = toggle.querySelector("i[data-icon]");
-    if (icon) icon.setAttribute("data-icon", compact ? (collapsed ? "menu" : "x") : (collapsed ? "chevron-right" : "chevron-left"));
-    if (persist) localStorage.setItem(storageKey(), collapsed ? "1" : "0");
+    if (icon && !isCompact()) icon.setAttribute("data-icon", collapsed ? "chevron-right" : "chevron-left");
+  };
+  const setCollapsed = (collapsed, { persist = true } = {}) => {
+    navAnimation?.cancel(); scrimAnimation?.cancel();
+    navAnimation = scrimAnimation = null; navigationTarget = null;
+    const railCollapsed = collapsed && !isCompact();
+    if (railCollapsed && !railWasCollapsed) {
+      taskGroups.forEach((group) => { group.dataset.expandedOpen = group.open ? "1" : "0"; });
+      closeRailPanels();
+    } else if (!railCollapsed && railWasCollapsed) {
+      taskGroups.forEach((group) => { group.open = group.dataset.expandedOpen === "1"; });
+    }
+    railWasCollapsed = railCollapsed;
+    document.documentElement.classList.toggle("nav-sidebar-collapsed", collapsed);
+    syncToggle(collapsed);
+    const compact = isCompact();
+    if (persist) { try { localStorage.setItem(storageKey(), collapsed ? "1" : "0"); } catch (_) {} }
     refreshIcons();
+    syncOverlay(compact && !collapsed);
     window.dispatchEvent(new CustomEvent("nav-sidebar-statechange"));
   };
+  const transitionCollapsed = collapsed => {
+    if (!isCompact() || reducedNavigation.matches || !drawer.animate) {
+      setCollapsed(collapsed);
+      if (collapsed) toggle.focus({ preventScroll: true });
+      return;
+    }
+    try { localStorage.setItem(storageKey(), collapsed ? '1' : '0'); } catch (_) {}
+    const interrupted = navAnimation !== null;
+    const startTransform = interrupted ? getComputedStyle(drawer).transform : null;
+    const startOpacity = interrupted ? getComputedStyle(drawer).opacity : null;
+    const scrimOpacity = getComputedStyle(scrim).opacity;
+    navAnimation?.cancel(); scrimAnimation?.cancel();
+    if (!collapsed) setCollapsed(false);
+    navigationTarget = collapsed;
+    syncToggle(collapsed);
+    // The shared header stays stationary; only the menu body moves.
+    // Only transforms and opacity animate; drawer layout is committed once.
+    navAnimation = drawer.animate([
+      { transform: startTransform || (collapsed ? 'none' : 'translate3d(-105%,0,0)'), opacity: startOpacity || (collapsed ? 1 : .8) },
+      { transform: collapsed ? 'translate3d(-105%,0,0)' : 'none', opacity: collapsed ? .55 : 1 }
+    ], { duration: collapsed ? 230 : 310, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'both' });
+    scrimAnimation = scrim.animate([{ opacity: interrupted ? scrimOpacity : (collapsed ? 1 : 0) }, { opacity: collapsed ? 0 : 1 }], { duration: collapsed ? 200 : 280, fill: 'both' });
+    const current = navAnimation;
+    current.finished.then(() => {
+      if (navAnimation !== current) return;
+      navAnimation = null; navigationTarget = null;
+      current.cancel(); scrimAnimation?.cancel(); scrimAnimation = null;
+      if (collapsed) { setCollapsed(true); toggle.focus({ preventScroll: true }); }
+    }).catch(() => {});
+  };
+  window.addEventListener('pagehide', () => { if (navigationTarget !== null) setCollapsed(navigationTarget, { persist: false }); });
+  scrim.addEventListener('click', () => transitionCollapsed(true));
+  document.addEventListener('keydown', event => {
+    if (!isCompact() || document.documentElement.classList.contains('nav-sidebar-collapsed') || document.querySelector('dialog[open]')) return;
+    if (event.key === 'Escape') {
+      event.preventDefault(); transitionCollapsed(true);
+    } else if (event.key === 'Tab') {
+      const items = [...sidebar.querySelectorAll('a[href], button, input, select, textarea, summary, [tabindex="0"]')]
+        .filter(node => {
+          if (node.disabled || node.tabIndex < 0 || !node.getClientRects().length || node.closest('[inert]') || getComputedStyle(node).visibility !== 'visible') return false;
+          // Closed details can report layout boxes even though their links cannot receive focus.
+          for (let parent = node.parentElement; parent && parent !== sidebar; parent = parent.parentElement) {
+            if (parent.matches('details:not([open])') && !parent.querySelector(':scope > summary')?.contains(node)) return false;
+          }
+          return true;
+        });
+      const first = items[0], last = items[items.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !sidebar.contains(document.activeElement))) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && (document.activeElement === last || !sidebar.contains(document.activeElement))) { event.preventDefault(); first?.focus(); }
+    }
+  });
+  // Native dialogs take over focus and dismissal when launched from the drawer.
+  new MutationObserver(() => {
+    if (isCompact() && !document.documentElement.classList.contains('nav-sidebar-collapsed') && document.querySelector('dialog[open]')) setCollapsed(true);
+  }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['open'] });
+  reducedNavigation.addEventListener('change', () => {
+    if (reducedNavigation.matches && navigationTarget !== null) setCollapsed(navigationTarget);
+  });
   collapsePrimaryNavSidebarOnCompact = () => {
     if (isCompact()) setCollapsed(true);
   };
   const applySavedPreference = () => {
     const compact = isCompact();
-    const storedPreference = localStorage.getItem(storageKey());
-    setCollapsed(storedPreference === null ? compact : storedPreference === "1", { persist: false });
+    let storedPreference = null;
+    try { storedPreference = localStorage.getItem(storageKey()); } catch (_) {}
+    setCollapsed(document.body.dataset.sidebarInitial === "collapsed" && !toggle.dataset.initialSidebarApplied ? true : (storedPreference === null ? compact : storedPreference === "1"), { persist: false });
+    toggle.dataset.initialSidebarApplied = "1";
   };
   applySavedPreference();
   compactQuery?.addEventListener?.("change", applySavedPreference);
-  if (toggle.dataset.navSidebarBound === "1") return;
-  toggle.dataset.navSidebarBound = "1";
   toggle.addEventListener("click", () => {
-    setCollapsed(!document.documentElement.classList.contains("nav-sidebar-collapsed"));
+    transitionCollapsed(navigationTarget === null ? !document.documentElement.classList.contains("nav-sidebar-collapsed") : !navigationTarget);
   });
-  content.addEventListener("click", (event) => {
-    const link = event.target.closest?.("a");
-    if (!link || !isCompact()) return;
-    window.setTimeout(() => setCollapsed(true), 120);
+  sidebar.addEventListener('click', event => {
+    if (!isCompact() || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    const link = event.target.closest('a[href]');
+    if (!link || !sidebar.contains(link) || link.hasAttribute('download')) return;
+    const href = link.getAttribute('href')?.trim();
+    if (!href || href === '#' || /^javascript:/i.test(href)) return;
+    // Persist before navigation so the destination also starts with its menu closed.
+    setCollapsed(true);
+  }, true);
+  let swipe = null, suppressClickUntil = 0;
+  sidebar.addEventListener('touchstart', event => {
+    swipe = null;
+    if (!isCompact() || document.documentElement.classList.contains('nav-sidebar-collapsed') || event.touches.length !== 1) return;
+    if (event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+    const touch = event.touches[0];
+    swipe = { id: touch.identifier, x: touch.clientX, y: touch.clientY, started: performance.now(), horizontal: false };
+  }, { passive: true });
+  sidebar.addEventListener('touchmove', event => {
+    if (!swipe || event.touches.length !== 1) { swipe = null; return; }
+    const touch = [...event.touches].find(item => item.identifier === swipe.id);
+    if (!touch) { swipe = null; return; }
+    const dx = touch.clientX - swipe.x, dy = touch.clientY - swipe.y;
+    if (!swipe.horizontal && Math.abs(dy) > 12 && Math.abs(dy) >= Math.abs(dx)) { swipe = null; return; }
+    if (dx < -12 && Math.abs(dx) > Math.abs(dy) * 1.5) swipe.horizontal = true;
+    if (swipe.horizontal && event.cancelable) event.preventDefault();
+  }, { passive: false });
+  sidebar.addEventListener('touchend', event => {
+    const gesture = swipe;
+    swipe = null;
+    if (!gesture || !isCompact()) return;
+    const touch = [...event.changedTouches].find(item => item.identifier === gesture.id);
+    if (!touch) return;
+    const dx = touch.clientX - gesture.x, dy = touch.clientY - gesture.y;
+    if (dx > -64 || Math.abs(dx) <= Math.abs(dy) * 1.5 || performance.now() - gesture.started > 1800) return;
+    suppressClickUntil = performance.now() + 500;
+    transitionCollapsed(true);
+    toggle.focus({ preventScroll: true });
+  }, { passive: true });
+  sidebar.addEventListener('touchcancel', () => { swipe = null; }, { passive: true });
+  document.addEventListener('click', event => {
+    if (performance.now() < suppressClickUntil && event.detail !== 0) { event.preventDefault(); event.stopImmediatePropagation(); }
+  }, true);
+
+}
+
+/** Browser-local destination search; publication queries use the main search. */
+function initToolFinder() {
+  const root = document.querySelector('[data-tool-finder]');
+  if (!root || root.dataset.ready === '1') return;
+  const input = root.querySelector('input');
+  const panel = root.querySelector('.tool-finder-panel');
+  const matches = root.querySelector('.tool-finder-matches');
+  const results = root.querySelector('ul');
+  const status = root.querySelector('[role="status"]');
+  const launch = root.querySelector('.tool-finder-launch');
+  let catalogue;
+  try { catalogue = JSON.parse(root.querySelector('[data-tool-catalog]').textContent); }
+  catch { return; }
+  root.dataset.ready = '1';
+  root.hidden = false;
+  const normalise = (text) => text.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  const words = (text) => normalise(text).split(' ').filter(Boolean);
+  const ignored = new Set(['a','an','the','and','or','for','to','of','in','on','with','where','how','can','i','my','find','psilocybin','psilocin','research']);
+  const oneEdit = (a,b) => {
+    if (a.length < 5 || Math.abs(a.length-b.length)>1) return false;
+    let i=0, j=0, edits=0;
+    while (i<a.length && j<b.length) {
+      if (a[i]===b[j]) { i++;j++;continue; }
+      if (++edits>1) return false;
+      if (a.length===b.length && a[i]===b[j+1] && a[i+1]===b[j]) { i+=2;j+=2; }
+      else if (a.length>b.length) i++;
+      else if (a.length<b.length) j++;
+      else { i++;j++; }
+    }
+    return edits+(a.length-i)+(b.length-j)<=1;
+  };
+  const index = catalogue.map((item,position) => ({...item,position,labelText:normalise(item.label),labelWords:words(item.label),aliases:words(item.keywords),context:words(`${item.group} ${item.section} ${item.description}`)}));
+  const score = (item, tokens, phrase) => {
+    let total = item.labelText===phrase ? 100 : 0;
+    for (const token of tokens) {
+      let weight = item.labelWords.includes(token) ? 12
+        : item.labelWords.some(word=>word.startsWith(token)) ? 9
+        : item.aliases.includes(token) ? 8
+        : item.aliases.some(word=>word.startsWith(token)) ? 5
+        : item.context.some(word=>word===token || word.startsWith(token)) ? 2
+        : [...item.labelWords,...item.aliases].some(word=>oneEdit(token,word)) ? 1 : 0;
+      if (!weight) return 0;
+      total += weight;
+    }
+    return total;
+  };
+  const close = ({clear=false}={}) => {
+    matches.hidden = true;
+    root.classList.remove('is-open');
+    launch.setAttribute('aria-expanded','false');
+    if (clear) { input.value=''; results.replaceChildren(); status.textContent=''; }
+  };
+  const render = () => {
+    const phrase=normalise(input.value);
+    if (phrase.length<2) { matches.hidden=true; results.replaceChildren();status.textContent='';return; }
+    const tokens=words(phrase).filter(token=>!ignored.has(token));
+    const ranked=tokens.length ? index.map(item=>({item,score:score(item,tokens,phrase)})).filter(hit=>hit.score>0).sort((a,b)=>b.score-a.score || a.item.position-b.item.position) : [];
+    results.replaceChildren();
+    ranked.slice(0,5).forEach(({item})=>{
+      const li=document.createElement('li');
+      const link=document.createElement('a'); link.href=item.href;
+      const label=document.createElement('strong'); label.textContent=item.label;
+      const context=document.createElement('span');context.textContent=[item.group,item.section].filter(Boolean).join(' · ');
+      link.append(label,context);
+      // Keep homepage modal behaviour when Analytics is chosen from suggestions.
+      if (item.key==='analytics' && document.querySelector('#analytics-modal')) {
+        link.addEventListener('click',(event)=>{event.preventDefault();document.querySelector('.research-task-nav [data-open-analytics]')?.click();});
+      }
+      if (item.key==='email-alerts' && document.querySelector('#alert-enrollment')) {
+        link.addEventListener('click',(event)=>{event.preventDefault();document.querySelector('.top-actions [data-open-alerts]')?.click();});
+      }
+      li.append(link);results.append(li);
+    });
+    status.textContent=ranked.length ? `${Math.min(ranked.length,5)} of ${ranked.length} matching tools and pages` : tokens.length ? 'No matching tool. Try “trials”, “citations” or “downloads”.' : 'Add a task or topic, such as “trials” or “downloads”.';
+    matches.hidden=false;
+  };
+  const open = () => {
+    root.classList.add('is-open'); launch.setAttribute('aria-expanded','true');
+    input.focus(); render();
+  };
+  launch.addEventListener('click',()=>root.classList.contains('is-open')?close():open());
+  input.addEventListener('input',render);
+  input.addEventListener('focus',render);
+  root.addEventListener('keydown',(event)=>{
+    const links=[...results.querySelectorAll('a')];
+    if (event.key==='Escape') {
+      event.preventDefault();event.stopPropagation();close({clear:true});
+      if (getComputedStyle(launch).display!=='none') launch.focus(); else input.focus();
+    } else if ((event.key==='ArrowDown' || event.key==='ArrowUp') && !matches.hidden && links.length) {
+      event.preventDefault();
+      const current=links.indexOf(document.activeElement);
+      const next=event.key==='ArrowDown'?(current+1)%links.length:current<=0?links.length-1:current-1;
+      links[next].focus();
+    } else if (event.key==='Enter' && event.target===input && !matches.hidden && links.length) {
+      event.preventDefault();links[0].click();
+    }
   });
+  results.addEventListener('click',()=>{
+    close();
+    collapsePrimaryNavSidebarOnCompact?.();
+  });
+  root.addEventListener('focusout',()=>window.setTimeout(()=>{
+    if (!root.contains(document.activeElement)) close();
+  },0));
+  document.addEventListener('click',(event)=>{if(!root.contains(event.target))close();});
+  document.addEventListener('keydown',(event)=>{
+    if ((event.ctrlKey||event.metaKey) && event.key.toLowerCase()==='k' && !event.altKey) {
+      event.preventDefault();
+      const toggle=document.querySelector('#nav-sidebar-toggle');
+      if (window.matchMedia('(max-width:1180px)').matches && document.documentElement.classList.contains('nav-sidebar-collapsed')) toggle?.click();
+      open();
+    }
+  });
+  window.addEventListener('nav-sidebar-statechange',()=>close({clear:true}));
 }
 
 function initNavGroups() {
   const nav = document.querySelector(".topbar nav");
   const content = document.querySelector("#primary-sidebar-content");
-  if (!nav || !content || nav.dataset.navGroupReady === "1") return;
+  if (!nav || !content || nav.dataset.navGroupReady === "1" || nav.querySelector(".research-task-nav")) return;
   nav.dataset.navGroupReady = "1";
   const compactQuery = window.matchMedia?.("(max-width: 1180px)");
   const isCompact = () => Boolean(compactQuery?.matches);
   const shouldGroup = () => isCompact() || !document.documentElement.classList.contains("nav-sidebar-collapsed");
   const originalItems = [...nav.children];
   const groups = [
-    { name: "Explore", labels: new Set(["Publications", "Evidence", "Trials", "Authors", "Citation Network"]) },
-    { name: "Tools", labels: new Set(["Analytics", "R script", "Alerts", "Export data", "API"]) },
+    { name: "Literature", labels: new Set(["Publications", "Research guide", "Alcohol evidence", "Depression evidence", "Evidence", "Dataset", "Research trends", "Trials"]) },
+    { name: "Visualize", labels: new Set(["Citation Network", "Trials Map"]) },
+    { name: "Tools", labels: new Set(["Open Datasets", "Authors", "Analytics", "R script", "Export data", "API"]) },
     { name: "Project", labels: new Set(["GitHub", "Zenodo DOI", "About", "Data protection"]) },
+    { name: "In development", labels: new Set(["Brain Model", "Receptor Binding", "Chemical Structure"]) },
   ];
   const labelFor = (item) => item.querySelector("span")?.textContent?.trim() || item.textContent.trim();
-  const groupFor = (item) => groups.find((group) => group.labels.has(labelFor(item))) || groups[groups.length - 1];
+  const groupFor = (item) => groups.find((group) => group.labels.has(labelFor(item))) || groups.find((group) => group.name === "Project");
   const isActiveItem = (item) => item.matches?.("[aria-current='location'], .is-active") || Boolean(item.querySelector?.("[aria-current='location'], .is-active"));
   const buildGroup = (group, items, activeGroupName) => {
     const details = document.createElement("details");
@@ -463,9 +1330,9 @@ function initNavGroups() {
     body.className = "nav-group-body";
     items.forEach((item) => body.append(item));
     details.append(summary, body);
-    if (group.name === (activeGroupName || "Explore")) details.open = true;
+    if (group.name === (activeGroupName || "Literature")) details.open = true;
     details.addEventListener("toggle", () => {
-      if (!details.open) return;
+      if (!details.open || !nav.contains(details)) return;
       nav.querySelectorAll(".nav-group[open]").forEach((other) => {
         if (other !== details) other.open = false;
       });
@@ -495,6 +1362,46 @@ function initNavGroups() {
   apply();
   compactQuery?.addEventListener?.("change", apply);
   window.addEventListener("nav-sidebar-statechange", apply);
+}
+
+function initFloatingExportHoverMenu() {
+  if (document.documentElement.dataset.floatingExportHoverBound === "1") return;
+  document.documentElement.dataset.floatingExportHoverBound = "1";
+  let closeTimer = 0;
+  document.addEventListener("pointerover", (event) => {
+    if (event.pointerType === "touch") return;
+    const bar = event.target.closest?.("[data-smart-result-bar].is-smart-floating");
+    if (!bar || bar.dataset.desktopControlsBound === "1") return;
+    const exportMenu = event.target.closest?.(".result-settings-menu");
+    if (exportMenu) {
+      window.clearTimeout(closeTimer);
+      exportMenu.open = true;
+    }
+  });
+  document.addEventListener("pointerout", (event) => {
+    if (event.pointerType === "touch") return;
+    const exportMenu = event.target.closest?.(".result-settings-menu");
+    if (!exportMenu || exportMenu.closest("[data-desktop-controls-bound]") || exportMenu.contains(event.relatedTarget)) return;
+    window.clearTimeout(closeTimer);
+    closeTimer = window.setTimeout(() => {
+      if (!exportMenu.matches(":hover, :focus-within")) exportMenu.open = false;
+    }, 180);
+  });
+  document.addEventListener("click", (event) => {
+    const closeButton = event.target.closest?.("[data-close-export-menu]");
+    if (!closeButton) return;
+    const exportMenu = closeButton.closest(".result-settings-menu");
+    if (!(exportMenu instanceof HTMLDetailsElement)) return;
+    exportMenu.open = false;
+    exportMenu.querySelector("summary")?.focus();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    const exportMenu = document.querySelector(".result-settings-menu[open]");
+    if (!(exportMenu instanceof HTMLDetailsElement)) return;
+    exportMenu.open = false;
+    exportMenu.querySelector("summary")?.focus();
+  });
 }
 
 function initEntryChoices() {
@@ -538,48 +1445,36 @@ function initEntryChoices() {
   });
 }
 
-function initScrollProgress() {
-  const progress = document.querySelector("#scroll-progress span");
-  if (!progress) return;
-  let ticking = false;
-  const update = () => {
-    const doc = document.documentElement;
-    const max = Math.max(1, doc.scrollHeight - doc.clientHeight);
-    const ratio = Math.min(1, Math.max(0, window.scrollY / max));
-    progress.style.transform = `scaleX(${ratio})`;
-    ticking = false;
-  };
-  const requestUpdate = () => {
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(update);
-  };
-  update();
-  window.addEventListener("scroll", requestUpdate, { passive: true });
-  window.addEventListener("resize", requestUpdate);
-}
-
 function initScrollTop() {
-  const button = document.querySelector("#scroll-top");
-  if (!button) return;
-  let ticking = false;
-  const sync = () => {
-    button.classList.toggle("is-visible", window.scrollY > 640);
-    ticking = false;
+  document.querySelector('#scroll-progress')?.remove();
+  let button=document.querySelector('#scroll-top');
+  if(!button){
+    button=document.createElement('button');button.id='scroll-top';button.className='scroll-top';button.type='button';
+    button.innerHTML=`<i aria-hidden="true">${ICONS['arrow-up']}</i><span>Top</span>`;document.body.append(button);
+  }
+  if(button.dataset.scrollReady==='1')return;
+  button.dataset.scrollReady='1';button.setAttribute('aria-label','Scroll to top');
+  button.setAttribute('aria-description','The surrounding ring shows page scroll progress.');
+  button.insertAdjacentHTML('afterbegin','<svg class="scroll-top-ring" viewBox="0 0 56 56" aria-hidden="true" focusable="false"><circle class="scroll-top-track" cx="28" cy="28" r="23.5"/><circle class="scroll-top-progress" cx="28" cy="28" r="23.5" pathLength="100"/></svg>');
+  const ring=button.querySelector('.scroll-top-progress');let frame=0,last=-1;
+  const update=()=>{
+    frame=0;const doc=document.documentElement,max=Math.max(0,doc.scrollHeight-doc.clientHeight);
+    const ratio=max?Math.max(0,Math.min(1,scrollY/max)):0;
+    ring.style.strokeDashoffset=String(100-ratio*100);
+    button.classList.toggle('is-visible',max>0&&scrollY>Math.min(400,doc.clientHeight*.6,max/3));
+    const percent=Math.round(ratio*100);
+    if(percent!==last){button.title=`Scroll to top · ${percent}% of page`;last=percent;}
   };
-  const requestSync = () => {
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(sync);
-  };
-  button.addEventListener("click", () => {
-    window.scrollTo({
-      top: 0,
-      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-    });
+  const schedule=()=>{if(!frame)frame=requestAnimationFrame(update);};
+  button.addEventListener('click',()=>{
+    window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+    const heading=document.querySelector('h1');
+    if(heading){const hadTabIndex=heading.hasAttribute('tabindex');if(!hadTabIndex)heading.setAttribute('tabindex','-1');heading.focus({preventScroll:true});if(!hadTabIndex)heading.addEventListener('blur',()=>heading.removeAttribute('tabindex'),{once:true});}
   });
-  sync();
-  window.addEventListener("scroll", requestSync, { passive: true });
+  window.addEventListener('scroll',schedule,{passive:true});window.addEventListener('resize',schedule);
+  window.addEventListener('pageshow',schedule);window.addEventListener('tracker:results-loaded',schedule);
+  if('ResizeObserver' in window)new ResizeObserver(schedule).observe(document.body);
+  update();
 }
 
 function browserFromUserAgent(userAgent) {
@@ -628,8 +1523,9 @@ function initCountUpStats() {
   const counters = document.querySelectorAll("[data-count-up]");
   if (!counters.length) return;
   const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  const formatter = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
   counters.forEach((counter) => {
+    const locale = counter.getAttribute("data-count-locale") || undefined;
+    const formatter = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
     const target = Number.parseInt(counter.getAttribute("data-count-up") || "0", 10);
     if (!Number.isFinite(target) || target < 1 || reducedMotion) {
       counter.textContent = formatter.format(Math.max(target, 0));
@@ -669,7 +1565,10 @@ function currentScrollOffset() {
 }
 
 function focusResultsPanel() {
-  const results = document.querySelector("#matching-results-body") || document.querySelector("#papers");
+  const results = document.querySelector("#search-context")
+    || document.querySelector("#publication-results")
+    || document.querySelector("#matching-results-body")
+    || document.querySelector("#papers");
   if (!results) return;
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const targetY = Math.max(0, window.scrollY + results.getBoundingClientRect().top - currentScrollOffset());
@@ -697,38 +1596,80 @@ function replaceSection(selector, nextDocument) {
   current.replaceWith(next);
 }
 
+let pendingSearchController = null;
+
+let renderedSearchLocation = window.location.pathname + window.location.search;
+
 async function loadSearchUrl(url, { push = true } = {}) {
+  pendingSearchController?.abort();
+  const controller = new AbortController();
+  pendingSearchController = controller;
+  hidePreloader();
   const target = new URL(url, window.location.href);
   target.hash = "";
   closeOpenDialogsForDomSwap();
   document.documentElement.classList.add("is-searching");
+  let completedSearch = false;
+  let searchPreloader = null;
+  const countChanged = (target.searchParams.get("per_page") || "20") !== (new URLSearchParams(window.location.search).get("per_page") || "20");
+  if (countChanged) searchPreloader = showSearchPreloader(target);
+  const searchPreloaderTimer = window.setTimeout(() => {
+    if (!controller.signal.aborted && pendingSearchController === controller) searchPreloader = showSearchPreloader(target);
+  }, countChanged ? 0 : 450);
   try {
     const response = await fetch(target.href, {
       headers: { Accept: "text/html" },
       cache: "no-store",
+      signal: controller.signal,
     });
     if (!response.ok) throw new Error("Search request failed");
+    window.trackerOfflinePage = response.headers.get("X-Tracker-Offline") === "1" ? { snapshot: "", kind: "home" } : null;
+    window.dispatchEvent(new Event("tracker:connection-status"));
     const html = await response.text();
+    if (controller.signal.aborted) return;
     const nextDocument = new DOMParser().parseFromString(html, "text/html");
+    window.clearTimeout(searchPreloaderTimer);
+    const confirmedResults = nextDocument.querySelector("#papers");
+    if (searchPreloader && confirmedResults) setPreloaderContext(confirmedResults.dataset.loadingTitle, confirmedResults.dataset.loadingDetail);
+    const robots = nextDocument.querySelector('meta[name="robots"]');
+    if (robots) document.querySelector('meta[name="robots"]')?.setAttribute("content", robots.content);
     closeOpenDialogsForDomSwap();
-    replaceSection(".filters", nextDocument);
+    replaceSection(".hero-action-summary", nextDocument);
+    replaceSection(".advanced-filter-form", nextDocument);
+    replaceSection("#alert-option-catalog", nextDocument);
     replaceSection(".results", nextDocument);
     if (push) {
       window.history.pushState({ publicationTrackerSearch: true }, "", `${target.pathname}${target.search}#papers`);
     }
+    renderedSearchLocation = target.pathname + target.search;
     syncSearchInputsFromLocation();
+    window.dispatchEvent(new Event("tracker:results-loaded"));
     refreshIcons();
     bindCitationButtons(document.querySelector("#papers") || document);
     initAppSheets();
+    initAdvancedFilterSearchSync();
+    initAlertMultiselects();
     initSidebarControls();
+    initSmartResultBar();
+    initResultQuickControls();
+    initCollectionExport();
     syncSidebarResultActions();
     focusResultsPanel();
     showAppToast("Search results updated.");
+    completedSearch = true;
   } catch (error) {
+    if (controller.signal.aborted) return;
     window.location.href = `${target.pathname}${target.search}#papers`;
   } finally {
-    document.documentElement.classList.remove("is-searching");
+    window.clearTimeout(searchPreloaderTimer);
+    if (pendingSearchController === controller) {
+      if (searchPreloader) hidePreloader();
+      document.documentElement.classList.remove("is-searching");
+      pendingSearchController = null;
+      if (completedSearch && !controller.signal.aborted) window.dispatchEvent(new Event("tracker:search-complete"));
+    }
   }
+  return completedSearch;
 }
 
 function urlFromForm(form) {
@@ -739,6 +1680,10 @@ function urlFromForm(form) {
     if (typeof value !== "string") continue;
     if (value === "" && key !== "page") continue;
     params.append(key, value);
+  }
+  if (form.matches(".advanced-filter-form")) {
+    const statuses = [...form.querySelectorAll('input[name="publication_statuses[]"]')];
+    if (statuses.length && statuses.every(input => input.checked)) params.delete("publication_statuses[]");
   }
   if (!params.has("page")) params.set("page", "1");
   url.search = params.toString();
@@ -754,13 +1699,27 @@ function initAjaxSearch() {
     const form = event.target;
     if (!(form instanceof HTMLFormElement)) return;
     if ((form.getAttribute("method") || "get").toLowerCase() !== "get") return;
-    if (!form.matches(".hero-search, .filters")) return;
+    if (!form.matches(".hero-search, .advanced-filter-form, .result-quick-controls")) return;
     event.preventDefault();
-    loadSearchUrl(urlFromForm(form));
+    const completed = loadSearchUrl(urlFromForm(form));
+    if (event.agentInvoked && typeof event.respondWith === 'function') {
+      event.respondWith(completed.then(done => {
+        if (!done) throw new Error('Search did not complete; retry against the current page.');
+        return {
+        url: currentResultsShareUrl(),
+        total: Number(document.querySelector('#papers')?.dataset.resultTotal || 0),
+        records: [...document.querySelectorAll('#matching-results-body .paper')].map(paper => ({
+          title: paper.querySelector('.paper-main h3 a')?.textContent?.trim() || '',
+          url: paper.querySelector('.paper-main h3 a')?.href || '',
+          metadata: paper.querySelector('.paper-meta')?.textContent?.trim() || ''
+        }))
+      }; }));
+    }
   });
 
   document.addEventListener("click", (event) => {
-    const link = event.target.closest(".pager a:not(.disabled), .search-context-reset, .rank-filter-link");
+    const link = event.target.closest(".pager a:not(.disabled), .results-bottom-pager a:not(.disabled), .search-context-reset, .advanced-filter-reset, .rank-filter-link, .active-filter-chip, .filter-reset, .search-recovery-link");
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     if (!(link instanceof HTMLAnchorElement)) return;
     const url = new URL(link.href, window.location.href);
     if (url.origin !== window.location.origin || url.pathname !== window.location.pathname) return;
@@ -769,6 +1728,8 @@ function initAjaxSearch() {
   });
 
   window.addEventListener("popstate", () => {
+    // Fragment-only navigation (including analytics) is not a new search.
+    if (window.location.pathname + window.location.search === renderedSearchLocation) return;
     loadSearchUrl(window.location.href, { push: false });
   });
 }
@@ -777,7 +1738,7 @@ function initSearchResultFocus() {
   const results = document.querySelector("#papers");
   if (!results) return;
   const params = new URLSearchParams(window.location.search);
-  const hasQuery = ["search", "q", "author", "journal", "topic", "study_type", "year", "from", "to"].some((key) => (params.get(key) || "").trim() !== "");
+  const hasQuery = ["search", "q", "author", "journal", "topic", "study_type", "year", "from", "to"].some((key) => [...params.keys()].some(k=>(k===key||k.startsWith(key+"["))&&(params.get(k)||"").trim()));
   const hash = window.location.hash;
   const shouldFocusResults = hash === "#papers" || (hasQuery && (!hash || hash === "#papers"));
   if (!shouldFocusResults) return;
@@ -790,22 +1751,27 @@ function initSearchResultFocus() {
 function syncSidebarResultActions() {
   const printButton = document.querySelector("#sidebar-print-results");
   if (!printButton) return;
+  if (!document.querySelector('#publication-results')) { printButton.disabled=false;printButton.removeAttribute('aria-disabled');printButton.title='Print this page';return; }
   const hasPrintableResults = document.querySelectorAll("#matching-results-body .paper").length > 0;
   printButton.disabled = !hasPrintableResults;
   printButton.setAttribute("aria-disabled", hasPrintableResults ? "false" : "true");
   printButton.setAttribute("title", hasPrintableResults ? "Print visible results" : "No visible results to print");
 }
 
-function hasShareableResultFilters(params = new URLSearchParams(window.location.search)) {
-  const meaningfulKeys = [
-    "search", "q", "author", "journal", "topic", "study_type", "year", "from", "to",
-    "substances[]", "sources[]", "publication_statuses[]",
-  ];
-  if (meaningfulKeys.some((key) => (params.get(key) || "").trim() !== "" || params.getAll(key).some((value) => value.trim() !== ""))) {
-    return true;
+function publicResultParams(params = new URLSearchParams(window.location.search)) {
+  const allowed = new Set(['search', 'q', 'author', 'journal', 'topic', 'study_type', 'cited_doi', 'year', 'from', 'to', 'added_from', 'added_to', 'substances', 'sources', 'publication_statuses', 'range', 'sort', 'per_page', 'page']);
+  const clean = new URLSearchParams();
+  for (const [key, value] of params) {
+    const match = key.match(/^([a-z_]+)(?:\[\d*\])?$/);
+    if (!match || !allowed.has(match[1]) || !value.trim()) continue;
+    if ((key === 'range' && value === 'all') || (key === 'page' && value === '1') || (key === 'per_page' && value === '20') || (key === 'sort' && value === 'newly_added')) continue;
+    clean.append(key, value);
   }
-  const range = (params.get("range") || "").trim();
-  return range !== "" && range !== "all";
+  return clean;
+}
+
+function hasShareableResultFilters(params = new URLSearchParams(window.location.search)) {
+  return publicResultParams(params).toString().length > 0;
 }
 
 function canonicalShareBaseUrl() {
@@ -814,9 +1780,10 @@ function canonicalShareBaseUrl() {
 }
 
 function currentResultsShareUrl() {
-  const params = new URLSearchParams(window.location.search);
+  if (!document.querySelector('#publication-results')) return canonicalShareBaseUrl().href;
+  const params = publicResultParams();
   const url = canonicalShareBaseUrl();
-  if (hasShareableResultFilters(params)) {
+  if (params.toString()) {
     url.search = params.toString();
     url.hash = "papers";
   } else {
@@ -835,35 +1802,31 @@ function shareTextForCurrentResults() {
   return "Search and analyze psilocybin and psilocin publications, preprints, protocols, reviews, and clinical trials.";
 }
 
-function initNativeShare() {
-  const button = document.querySelector("#sidebar-share-results");
-  if (!button) return;
-  if (!navigator.share) {
-    button.hidden = true;
-    return;
+async function shareCurrentResults() {
+  const results=!!document.querySelector('#publication-results');
+  const payload = { title: results?'Psilocybin Research Database':document.title, text: results?shareTextForCurrentResults():'', url: currentResultsShareUrl() };
+  if (navigator.share) {
+    try { await navigator.share(payload); return; }
+    catch (error) { if (error?.name === 'AbortError') return; }
   }
-  button.hidden = false;
-  button.setAttribute("title", "Share current results");
-  button.addEventListener("click", async () => {
-    const payload = {
-      title: "Psilocybin Research Publication Tracker",
-      text: shareTextForCurrentResults(),
-      url: currentResultsShareUrl(),
-    };
-    try {
-      await navigator.share(payload);
-      showAppToast("Share sheet opened.");
-    } catch (error) {
-      if (error && error.name === "AbortError") return;
-      showAppToast("Sharing is not available right now.");
-    }
-  });
+  try {
+    await navigator.clipboard.writeText(payload.url);
+    showAppToast('Link copied.');
+  } catch (_) { showAppToast(`Copy this link: ${payload.url}`, 12000); }
+}
+
+function initNativeShare() {
+  const button = document.querySelector('#sidebar-share-results');
+  if (!button || button.dataset.shareReady === '1') return;
+  button.dataset.shareReady = '1'; button.hidden = false;
+  button.setAttribute('title', document.querySelector('#publication-results')?'Share current results':'Share this page');
+  button.addEventListener('click', shareCurrentResults);
 }
 
 function initFullscreenToggle() {
   const button = document.querySelector("#sidebar-fullscreen-toggle");
   if (!button) return;
-  const fullscreenEnabled = document.fullscreenEnabled || document.webkitFullscreenEnabled;
+  const fullscreenEnabled = Boolean(document.fullscreenEnabled || document.webkitFullscreenEnabled);
   const fullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
   const requestFullscreen = (element) => {
     if (element.requestFullscreen) return element.requestFullscreen();
@@ -1028,6 +1991,7 @@ function initPrintResults() {
   if (button.dataset.printBound === "1") return;
   button.dataset.printBound = "1";
   button.addEventListener("click", () => {
+    if (!document.querySelector('#publication-results')) { window.print();return; }
     const papers = paperDataForPrint();
     if (!papers.length) {
       syncSidebarResultActions();
@@ -1087,6 +2051,30 @@ for (const form of document.querySelectorAll("form")) {
     button.setAttribute("aria-busy", "true");
   });
 }
+
+// Delegation also covers the card after an AJAX results refresh.
+document.addEventListener("click", async (event) => {
+  const button = event.target.closest?.("[data-copy-mcp-url]");
+  if (!button || button.disabled) return;
+  const address = button.closest(".mcp-connect-card")?.querySelector("code");
+  if (!address) return;
+  button.disabled = true;
+  try {
+    await navigator.clipboard.writeText(address.textContent.trim());
+    button.textContent = "Copied";
+    showAppToast("MCP server address copied.");
+  } catch (error) {
+    address.focus({ preventScroll: true });
+    const range = document.createRange();
+    range.selectNodeContents(address);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    showAppToast("Select the highlighted server address and copy it.");
+  } finally {
+    window.setTimeout(() => { button.textContent = "Copy"; button.disabled = false; }, 1600);
+  }
+});
 
 function bindCitationButtons(scope = document) {
 for (const button of scope.querySelectorAll(".copy-citation")) {
@@ -1153,903 +2141,11 @@ function syncRecencyBadges(root = document) {
   });
 }
 
-const analyticsDataElement = document.querySelector("#analytics-data");
-const timelineChart = document.querySelector("#publication-timeline");
-const timelineSummary = document.querySelector("#timeline-summary");
-const timelineInsight = document.querySelector("#timeline-insight");
-const timelineFrom = document.querySelector("#timeline-from");
-const timelineTo = document.querySelector("#timeline-to");
-const timelineApply = document.querySelector("#timeline-apply");
-const timelineReset = document.querySelector("#timeline-reset");
-const timelineOpenJson = document.querySelector("#timeline-open-json");
-const timelineOpenHtml = document.querySelector("#timeline-open-html");
-const analyticsLens = document.querySelector("#analytics-lens");
-const analyticsLensSummary = document.querySelector("#analytics-lens-summary");
-const analyticsApply = document.querySelector("#analytics-apply");
-const analyticsClear = document.querySelector("#analytics-clear");
-const analyticsOpenPapers = document.querySelector("#analytics-open-papers");
-const analyticsExportLatex = document.querySelector("#analytics-export-latex");
-const analyticsResultsList = document.querySelector("#analytics-results-list");
-const analyticsResultsCount = document.querySelector("#analytics-results-count");
-const analyticsLensInputs = {
-  keyword: document.querySelector("#analytics-keyword"),
-  author: document.querySelector("#analytics-author"),
-  journal: document.querySelector("#analytics-journal"),
-  identifier: document.querySelector("#analytics-identifier"),
-  source: document.querySelector("#analytics-source"),
-  status: document.querySelector("#analytics-status"),
-  topic: document.querySelector("#analytics-topic"),
-  studyType: document.querySelector("#analytics-study-type"),
-  substance: document.querySelector("#analytics-substance"),
-};
-const DAY_MS = 86400000;
-let currentTimelineView = null;
-let currentAnalyticsFilters = {};
-
-const publicationGrowthChart = document.querySelector("#publication-growth-chart");
-const publicationGrowthDataElement = document.querySelector("#publication-growth-data");
-
-function analyticsData() {
-  if (!analyticsDataElement) return {};
-  try {
-    return JSON.parse(analyticsDataElement.textContent || "{}");
-  } catch (error) {
-    return {};
-  }
-}
-
-function parseIsoDate(value) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) return null;
-  const date = new Date(`${value}T00:00:00Z`);
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
-function isoDate(date) {
-  return date.toISOString().slice(0, 10);
-}
-
-function addDays(date, days) {
-  const next = new Date(date);
-  next.setUTCDate(next.getUTCDate() + days);
-  return next;
-}
-
-function addMonths(date, months) {
-  const next = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
-  next.setUTCMonth(next.getUTCMonth() + months);
-  return next;
-}
-
-function addYears(date, years) {
-  return new Date(Date.UTC(date.getUTCFullYear() + years, 0, 1));
-}
-
-function monthKey(date) {
-  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
-}
-
-function timelineBounds(rows) {
-  const dates = rows.map((row) => parseIsoDate(row.date)).filter(Boolean);
-  if (!dates.length) return null;
-  return {
-    min: new Date(Math.min(...dates.map((date) => date.getTime()))),
-    max: new Date(Math.max(...dates.map((date) => date.getTime()))),
-  };
-}
-
-function analyticsPapers() {
-  const data = analyticsData();
-  const rows = Array.isArray(data.timeline_papers) ? data.timeline_papers : [];
-  return rows.map((paper) => ({
-    id: Number(paper.id || 0),
-    title: String(paper.title || "Untitled publication"),
-    authors: String(paper.authors || ""),
-    journal: String(paper.journal || ""),
-    publication_date: String(paper.publication_date || ""),
-    doi: String(paper.doi || ""),
-    pubmed_id: String(paper.pubmed_id || ""),
-    source_url: String(paper.source_url || ""),
-    source_name: String(paper.source_name || ""),
-    publication_status: String(paper.publication_status || "published"),
-    substance_tags: String(paper.substance_tags || ""),
-    topic_tags: String(paper.topic_tags || ""),
-    study_type: String(paper.study_type || ""),
-  })).filter((paper) => parseIsoDate(paper.publication_date));
-}
-
-function normalizedNeedle(value) {
-  return String(value || "").trim().toLowerCase();
-}
-
-function getAnalyticsLensFilters() {
-  return Object.fromEntries(Object.entries(analyticsLensInputs).map(([key, input]) => [key, normalizedNeedle(input?.value)]));
-}
-
-function activeAnalyticsFilterEntries(filters = currentAnalyticsFilters) {
-  return Object.entries(filters).filter(([, value]) => value !== "");
-}
-
-function analyticsLensSearchText(paper) {
-  return [
-    paper.title, paper.authors, paper.journal, paper.doi, paper.pubmed_id, paper.source_name,
-    paper.publication_status, paper.substance_tags, paper.topic_tags, paper.study_type,
-  ].join(" ").toLowerCase();
-}
-
-function analyticsPaperMatches(paper, filters = currentAnalyticsFilters) {
-  if (filters.keyword && !analyticsLensSearchText(paper).includes(filters.keyword)) return false;
-  if (filters.author && !paper.authors.toLowerCase().includes(filters.author)) return false;
-  if (filters.journal && !paper.journal.toLowerCase().includes(filters.journal)) return false;
-  if (filters.identifier && !`${paper.doi} ${paper.pubmed_id}`.toLowerCase().includes(filters.identifier)) return false;
-  if (filters.source && !paper.source_name.toLowerCase().includes(filters.source)) return false;
-  if (filters.status && paper.publication_status.toLowerCase() !== filters.status) return false;
-  if (filters.topic && !paper.topic_tags.toLowerCase().includes(filters.topic)) return false;
-  if (filters.studyType && !paper.study_type.toLowerCase().includes(filters.studyType)) return false;
-  if (filters.substance && !paper.substance_tags.toLowerCase().includes(filters.substance)) return false;
-  return true;
-}
-
-function filteredAnalyticsPapers(range = null) {
-  return analyticsPapers().filter((paper) => {
-    if (!analyticsPaperMatches(paper)) return false;
-    if (!range) return true;
-    return paper.publication_date >= range.from && paper.publication_date <= range.to;
-  });
-}
-
-function timelineRowsFromPapers(papers) {
-  const counts = new Map();
-  papers.forEach((paper) => {
-    counts.set(paper.publication_date, (counts.get(paper.publication_date) || 0) + 1);
-  });
-  return Array.from(counts.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, count]) => ({ date, count }));
-}
-
-function analyticsUrlFromFilters(format = null) {
-  const url = new URL(format ? "export.php" : "./", window.location.href);
-  const filters = currentAnalyticsFilters;
-  const set = (key, value) => { if (value) url.searchParams.set(key, value); };
-  set("search", filters.keyword || filters.identifier || "");
-  set("author", filters.author || "");
-  set("journal", filters.journal || "");
-  set("topic", filters.topic || "");
-  set("study_type", filters.studyType || "");
-  if (filters.substance) url.searchParams.append("substances[]", filters.substance);
-  if (filters.source) url.searchParams.append("sources[]", filters.source);
-  if (filters.status) url.searchParams.append("publication_statuses[]", filters.status);
-  if (currentTimelineView) {
-    url.searchParams.set("range", "custom");
-    url.searchParams.set("from", isoDate(currentTimelineView.from));
-    url.searchParams.set("to", isoDate(currentTimelineView.to));
-  }
-  url.searchParams.set("page", "1");
-  if (format) {
-    url.searchParams.set("format", format);
-  } else {
-    url.hash = "papers";
-  }
-  return url.toString();
-}
-
-function presetRange(preset, bounds) {
-  if (!bounds) return null;
-  if (preset === "all") return { from: bounds.min, to: bounds.max };
-  const years = Number(String(preset).replace("y", ""));
-  if (!Number.isFinite(years)) return { from: bounds.min, to: bounds.max };
-  return {
-    from: new Date(Date.UTC(bounds.max.getUTCFullYear() - years + 1, bounds.max.getUTCMonth(), bounds.max.getUTCDate())),
-    to: bounds.max,
-  };
-}
-
-function aggregateTimeline(rows, from, to, preferredMode = null) {
-  const spanDays = Math.max(1, Math.round((to.getTime() - from.getTime()) / DAY_MS) + 1);
-  const autoMode = spanDays <= 120 ? "day" : spanDays <= 1460 ? "month" : "year";
-  const mode = ["day", "month", "year"].includes(preferredMode) ? preferredMode : autoMode;
-  const counts = new Map();
-  rows.forEach((row) => {
-    const date = parseIsoDate(row.date);
-    if (!date || date < from || date > to) return;
-    const key = mode === "day" ? isoDate(date) : mode === "month" ? monthKey(date) : String(date.getUTCFullYear());
-    counts.set(key, (counts.get(key) || 0) + Number(row.count || 0));
-  });
-
-  const buckets = [];
-  if (mode === "day") {
-    for (let cursor = new Date(from); cursor <= to; cursor = addDays(cursor, 1)) {
-      const key = isoDate(cursor);
-      buckets.push({ label: key.slice(5), fullLabel: key, range: { from: key, to: key }, count: counts.get(key) || 0 });
-    }
-  } else if (mode === "month") {
-    const start = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), 1));
-    const end = new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), 1));
-    for (let cursor = start; cursor <= end; cursor = addMonths(cursor, 1)) {
-      const key = monthKey(cursor);
-      const monthStart = isoDate(cursor) < isoDate(from) ? isoDate(from) : isoDate(cursor);
-      const monthEndDate = addDays(addMonths(cursor, 1), -1);
-      const monthEnd = isoDate(monthEndDate) > isoDate(to) ? isoDate(to) : isoDate(monthEndDate);
-      buckets.push({ label: key, fullLabel: key, range: { from: monthStart, to: monthEnd }, count: counts.get(key) || 0 });
-    }
-  } else {
-    const start = new Date(Date.UTC(from.getUTCFullYear(), 0, 1));
-    const end = new Date(Date.UTC(to.getUTCFullYear(), 0, 1));
-    for (let cursor = start; cursor <= end; cursor = addYears(cursor, 1)) {
-      const key = String(cursor.getUTCFullYear());
-      const yearStart = `${key}-01-01` < isoDate(from) ? isoDate(from) : `${key}-01-01`;
-      const yearEnd = `${key}-12-31` > isoDate(to) ? isoDate(to) : `${key}-12-31`;
-      buckets.push({ label: key, fullLabel: key, range: { from: yearStart, to: yearEnd }, count: counts.get(key) || 0 });
-    }
-  }
-  return { buckets, mode, total: buckets.reduce((sum, row) => sum + row.count, 0), spanDays };
-}
-
-function publicationGrowthData() {
-  if (!publicationGrowthDataElement) return null;
-  try {
-    return JSON.parse(publicationGrowthDataElement.textContent || "{}");
-  } catch (error) {
-    return null;
-  }
-}
-
-function renderPublicationGrowthChart() {
-  if (!publicationGrowthChart) return;
-  const data = publicationGrowthData();
-  const rows = Array.isArray(data?.rows) ? data.rows.map((row) => ({
-    year: Number(row.year),
-    count: Number(row.count || 0),
-  })).filter((row) => Number.isFinite(row.year)) : [];
-  if (!rows.length) {
-    publicationGrowthChart.innerHTML = '<p class="publication-growth-empty">Timeline data will appear after dated records are indexed.</p>';
-    return;
-  }
-
-  const width = Math.max(320, Math.round(publicationGrowthChart.clientWidth || 360));
-  const height = 126;
-  const pad = { top: 13, right: 26, bottom: 25, left: 26 };
-  const innerW = width - pad.left - pad.right;
-  const innerH = 78;
-  const total = rows.reduce((sum, row) => sum + row.count, 0);
-  const max = Math.max(...rows.map((row) => row.count), 1);
-  const slot = innerW / rows.length;
-  const barW = Math.max(5, Math.min(18, slot * 0.52));
-  let cumulative = 0;
-  const bars = rows.map((row, index) => {
-    const x = pad.left + index * slot + (slot - barW) / 2;
-    const h = row.count > 0 ? Math.max(2, (row.count / max) * innerH) : 0;
-    const y = pad.top + innerH - h;
-    cumulative += row.count;
-    const lineX = pad.left + index * slot + slot / 2;
-    const lineY = pad.top + (1 - cumulative / Math.max(1, total)) * innerH;
-    return { ...row, x, y, width: barW, height: h, lineX, lineY, cumulative };
-  });
-  const first = rows[0];
-  const last = rows[rows.length - 1];
-  const line = bars.map((bar, index) => `${index ? "L" : "M"}${bar.lineX.toFixed(1)} ${bar.lineY.toFixed(1)}`).join(" ");
-  publicationGrowthChart.innerHTML = `
-    <svg viewBox="0 0 ${width} ${height}" aria-label="Annual publication growth since ${first.year}">
-      <line class="chart-grid publication-growth-grid" x1="${pad.left}" y1="${pad.top + innerH / 2}" x2="${width - pad.right}" y2="${pad.top + innerH / 2}"></line>
-      <line class="chart-axis publication-growth-axis" x1="${pad.left}" y1="${pad.top + innerH}" x2="${width - pad.right}" y2="${pad.top + innerH}"></line>
-      ${bars.map((bar) => `<rect class="chart-bar publication-growth-bar publication-growth-year" tabindex="0" role="link" data-growth-year="${bar.year}" aria-label="Filter publications from ${bar.year}" x="${bar.x.toFixed(1)}" y="${bar.y.toFixed(1)}" width="${bar.width.toFixed(1)}" height="${bar.height.toFixed(1)}" rx="2"><title>${bar.year}: ${bar.count.toLocaleString()} publications. Opens matching records.</title></rect>`).join("")}
-      <path class="chart-line publication-growth-line" d="${line}"></path>
-      ${bars.map((bar) => `<circle class="chart-point publication-growth-point publication-growth-year" tabindex="0" role="link" data-growth-year="${bar.year}" aria-label="Filter publications from ${bar.year}" cx="${bar.lineX.toFixed(1)}" cy="${bar.lineY.toFixed(1)}" r="3"><title>${bar.year}: ${bar.count.toLocaleString()} publications. Opens matching records.</title></circle>`).join("")}
-      <text class="chart-x" x="${pad.left}" y="${height - 8}">${first.year}</text>
-      <text class="chart-x" x="${width - pad.right}" y="${height - 8}" text-anchor="end">${last.year}</text>
-    </svg>`;
-}
-
-function openPublicationGrowthYear(year) {
-  const normalizedYear = Number(year);
-  if (!Number.isInteger(normalizedYear) || normalizedYear < 1900) return;
-  const url = new URL(window.location.href);
-  url.searchParams.set("year", String(normalizedYear));
-  url.searchParams.set("page", "1");
-  url.searchParams.delete("range");
-  url.searchParams.delete("from");
-  url.searchParams.delete("to");
-  url.hash = "papers";
-  window.location.assign(url.toString());
-}
-
-function bucketRange(bucket, mode, clip = null) {
-  const label = String(bucket?.fullLabel || "");
-  let range;
-  if (mode === "day") {
-    range = { from: label, to: label };
-  } else if (mode === "month") {
-    const [year, month] = label.split("-").map(Number);
-    const start = new Date(Date.UTC(year, month - 1, 1));
-    const end = new Date(Date.UTC(year, month, 0));
-    range = { from: isoDate(start), to: isoDate(end) };
-  } else {
-    const year = Number(label);
-    range = { from: `${year}-01-01`, to: `${year}-12-31` };
-  }
-  if (!clip) return range;
-  return {
-    from: range.from < clip.from ? clip.from : range.from,
-    to: range.to > clip.to ? clip.to : range.to,
-  };
-}
-
-function timelinePayload(bucket = null) {
-  if (!currentTimelineView) return null;
-  const { from, to, aggregate } = currentTimelineView;
-  const visibleRange = { from: isoDate(from), to: isoDate(to) };
-  const paperRange = bucket ? bucketRange(bucket, aggregate.mode, visibleRange) : visibleRange;
-  const papers = timelinePapersForRange(paperRange);
-  const base = {
-    generated_at: new Date().toISOString(),
-    source: "Psilocybin Research Publication Tracker",
-    range: { from: isoDate(from), to: isoDate(to) },
-    granularity: aggregate.mode,
-    total_publications: aggregate.total,
-    papers,
-  };
-  if (bucket) {
-    return {
-      ...base,
-      bucket: {
-        label: bucket.fullLabel,
-        range: paperRange,
-        count: bucket.count,
-      },
-    };
-  }
-  return {
-    ...base,
-    buckets: aggregate.buckets.map((item) => ({
-      label: item.fullLabel,
-      range: bucketRange(item, aggregate.mode, visibleRange),
-      count: item.count,
-    })),
-  };
-}
-
-function timelinePapersForRange(range) {
-  return filteredAnalyticsPapers(range);
-}
-
-function openBlobWindow(content, type) {
-  const blob = new Blob([content], { type });
-  const url = URL.createObjectURL(blob);
-  const opened = window.open(url, "_blank", "noopener");
-  setTimeout(() => URL.revokeObjectURL(url), opened ? 60000 : 1000);
-}
-
-function externalPaperUrl(paper) {
-  if (paper.doi) return `https://doi.org/${encodeURIComponent(paper.doi).replaceAll("%2F", "/")}`;
-  if (paper.pubmed_id) return `https://pubmed.ncbi.nlm.nih.gov/${encodeURIComponent(paper.pubmed_id)}/`;
-  return paper.source_url || "";
-}
-
-function timelineHtml(payload) {
-  const isBucket = !!payload.bucket;
-  const rows = isBucket ? [payload.bucket] : payload.buckets;
-  const title = isBucket ? `Publication timeline: ${payload.bucket.label}` : "Publication timeline data";
-  const papers = Array.isArray(payload.papers) ? payload.papers : [];
-  const printedDateRange = printDateRangeLabel(papers) === "No publication dates available"
-    ? `${isBucket ? payload.bucket.range.from : payload.range.from} to ${isBucket ? payload.bucket.range.to : payload.range.to}`
-    : printDateRangeLabel(papers);
-  const printedSources = printSourcesLabel(papers);
-  const generatedDisplay = new Date(payload.generated_at).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
-  const printConfirmMessage = `Print ${papers.length} ${papers.length === 1 ? "record" : "records"}?\n\nDate range: ${printedDateRange}`;
-  return `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>${escapeHtml(title)}</title>
-  <style>
-    body{margin:0;background:#ffffff;color:#24251f;font-family:Arial,Helvetica,sans-serif}
-    main{max-width:920px;margin:32px auto;padding:0 18px}
-    section{background:#fff;border:1px solid #d8d2c4;border-radius:8px;overflow:hidden}
-    header{padding:18px 22px;background:#ffffff;color:#24251f;border-bottom:1px solid #d8d2c4;border-left:4px solid #123c31}
-    h1{margin:0;font-size:24px;line-height:1.2}
-    h2{margin:22px 22px 8px;font-size:17px;color:#24251f}
-    p{margin:8px 0 0;color:#686c61;font-size:13px}
-    .timeline-actions{margin-top:14px}
-    .timeline-actions button{appearance:none;border:1px solid #123c31;border-radius:6px;background:#123c31;color:#fff;font-weight:800;padding:8px 12px;cursor:pointer}
-    .timeline-actions button:hover{background:#0d2f26}
-    table{width:100%;border-collapse:collapse}
-    th,td{padding:11px 14px;border-bottom:1px solid #d8d2c4;text-align:left;font-size:13px;vertical-align:top}
-    th{background:#f7f6f1;color:#686c61;font-size:11px;text-transform:uppercase}
-    .summary-table td:last-child,.summary-table th:last-child{text-align:right;font-weight:800}
-    .papers-table{border-top:1px solid #d8d2c4}
-    .paper-title{font-weight:800;color:#24251f;text-decoration:none}
-    .paper-title:hover{text-decoration:underline}
-    .paper-meta{margin-top:4px;color:#686c61;font-size:12px;line-height:1.45}
-    .paper-links{white-space:nowrap}
-    .paper-links a{display:inline-block;margin-right:10px;color:#1a6b54;font-weight:800;text-decoration:none}
-    .paper-links a:hover{text-decoration:underline}
-    .badge{display:inline-block;margin-top:5px;padding:3px 7px;border:1px solid #d8d2c4;border-radius:999px;background:#f7f6f1;color:#3d4238;font-size:11px;font-weight:800;text-transform:uppercase}
-    .meta{padding:14px 22px;color:#686c61;font-size:12px}
-    .print-only{display:none}
-    @media screen and (max-width: 700px){
-      body{background:#f7f6f1}
-      main{max-width:none;margin:0;padding:10px}
-      section{border-radius:8px}
-      header{padding:16px;border-left:0;border-top:4px solid #123c31}
-      h1{font-size:21px;line-height:1.16;overflow-wrap:anywhere}
-      h2{margin:18px 14px 8px;font-size:16px}
-      p{font-size:12px;line-height:1.45}
-      .timeline-actions{display:flex;margin-top:12px}
-      .timeline-actions button{width:100%;min-height:42px}
-      .summary-table,.summary-table thead,.summary-table tbody,.summary-table tr,.summary-table th,.summary-table td{display:block;width:100%}
-      .summary-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-      .summary-table tr{padding:10px 14px;border-bottom:1px solid #d8d2c4}
-      .summary-table td{display:flex;justify-content:space-between;gap:12px;padding:4px 0;border:0;white-space:normal}
-      .summary-table td:nth-child(1)::before{content:"Bucket";font-weight:800;color:#686c61;text-transform:uppercase;font-size:11px}
-      .summary-table td:nth-child(2)::before{content:"From";font-weight:800;color:#686c61;text-transform:uppercase;font-size:11px}
-      .summary-table td:nth-child(3)::before{content:"To";font-weight:800;color:#686c61;text-transform:uppercase;font-size:11px}
-      .summary-table td:nth-child(4)::before{content:"Publications";font-weight:800;color:#686c61;text-transform:uppercase;font-size:11px}
-      .papers-table,.papers-table thead,.papers-table tbody,.papers-table tr,.papers-table th,.papers-table td{display:block;width:100%}
-      .papers-table{border-top:0}
-      .papers-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-      .papers-table tr{padding:12px 14px;border-top:1px solid #d8d2c4;background:#fff}
-      .papers-table td{padding:0;border:0;font-size:13px}
-      .papers-table td + td{margin-top:8px}
-      .papers-table td:nth-child(2)::before{content:"Date: ";font-weight:800;color:#686c61}
-      .papers-table td:nth-child(3)::before{content:"Source: ";font-weight:800;color:#686c61}
-      .paper-meta{font-size:12px;line-height:1.5}
-      .paper-links{display:flex;flex-wrap:wrap;gap:8px;white-space:normal}
-      .paper-links a{margin:0;padding:6px 8px;border:1px solid #d8d2c4;border-radius:6px;background:#f7f6f1}
-      .meta{padding:12px 14px;overflow-wrap:anywhere}
-    }
-    @media print{
-      @page{margin:16mm 14mm}
-      body{background:#fff;color:#111;font-family:Georgia,"Times New Roman",serif;font-size:11pt;line-height:1.42}
-      main{max-width:none;margin:0;padding:0}
-      .screen-section{display:none}
-      .print-only{display:block;background:#fff;border:0;border-radius:0;overflow:visible}
-      .print-header{border-bottom:1px solid #111;margin-bottom:14px;padding-bottom:8px;font-family:Arial,Helvetica,sans-serif;font-size:9pt;color:#222}
-      .print-header dl{display:grid;grid-template-columns:30mm 1fr;gap:3px 8px;margin:0}
-      .print-header dt{font-weight:700}
-      .print-header dd{margin:0}
-      .print-references{margin:0;padding-left:20px}
-      .print-references li{break-inside:avoid;margin:0 0 8px;padding-left:3px}
-      .print-footer{border-top:1px solid #bbb;margin-top:14px;padding-top:7px;font-family:Arial,Helvetica,sans-serif;font-size:9pt;color:#333}
-      .print-footer a{color:#111;text-decoration:none}
-    }
-  </style>
-</head>
-<body>
-  <main>
-    <section class="screen-section">
-      <header>
-        <h1>${escapeHtml(title)}</h1>
-        <p>${escapeHtml(payload.range.from)} to ${escapeHtml(payload.range.to)} · ${payload.total_publications} publications · ${escapeHtml(payload.granularity)}</p>
-        <div class="timeline-actions"><button id="timeline-print-references" type="button">Print references</button></div>
-      </header>
-      <table class="summary-table">
-        <thead><tr><th>Bucket</th><th>From</th><th>To</th><th>Publications</th></tr></thead>
-        <tbody>
-          ${rows.map((row) => `<tr><td>${escapeHtml(row.label)}</td><td>${escapeHtml(row.range.from)}</td><td>${escapeHtml(row.range.to)}</td><td>${row.count}</td></tr>`).join("")}
-        </tbody>
-      </table>
-      <h2>Matching publications (${papers.length})</h2>
-      <table class="papers-table">
-        <thead><tr><th>Publication</th><th>Date</th><th>Source</th><th>Links</th></tr></thead>
-        <tbody>
-          ${papers.map((paper) => {
-            const url = externalPaperUrl(paper);
-            const titleCell = url
-              ? `<a class="paper-title" href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(paper.title)}</a>`
-              : `<span class="paper-title">${escapeHtml(paper.title)}</span>`;
-            const doi = paper.doi ? `<a href="https://doi.org/${escapeHtml(paper.doi)}" target="_blank" rel="noopener">DOI</a>` : "";
-            const pmid = paper.pubmed_id ? `<a href="https://pubmed.ncbi.nlm.nih.gov/${escapeHtml(paper.pubmed_id)}/" target="_blank" rel="noopener">PubMed</a>` : "";
-            const source = paper.source_url ? `<a href="${escapeHtml(paper.source_url)}" target="_blank" rel="noopener">Source</a>` : "";
-            return `<tr>
-              <td>${titleCell}<div class="paper-meta">${escapeHtml(paper.authors || "Authors not indexed")}${paper.journal ? ` · ${escapeHtml(paper.journal)}` : ""}</div></td>
-              <td>${escapeHtml(paper.publication_date)}</td>
-              <td>${escapeHtml(paper.source_name || "Unknown")}<br><span class="badge">${escapeHtml(paper.publication_status || "published")}</span></td>
-              <td class="paper-links">${doi}${pmid}${source}</td>
-            </tr>`;
-          }).join("") || '<tr><td colspan="4">No publication records are available for this bucket.</td></tr>'}
-        </tbody>
-      </table>
-      <div class="meta">Generated ${escapeHtml(payload.generated_at)} from ${escapeHtml(payload.source)}.</div>
-    </section>
-    <section class="print-only" aria-label="Scientific references">
-      <div class="print-header">
-        <dl>
-          <dt>Generated</dt><dd>${escapeHtml(generatedDisplay)}</dd>
-          <dt>Entries</dt><dd>${escapeHtml(String(papers.length))}</dd>
-          <dt>Date range</dt><dd>${escapeHtml(printedDateRange)}</dd>
-          <dt>Sources</dt><dd>${escapeHtml(printedSources)}</dd>
-        </dl>
-      </div>
-      <ol class="print-references">
-        ${papers.map((paper) => `<li>${escapeHtml(printReferenceText(paper))}</li>`).join("") || "<li>No publication records are available for this timeline selection.</li>"}
-      </ol>
-      <div class="print-footer"><a href="https://psilocybin-research.com/">psilocybin-research.com</a></div>
-    </section>
-  </main>
-  <script>
-    document.querySelector("#timeline-print-references")?.addEventListener("click", () => {
-      if (window.confirm(${JSON.stringify(printConfirmMessage)})) window.print();
-    });
-  </script>
-</body>
-</html>`;
-}
-
-function openTimelineData(format, bucket = null) {
-  const payload = timelinePayload(bucket);
-  if (!payload) return;
-  if (format === "json") {
-    openBlobWindow(JSON.stringify(payload, null, 2), "application/json;charset=utf-8");
-    return;
-  }
-  openBlobWindow(timelineHtml(payload), "text/html;charset=utf-8");
-}
-
-function setTimelineSummary(from, to, aggregate) {
-  if (!timelineSummary) return;
-  const modeLabel = aggregate.mode === "day" ? "daily" : aggregate.mode === "month" ? "monthly" : "yearly";
-  timelineSummary.textContent = `${isoDate(from)} to ${isoDate(to)} · ${aggregate.total} publications · ${modeLabel}`;
-}
-
-function setTimelineInsight(bucket = null) {
-  if (!timelineInsight) return;
-  if (!bucket) {
-    timelineInsight.textContent = "Hover or focus a bar to inspect the publication bucket. Activate a bar to open the matching publications.";
-    return;
-  }
-  timelineInsight.textContent = `${bucket.fullLabel}: ${Number(bucket.count || 0).toLocaleString()} publications · ${bucket.range.from} to ${bucket.range.to}`;
-}
-
-function compactListLabel(values, fallback = "Not indexed") {
-  const parts = String(values || "").split(",").map((item) => item.trim()).filter(Boolean);
-  return parts.length ? parts.slice(0, 5).join(", ") : fallback;
-}
-
-function analyticsMatchReasons(paper) {
-  const filters = currentAnalyticsFilters;
-  const reasons = [];
-  if (filters.keyword && analyticsLensSearchText(paper).includes(filters.keyword)) reasons.push(`keyword "${filters.keyword}"`);
-  if (filters.author && paper.authors.toLowerCase().includes(filters.author)) reasons.push(`author "${filters.author}"`);
-  if (filters.journal && paper.journal.toLowerCase().includes(filters.journal)) reasons.push(`journal "${filters.journal}"`);
-  if (filters.identifier && `${paper.doi} ${paper.pubmed_id}`.toLowerCase().includes(filters.identifier)) reasons.push(`identifier "${filters.identifier}"`);
-  if (filters.source && paper.source_name.toLowerCase().includes(filters.source)) reasons.push(`source "${filters.source}"`);
-  if (filters.status && paper.publication_status.toLowerCase() === filters.status) reasons.push(`status "${filters.status}"`);
-  if (filters.topic && paper.topic_tags.toLowerCase().includes(filters.topic)) reasons.push(`topic "${filters.topic}"`);
-  if (filters.studyType && paper.study_type.toLowerCase().includes(filters.studyType)) reasons.push(`study type "${filters.studyType}"`);
-  if (filters.substance && paper.substance_tags.toLowerCase().includes(filters.substance)) reasons.push(`substance "${filters.substance}"`);
-  return reasons.length ? reasons : ["current timeline range"];
-}
-
-function analyticsFacetSummary(papers) {
-  const topFor = (key, fallback) => {
-    const counts = new Map();
-    papers.forEach((paper) => {
-      const raw = key === "topic_tags" || key === "substance_tags" ? String(paper[key] || "").split(",") : [paper[key]];
-      raw.map((item) => String(item || "").trim()).filter(Boolean).forEach((item) => counts.set(item, (counts.get(item) || 0) + 1));
-    });
-    const top = Array.from(counts.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 3);
-    return top.length ? top.map(([name, count]) => `${name} (${count})`).join(", ") : fallback;
-  };
-  const dates = papers.map((paper) => paper.publication_date).filter(Boolean).sort();
-  return {
-    dateRange: dates.length ? `${dates[0]} to ${dates[dates.length - 1]}` : "No dated publications",
-    journals: topFor("journal", "No journal facet"),
-    sources: topFor("source_name", "No source facet"),
-    statuses: topFor("publication_status", "No status facet"),
-    topics: topFor("topic_tags", "No topic facet"),
-  };
-}
-
-function renderAnalyticsLensResults() {
-  if (!analyticsResultsList || !analyticsResultsCount) return;
-  const range = currentTimelineView ? { from: isoDate(currentTimelineView.from), to: isoDate(currentTimelineView.to) } : null;
-  const papers = filteredAnalyticsPapers(range);
-  const activeEntries = activeAnalyticsFilterEntries();
-  const rangeLabel = range ? `${range.from} to ${range.to}` : "all dates";
-  analyticsResultsCount.textContent = `${papers.length.toLocaleString()} matching ${papers.length === 1 ? "record" : "records"} · ${rangeLabel}`;
-  if (analyticsLensSummary) {
-    analyticsLensSummary.textContent = activeEntries.length
-      ? `${papers.length.toLocaleString()} records match ${activeEntries.map(([key]) => key.replace(/([A-Z])/g, " $1").toLowerCase()).join(", ")}.`
-      : "Search within analytics by keyword, author, journal, source, status, topic, or DOI.";
-  }
-  if (analyticsOpenPapers) analyticsOpenPapers.href = analyticsUrlFromFilters(null);
-  if (analyticsExportLatex) analyticsExportLatex.href = analyticsUrlFromFilters("latex");
-  if (!papers.length) {
-    analyticsResultsList.innerHTML = '<p class="empty-chart">No publications match this research lens and date range.</p>';
-    return;
-  }
-  const summary = analyticsFacetSummary(papers);
-  const insightHtml = `<div class="analytics-query-insights" aria-label="Lens result summary">
-    <div><span>Date span</span><strong>${escapeHtml(summary.dateRange)}</strong></div>
-    <div><span>Top journals</span><strong>${escapeHtml(summary.journals)}</strong></div>
-    <div><span>Sources</span><strong>${escapeHtml(summary.sources)}</strong></div>
-    <div><span>Status mix</span><strong>${escapeHtml(summary.statuses)}</strong></div>
-  </div>`;
-  analyticsResultsList.innerHTML = insightHtml + papers.slice(0, 8).map((paper) => {
-    const url = externalPaperUrl(paper);
-    const title = url
-      ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(paper.title)}</a>`
-      : `<span>${escapeHtml(paper.title)}</span>`;
-    const tags = [paper.publication_status, paper.source_name, paper.study_type, paper.topic_tags].filter(Boolean).slice(0, 4);
-    const reasons = analyticsMatchReasons(paper);
-    const doi = paper.doi ? `<a href="https://doi.org/${escapeHtml(paper.doi)}" target="_blank" rel="noopener">${escapeHtml(paper.doi)}</a>` : "Not indexed";
-    const pmid = paper.pubmed_id ? `<a href="https://pubmed.ncbi.nlm.nih.gov/${escapeHtml(paper.pubmed_id)}/" target="_blank" rel="noopener">${escapeHtml(paper.pubmed_id)}</a>` : "Not indexed";
-    const source = paper.source_url ? `<a href="${escapeHtml(paper.source_url)}" target="_blank" rel="noopener">Open source record</a>` : "No source URL";
-    return `<article class="analytics-result-item">
-      <div>
-        <strong>${title}</strong>
-        <p>${escapeHtml(paper.authors || "Authors not indexed")}${paper.journal ? ` · ${escapeHtml(paper.journal)}` : ""}</p>
-        <div class="analytics-match-reasons">${reasons.map((reason) => `<span>${escapeHtml(reason)}</span>`).join("")}</div>
-        <details class="analytics-paper-detail">
-          <summary><span>Inspect record</span><i data-icon="chevron-down" aria-hidden="true"></i></summary>
-          <dl>
-            <div><dt>DOI</dt><dd>${doi}</dd></div>
-            <div><dt>PubMed</dt><dd>${pmid}</dd></div>
-            <div><dt>Source</dt><dd>${source}</dd></div>
-            <div><dt>Topics</dt><dd>${escapeHtml(compactListLabel(paper.topic_tags))}</dd></div>
-            <div><dt>Substances</dt><dd>${escapeHtml(compactListLabel(paper.substance_tags))}</dd></div>
-            <div><dt>Text access</dt><dd>Source-derived abstracts and keywords are not redistributed; use the source record link.</dd></div>
-          </dl>
-        </details>
-      </div>
-      <div class="analytics-result-meta">
-        <time>${escapeHtml(paper.publication_date)}</time>
-        ${tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}
-      </div>
-    </article>`;
-  }).join("");
-  if (papers.length > 8) {
-    analyticsResultsList.insertAdjacentHTML("beforeend", `<p class="analytics-result-more">${(papers.length - 8).toLocaleString()} more records are available through matching-publication and LaTeX export actions.</p>`);
-  }
-  refreshIcons();
-}
-
-function renderTimeline(options = { preset: "10y" }) {
-  if (!timelineChart) return;
-  const data = analyticsData();
-  const sourcePapers = filteredAnalyticsPapers();
-  const rows = activeAnalyticsFilterEntries().length ? timelineRowsFromPapers(sourcePapers) : (data.timeline || []);
-  const bounds = timelineBounds(rows);
-  if (!bounds) {
-    currentTimelineView = null;
-    timelineChart.innerHTML = '<p class="empty-chart">No trend data matches this research lens.</p>';
-    renderAnalyticsLensResults();
-    return;
-  }
-  if (timelineFrom && timelineTo) {
-    timelineFrom.min = isoDate(bounds.min);
-    timelineFrom.max = isoDate(bounds.max);
-    timelineTo.min = isoDate(bounds.min);
-    timelineTo.max = isoDate(bounds.max);
-  }
-  let range = options.from && options.to ? { from: options.from, to: options.to } : presetRange(options.preset || "10y", bounds);
-  if (!range) range = { from: bounds.min, to: bounds.max };
-  if (range.from < bounds.min) range.from = bounds.min;
-  if (range.to > bounds.max) range.to = bounds.max;
-  if (range.from > range.to) [range.from, range.to] = [range.to, range.from];
-  if (timelineFrom) timelineFrom.value = isoDate(range.from);
-  if (timelineTo) timelineTo.value = isoDate(range.to);
-  const preferredMode = options.preset === "1y" ? "month" : null;
-  const aggregate = aggregateTimeline(rows, range.from, range.to, preferredMode);
-  currentTimelineView = { from: new Date(range.from), to: new Date(range.to), aggregate };
-  const labels = aggregate.buckets.map((row) => row.label);
-  const counts = aggregate.buckets.map((row) => Number(row.count || 0));
-  setTimelineSummary(range.from, range.to, aggregate);
-  setTimelineInsight(null);
-  if (!aggregate.buckets.length) {
-    timelineChart.innerHTML = '<p class="empty-chart">No publications in this range.</p>';
-    renderAnalyticsLensResults();
-    return;
-  }
-  const max = Math.max(...counts, 1);
-  const axisMax = Math.max(max, 4);
-  const containerWidth = Math.round(timelineChart.clientWidth || Math.min(window.innerWidth - 44, 760) || 360);
-  const isCompactTimeline = containerWidth < 560;
-  const targetWidth = aggregate.buckets.length * (isCompactTimeline ? 30 : 48) + (isCompactTimeline ? 92 : 128);
-  const width = Math.max(isCompactTimeline ? 340 : 760, Math.min(isCompactTimeline ? 560 : 1280, targetWidth, Math.max(containerWidth, 340)));
-  const height = isCompactTimeline ? 282 : 360;
-  const pad = {
-    top: isCompactTimeline ? 28 : 34,
-    right: isCompactTimeline ? 18 : 34,
-    bottom: labels.length > 14 ? (isCompactTimeline ? 56 : 68) : (isCompactTimeline ? 42 : 48),
-    left: isCompactTimeline ? 46 : 68,
-  };
-  const innerW = width - pad.left - pad.right;
-  const innerH = height - pad.top - pad.bottom;
-  const slot = innerW / counts.length;
-  const barGap = Math.max(4, Math.min(16, slot * 0.28));
-  const barW = Math.max(5, Math.min(34, slot - barGap));
-  const points = counts.map((count, index) => {
-    const x = pad.left + index * (innerW / counts.length) + (innerW / counts.length) / 2;
-    const y = pad.top + innerH - (count / axisMax) * innerH;
-    return { x, y, count, label: labels[index] };
-  });
-  const line = points.map((point, index) => `${index ? "L" : "M"}${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(" ");
-  const yTicks = Array.from(new Set([0, Math.ceil(axisMax / 4), Math.ceil(axisMax / 2), Math.ceil(axisMax * 0.75), axisMax]));
-  const skip = labels.length > 36 ? (isCompactTimeline ? 8 : 6) : labels.length > 24 ? (isCompactTimeline ? 5 : 4) : labels.length > 14 ? (isCompactTimeline ? 3 : 2) : 1;
-  timelineChart.innerHTML = `
-    <svg class="timeline-svg" viewBox="0 0 ${width} ${height}" aria-label="Interactive publication timeline chart">
-      <rect class="chart-plot-bg" x="${pad.left}" y="${pad.top}" width="${innerW}" height="${innerH}" rx="6"></rect>
-      <text class="chart-axis-label" x="${pad.left}" y="20">Publications</text>
-      ${yTicks.map((tick) => {
-        const y = pad.top + innerH - (tick / axisMax) * innerH;
-        return `<line class="chart-grid" x1="${pad.left}" y1="${y}" x2="${width - pad.right}" y2="${y}"></line><text class="chart-y" x="${pad.left - 12}" y="${y + 4}" text-anchor="end">${tick}</text>`;
-      }).join("")}
-      <line class="chart-axis" x1="${pad.left}" y1="${pad.top + innerH}" x2="${width - pad.right}" y2="${pad.top + innerH}"></line>
-      ${counts.map((count, index) => {
-        const slotX = pad.left + index * slot;
-        const x = slotX + (slot - barW) / 2;
-        const h = Math.max(2, (count / axisMax) * innerH);
-        const y = pad.top + innerH - h;
-        const bucket = aggregate.buckets[index] || {};
-        const title = bucket.fullLabel || labels[index];
-        const rangeLabel = bucket.range ? `${bucket.range.from} to ${bucket.range.to}` : title;
-        return `<rect class="chart-bar timeline-bucket" tabindex="0" role="link" data-bucket-index="${index}" aria-label="${escapeHtml(title)}: ${count} publications, ${escapeHtml(rangeLabel)}. Open matching publications." x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="4" vector-effect="non-scaling-stroke"><title>${title}: ${count} publications. ${rangeLabel}. Opens matching publications.</title></rect>`;
-      }).join("")}
-      <path class="chart-line" d="${line}" vector-effect="non-scaling-stroke"></path>
-      ${points.map((point, index) => `<circle class="chart-point timeline-bucket" tabindex="0" role="link" data-bucket-index="${index}" aria-label="${escapeHtml(aggregate.buckets[index]?.fullLabel || point.label)}: ${point.count} publications. Open matching publications." cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="4.5" vector-effect="non-scaling-stroke"><title>${aggregate.buckets[index]?.fullLabel || point.label}: ${point.count} publications. Opens matching publications.</title></circle>`).join("")}
-      ${labels.map((label, index) => {
-        if (index % skip !== 0 && index !== labels.length - 1) return "";
-        const x = pad.left + index * (innerW / counts.length) + (innerW / counts.length) / 2;
-        const rotate = labels.length > 14 ? ` transform="rotate(-38 ${x.toFixed(1)} ${height - 22})"` : "";
-        return `<text class="chart-x" x="${x.toFixed(1)}" y="${height - 22}" text-anchor="${labels.length > 14 ? "end" : "middle"}"${rotate}>${label}</text>`;
-      }).join("")}
-    </svg>`;
-  renderAnalyticsLensResults();
-}
-
-if (timelineChart) {
-  timelineChart.addEventListener("pointerover", (event) => {
-    const target = event.target.closest?.(".timeline-bucket");
-    if (!target || !currentTimelineView) return;
-    const bucket = currentTimelineView.aggregate.buckets[Number(target.dataset.bucketIndex || -1)];
-    if (bucket) setTimelineInsight(bucket);
-  });
-  timelineChart.addEventListener("pointerout", (event) => {
-    if (event.relatedTarget?.closest?.(".timeline-bucket")) return;
-    setTimelineInsight(null);
-  });
-  timelineChart.addEventListener("focusin", (event) => {
-    const target = event.target.closest?.(".timeline-bucket");
-    if (!target || !currentTimelineView) return;
-    const bucket = currentTimelineView.aggregate.buckets[Number(target.dataset.bucketIndex || -1)];
-    if (bucket) setTimelineInsight(bucket);
-  });
-  timelineChart.addEventListener("focusout", () => setTimelineInsight(null));
-  timelineChart.addEventListener("click", (event) => {
-    const target = event.target.closest?.(".timeline-bucket");
-    if (!target || !currentTimelineView) return;
-    const bucket = currentTimelineView.aggregate.buckets[Number(target.dataset.bucketIndex || -1)];
-    if (bucket) openTimelineData("html", bucket);
-  });
-  timelineChart.addEventListener("keydown", (event) => {
-    if (event.key !== "Enter" && event.key !== " ") return;
-    const target = event.target.closest?.(".timeline-bucket");
-    if (!target || !currentTimelineView) return;
-    event.preventDefault();
-    const bucket = currentTimelineView.aggregate.buckets[Number(target.dataset.bucketIndex || -1)];
-    if (bucket) openTimelineData("html", bucket);
-  });
-}
-
-for (const button of document.querySelectorAll(".timeline-controls button")) {
-  button.addEventListener("click", () => {
-    if (!button.dataset.range) return;
-    document.querySelectorAll(".timeline-presets button").forEach((item) => item.classList.remove("is-active"));
-    button.classList.add("is-active");
-    renderTimeline({ preset: button.dataset.range || "10y" });
-  });
-}
-
-if (timelineApply) {
-  timelineApply.addEventListener("click", () => {
-    const from = parseIsoDate(timelineFrom?.value);
-    const to = parseIsoDate(timelineTo?.value);
-    document.querySelectorAll(".timeline-presets button").forEach((item) => item.classList.remove("is-active"));
-    if (!from || !to) {
-      renderTimeline({ preset: "all" });
-      return;
-    }
-    renderTimeline({ from, to });
-  });
-}
-
-if (timelineReset) {
-  timelineReset.addEventListener("click", () => {
-    document.querySelectorAll(".timeline-presets button").forEach((item) => item.classList.toggle("is-active", item.dataset.range === "10y"));
-    renderTimeline({ preset: "10y" });
-  });
-}
-
-if (timelineOpenJson) {
-  timelineOpenJson.addEventListener("click", () => openTimelineData("json"));
-}
-
-if (timelineOpenHtml) {
-  timelineOpenHtml.addEventListener("click", () => openTimelineData("html"));
-}
-
-function applyAnalyticsLens() {
-  currentAnalyticsFilters = getAnalyticsLensFilters();
-  if (analyticsLens && activeAnalyticsFilterEntries().length) analyticsLens.open = true;
-  document.querySelectorAll(".timeline-presets button").forEach((item) => item.classList.toggle("is-active", item.dataset.range === "10y"));
-  renderTimeline({ preset: "10y" });
-}
-
-if (analyticsApply) {
-  analyticsApply.addEventListener("click", applyAnalyticsLens);
-}
-
-if (analyticsClear) {
-  analyticsClear.addEventListener("click", () => {
-    Object.values(analyticsLensInputs).forEach((input) => {
-      if (input) input.value = "";
-    });
-    currentAnalyticsFilters = {};
-    document.querySelectorAll(".timeline-presets button").forEach((item) => item.classList.toggle("is-active", item.dataset.range === "10y"));
-    renderTimeline({ preset: "10y" });
-  });
-}
-
-Object.values(analyticsLensInputs).forEach((input) => {
-  input?.addEventListener("keydown", (event) => {
-    if (event.key !== "Enter") return;
-    event.preventDefault();
-    applyAnalyticsLens();
-  });
-});
-
-if (publicationGrowthChart) {
-  publicationGrowthChart.addEventListener("click", (event) => {
-    const target = event.target.closest?.(".publication-growth-year");
-    if (!target) return;
-    openPublicationGrowthYear(target.dataset.growthYear);
-  });
-  publicationGrowthChart.addEventListener("keydown", (event) => {
-    if (event.key !== "Enter" && event.key !== " ") return;
-    const target = event.target.closest?.(".publication-growth-year");
-    if (!target) return;
-    event.preventDefault();
-    openPublicationGrowthYear(target.dataset.growthYear);
-  });
-}
-
-let publicationGrowthResizeTimer = null;
-let timelineResizeTimer = null;
-window.addEventListener("resize", () => {
-  window.clearTimeout(publicationGrowthResizeTimer);
-  window.clearTimeout(timelineResizeTimer);
-  if (publicationGrowthChart) {
-    publicationGrowthResizeTimer = window.setTimeout(renderPublicationGrowthChart, 120);
-  }
-  if (timelineChart) {
-    timelineResizeTimer = window.setTimeout(() => {
-      if (currentTimelineView) {
-        renderTimeline({ from: new Date(currentTimelineView.from), to: new Date(currentTimelineView.to) });
-        return;
-      }
-      renderTimeline({ preset: "10y" });
-    }, 120);
-  }
-});
-
-window.addEventListener("load", () => {
-  syncRecencyBadges();
-  scheduleIdleTask(() => {
-    renderPublicationGrowthChart();
-    if (window.location.hash === "#analytics" || document.querySelector("#analytics-modal")?.open) {
-      renderTimeline({ preset: "10y" });
-    }
-  }, 2200);
-  refreshIcons();
-});
-
 function initAlertScope() {
   const form = document.querySelector("#alert-enrollment .alert-form");
   if (!form) return;
   const targeting = form.querySelector(".alert-targeting");
-  const scopedInputs = targeting ? Array.from(targeting.querySelectorAll("input, select")) : [];
+  const scopedInputs = () => targeting ? Array.from(targeting.querySelectorAll("input, select")) : [];
   const radios = Array.from(form.querySelectorAll('input[name="alert_scope"]'));
   const targetedRadio = form.querySelector('input[name="alert_scope"][value="targeted"]');
   const allRadio = form.querySelector('input[name="alert_scope"][value="all"]');
@@ -2057,7 +2153,7 @@ function initAlertScope() {
   const sync = () => {
     const targeted = targetedRadio?.checked || false;
     if (targeting && targeted) targeting.open = true;
-    scopedInputs.forEach((input) => {
+    scopedInputs().forEach((input) => {
       input.disabled = !targeted;
     });
   };
@@ -2068,22 +2164,15 @@ function initAlertScope() {
       if (targeting.open && targetedRadio) {
         targetedRadio.checked = true;
         sync();
-      } else if (!targeting.open && allRadio && !scopedInputs.some((input) => input.value)) {
+      } else if (!targeting.open && allRadio && !scopedInputs().some((input) => input.value)) {
         allRadio.checked = true;
         sync();
       }
     });
   }
-  scopedInputs.forEach((input) => {
-    input.addEventListener("input", () => {
-      if (targetedRadio) targetedRadio.checked = true;
-      sync();
-    });
-    input.addEventListener("change", () => {
-      if (targetedRadio) targetedRadio.checked = true;
-      sync();
-    });
-  });
+  const selectTargeted = () => { if (targetedRadio) targetedRadio.checked = true; sync(); };
+  targeting?.addEventListener('input', selectTargeted);
+  targeting?.addEventListener('change', selectTargeted);
   sync();
 }
 
@@ -2142,7 +2231,7 @@ function initHaptics() {
   ].join(",");
   document.addEventListener("click", (event) => {
     const target = event.target.closest?.(selectors);
-    if (!target || target.matches("[disabled], .disabled, [aria-disabled='true']")) return;
+    if (!event.isTrusted || !["touch", "pen"].includes(event.pointerType) || !target || target.matches("[disabled], .disabled, [aria-disabled='true']")) return;
     subtleHaptic(target.matches(".primary, .push-app, .install-app, form button[type='submit']") ? [8, 24, 8] : 7);
   }, { passive: true });
 }
@@ -2228,8 +2317,8 @@ function downloadIncludedSources(url) {
   if (url.pathname.endsWith("/database.php")) return "All public indexed sources";
   const sources = repeatedDownloadParams(url.searchParams, "sources");
   if (sources.length) return sources.join(", ");
-  const selected = Array.from(document.querySelectorAll('select[name="sources[]"] option:checked'))
-    .map((option) => option.textContent?.replace(/\s*\\(.*?\\)\s*$/, "").trim() || "")
+  const selected = Array.from(document.querySelectorAll('select[name="sources[]"] option:checked, input[name="sources[]"]:checked'))
+    .map((option) => (option.value || option.textContent)?.replace(/\s*\\(.*?\\)\s*$/, "").trim() || "")
     .filter(Boolean);
   return selected.length ? selected.join(", ") : "All included sources";
 }
@@ -2287,43 +2376,49 @@ function initApiConfirmations() {
 }
 
 function initDownloadConfirmations() {
-  document.addEventListener("click", async (event) => {
-    const link = event.target.closest?.("a[href]");
-    if (!(link instanceof HTMLAnchorElement)) return;
-    const url = new URL(link.href, window.location.href);
-    if (!isDownloadEndpoint(url)) return;
-    event.preventDefault();
-
-    link.classList.add("is-loading");
-    link.setAttribute("aria-busy", "true");
-    const downloadUrl = augmentDownloadUrl(url);
-    let entries = fallbackDownloadCount(downloadUrl);
-    try {
-      const response = await fetch(downloadUrl.href, {
-        method: "HEAD",
-        credentials: "same-origin",
-        cache: "no-store",
-      });
-      if (response.ok) {
-        entries = response.headers.get("X-Publication-Tracker-Export-Count") || entries;
-      }
-    } catch (error) {
-      // Fall through to a conservative confirmation with the visible result count.
-    }
-
-    link.classList.remove("is-loading");
-    link.removeAttribute("aria-busy");
-    const confirmed = window.confirm(`Download publication data?\n\nEntries: ${entries}\nDate range: ${downloadDateRange(downloadUrl)}\nIncluded sources: ${downloadIncludedSources(downloadUrl)}`);
-    if (!confirmed) return;
-    const downloadLink = document.createElement("a");
-    downloadLink.href = downloadUrl.href;
-    downloadLink.target = link.target || "_self";
-    downloadLink.rel = link.rel || "noopener";
-    document.body.append(downloadLink);
-    downloadLink.click();
-    downloadLink.remove();
+  const approved = new WeakSet();
+  const nativeClick = HTMLAnchorElement.prototype.click;
+  // Generated exports often click detached anchors; bring them through the same gate.
+  HTMLAnchorElement.prototype.click = function () {
+    const detached = !this.isConnected;
+    if (detached) this.ownerDocument.body.append(this);
+    try { return nativeClick.call(this); } finally { if (detached) this.remove(); }
+  };
+  let queue = Promise.resolve();
+  const ask = (name, size, context) => new Promise(resolve => {
+    const readable = Number.isFinite(size) ? `${new Intl.NumberFormat('en', {maximumFractionDigits: 1}).format(size / (size >= 1048576 ? 1048576 : size >= 1024 ? 1024 : 1))} ${size >= 1048576 ? 'MB' : size >= 1024 ? 'KB' : 'bytes'}` : 'Not available';
+    if (!window.HTMLDialogElement) { resolve(window.confirm(`Download file?\n\nFilename: ${name}\nSize: ${readable}`)); return; }
+    const dialog=document.createElement('dialog');dialog.className='file-download-confirm';dialog.setAttribute('aria-labelledby','file-download-title');
+    dialog.innerHTML='<form method="dialog"><div class="file-download-icon" aria-hidden="true">'+ICONS.download+'</div><h2 id="file-download-title">Download file?</h2><p>Save this file to your device.</p><dl><div><dt>Filename</dt><dd data-download-name></dd></div><div><dt>Size</dt><dd data-download-size></dd></div></dl><p data-download-context></p><div class="file-download-actions"><button class="secondary" value="cancel" autofocus>Cancel</button><button class="primary" value="download">Download</button></div></form>';
+    dialog.querySelector('[data-download-context]').textContent=context||'';dialog.querySelector('[data-download-name]').textContent=name;dialog.querySelector('[data-download-size]').textContent=readable;
+    const previous=document.activeElement;document.body.append(dialog);
+    dialog.addEventListener('close',()=>{const accepted=dialog.returnValue==='download';dialog.remove();if(previous?.isConnected)previous.focus({preventScroll:true});resolve(accepted);},{once:true});dialog.showModal();
   });
+  const handleDownload = event => {
+    const link=event.target.closest?.('a[href]');if(link?.tagName!=='A')return;
+    if(approved.has(link)){approved.delete(link);return;}
+    let original=new URL(link.href,location.href);
+    if(link.matches('[data-sidebar-export]'))original=exportUrlForSelectedPapers(original.searchParams.get('format')||'json')||original;
+    const downloadable=link.hasAttribute('download')||isDownloadEndpoint(original)||/\.(?:pdf|zip|gz|xz|csv|tsv|json|txt|bib|ris|rds|rdata|xlsx?|docx?|pptx?|png|jpe?g|webp|svg|mp[34]|wav|r|py|ipynb)$/i.test(original.pathname)||(/\/(?:account-analysis-api|catalogue)\.php$/.test(original.pathname)&&original.searchParams.get('action')!=='status');
+    if(!downloadable)return;
+    event.preventDefault();event.stopImmediatePropagation();
+    const href=isDownloadEndpoint(original)?augmentDownloadUrl(original).href:original.href;
+    const requestedName=link.download;
+    // Read local bytes immediately so the producer can safely revoke its short-lived URL.
+    const local=/^(?:blob|data):/.test(original.protocol)?fetch(href).then(r=>r.blob()).catch(()=>null):null;
+    queue=queue.catch(()=>{}).then(async()=>{
+      let name=requestedName||decodeURIComponent(original.pathname.split('/').pop()||'download'),size=NaN,pinned=null;
+      if(local){const blob=await local;if(!blob){showAppToast('The download expired. Please try again.');return;}size=blob.size;pinned=URL.createObjectURL(blob);}
+      else {const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),3000);try{const response=await fetch(href,{method:'HEAD',cache:'no-store',credentials:original.origin===location.origin?'same-origin':'omit',signal:controller.signal});if(response.ok){const disposition=response.headers.get('Content-Disposition')||'';const encoded=disposition.match(/filename\*=UTF-8''([^;]+)/i),plain=disposition.match(/filename="([^"]+)"|filename=([^;]+)/i);if(encoded){try{name=decodeURIComponent(encoded[1]);}catch{}}else if(plain)name=(plain[1]||plain[2]).trim();const length=response.headers.get('Content-Length');if(length&&!response.headers.get('Content-Encoding'))size=Number(length);}}catch{}finally{clearTimeout(timer);}}
+      const context=isDownloadEndpoint(original)?`Entries: ${fallbackDownloadCount(new URL(href))} · Date range: ${downloadDateRange(new URL(href))} · Included sources: ${downloadIncludedSources(new URL(href))}`:'';
+      if(await ask(name,size,context)){const save=document.createElement('a');save.href=pinned||href;save.download=requestedName||name;save.rel='noopener';approved.add(save);document.body.append(save);nativeClick.call(save);save.remove();if(pinned)setTimeout(()=>URL.revokeObjectURL(pinned),60000);}else if(pinned)URL.revokeObjectURL(pinned);
+    });
+  };
+  const attached=new WeakSet();
+  const attach=win=>{try{if(attached.has(win.document))return;attached.add(win.document);win.addEventListener('click',handleDownload,true);win.HTMLAnchorElement.prototype.click=HTMLAnchorElement.prototype.click;win.document.addEventListener('load',e=>{if(e.target.tagName==='IFRAME')attach(e.target.contentWindow);},true);win.document.querySelectorAll('iframe').forEach(frame=>attach(frame.contentWindow));}catch{ /* External frames own their download policy. */ }};
+  attach(window);
 }
+
 
 function initAlertVanta() {
   const element = document.querySelector("#alert-vanta-bg");
@@ -2349,154 +2444,654 @@ function initAlertVanta() {
   window.addEventListener("pagehide", () => effect?.destroy?.(), { once: true });
 }
 
-function initPwa() {
-  const installButton = document.querySelector("#install-app");
-  const pushButton = document.querySelector("#push-app");
-  let deferredPrompt = null;
-  let refreshingForUpdate = false;
-  const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
-  const installedFlag = localStorage.getItem("publicationTrackerInstalled") === "1";
-
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (!refreshingForUpdate) return;
-      window.location.reload();
-    });
-    navigator.serviceWorker.register("sw.js", { scope: "./", updateViaCache: "none" }).then((registration) => {
-      const notifyUpdated = () => {
-        sessionStorage.setItem("publicationTrackerUpdated", "1");
-        refreshingForUpdate = true;
-        showAppToast("Psilocybin Research Tracker updated. Reloading the app shell...");
-      };
-      registration.addEventListener("updatefound", () => {
-        const worker = registration.installing;
-        if (!worker) return;
-        worker.addEventListener("statechange", () => {
-          if (worker.state === "installed" && navigator.serviceWorker.controller) {
-            notifyUpdated();
-            worker.postMessage({ type: "SKIP_WAITING" });
+// Installation is browser-controlled. Positive evidence suppresses promotion;
+// an empty related-apps response alone is never evidence of uninstallation.
+// Daily counters only: random receipt IDs identify one delivery, never a browser.
+function createPwaMetricRecorder() {
+  const queueKey = 'publicationTrackerPwaMetricQueue';
+  const platform = /Android/.test(navigator.userAgent) ? 'android'
+    : /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ? 'ios'
+    : /Windows|Macintosh|Linux|CrOS/.test(navigator.userAgent) ? 'desktop' : 'other';
+  const base = { strategy: 'contextual-v2', platform, surface: 'unknown' };
+  let sending = false, retryAt = 0, failures = 0;
+  const load = () => {
+    const cutoff = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+    let value;
+    try { value = JSON.parse(localStorage.getItem(queueKey) || '[]'); } catch (_) { return []; }
+    return (Array.isArray(value) ? value : []).filter(e => e && e.date >= cutoff && typeof e.metric === 'string' && typeof e.storageKey === 'string').slice(-64);
+  };
+  const flush = async () => {
+    if (sending || navigator.onLine === false || Date.now() < retryAt) return;
+    sending = true;
+    const deliver = async () => {
+      try {
+        for (const entry of load()) {
+          if (localStorage.getItem(entry.storageKey) !== '1') {
+            const payload = entry.event_id
+              ? { metric: entry.metric, date: entry.date, event_id: entry.event_id, strategy: entry.strategy, platform: entry.platform, surface: entry.surface }
+              : { metric: entry.metric, date: entry.date }; // Preserve pre-upgrade queued observations.
+            const response = await fetch('/engagement.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), keepalive: true });
+            if (response.status === 400) {
+              // A permanently invalid event must not strand valid observations behind it.
+              localStorage.setItem(entry.storageKey, '1');
+            } else {
+              if (!response.ok || !(await response.json()).ok) throw new Error('Metric delivery failed');
+              localStorage.setItem(entry.storageKey, '1');
+            }
           }
-        });
-      });
-      registration.update().catch(() => {});
-    }).catch(() => {});
-    if (sessionStorage.getItem("publicationTrackerUpdated") === "1") {
-      sessionStorage.removeItem("publicationTrackerUpdated");
-      showAppToast("Psilocybin Research Tracker is up to date.");
-      if ("Notification" in window && Notification.permission === "granted") {
-        try {
-          new Notification("Psilocybin Research Tracker updated", {
-            body: "The installed research app has refreshed to the latest version.",
-            icon: "assets/pwa/icon-192.png?v=20260713-push-footer-v89",
-            tag: "publication-tracker-app-update",
-          });
-        } catch (error) {}
+          // Re-read so observations queued during a request are never overwritten.
+          localStorage.setItem(queueKey, JSON.stringify(load().filter(e => e.storageKey !== entry.storageKey)));
+        }
+        failures = 0; retryAt = 0;
+      } catch (_) {
+        retryAt = Date.now() + Math.min(600000, 15000 * 2 ** Math.min(6, failures++));
       }
-    }
-  }
+    };
+    try {
+      if (navigator.locks?.request) await navigator.locks.request('tracker-pwa-metric-send', { ifAvailable: true }, lock => lock ? deliver() : undefined);
+      else await deliver();
+    } catch (_) { retryAt = Date.now() + 60000; }
+    finally { sending = false; }
+  };
+  const record = (metric, storageKey, context = {}) => {
+    try {
+      if (localStorage.getItem('publicationTrackerMetricsExcluded') === '1') { localStorage.removeItem(queueKey); return; }
+      if (localStorage.getItem(storageKey) === '1') return;
+      const queue = load();
+      if (!queue.some(e => e.storageKey === storageKey)) {
+        const bytes = new Uint8Array(16); crypto.getRandomValues(bytes);
+        const event_id = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+        queue.push({ metric, storageKey, date: new Date().toISOString().slice(0, 10), event_id, ...base, ...context });
+        localStorage.setItem(queueKey, JSON.stringify(queue.slice(-64)));
+      }
+      flush();
+    } catch (_) {} // Measurement is optional and never blocks installation or research.
+  };
+  window.addEventListener('online', () => { retryAt = 0; flush(); });
+  window.addEventListener('storage', e => { if (e.key === queueKey) flush(); });
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') flush(); });
+  setInterval(flush, 30000);
+  flush();
+  return record;
+}
 
-  const canPush = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
-  const shouldOfferPush = () => canPush && (standalone || localStorage.getItem("publicationTrackerInstalled") === "1");
-  const updatePushButton = async () => {
-    if (!pushButton) return;
-    if (!shouldOfferPush()) {
-      pushButton.hidden = true;
-      return;
+function initPwaInstall({ installButton, recordPwaMetric, updatePushButton }) {
+  if (!installButton || window.TrackerInstall) return;
+  const mobileInstallButton = document.querySelector('[data-mobile-install-app]');
+  const installedKey = 'publicationTrackerInstalled';
+  const preferenceKey = 'publicationTrackerInstallPreferenceV1';
+  const offlineChoiceKey = 'psiloPwaOfflineChoiceV1';
+  const sessionKey = 'publicationTrackerInstallOfferSession';
+  const mode = matchMedia('(display-mode: standalone), (display-mode: minimal-ui), (display-mode: window-controls-overlay)');
+  const day = 86400000;
+  const strategy = 'contextual-v2';
+  const attributionKey = 'publicationTrackerInstallAttributionV1';
+  let installSurface = 'unknown', attempt = 0;
+  const track = (metric, key, surface = installSurface) => recordPwaMetric(metric, key, { strategy, surface });
+  const eventKey = metric => `publicationTrackerPwa-${strategy}-${metric}-${Date.now()}-${++attempt}`;
+  const attribution = () => { try { const a = JSON.parse(localStorage.getItem(attributionKey) || '{}'); return a.strategy === strategy && Date.now() - a.at < 7 * day ? a : null; } catch (_) { return null; } };
+
+  const startedAt = Date.now();
+  const read = (key, session = false) => { try { return (session ? sessionStorage : localStorage).getItem(key); } catch (_) { return null; } };
+  const write = (key, value, session = false) => { try { (session ? sessionStorage : localStorage).setItem(key, value); } catch (_) {} };
+  const preferences = () => { try { const value = JSON.parse(read(preferenceKey) || '{}'); return value && typeof value === 'object' ? value : {}; } catch (_) { return {}; } };
+  const savePreferences = patch => write(preferenceKey, JSON.stringify({ ...preferences(), ...patch }));
+  const saveOfflineChoice = (components, source = 'install') => {
+    if (!components || !('includeWebR' in components) || !('includeLatex' in components)) return;
+    write(offlineChoiceKey, JSON.stringify({
+      chosen: true,
+      includeWebR: components.includeWebR === true,
+      includeLatex: components.includeLatex === true,
+      source,
+      at: Date.now()
+    }));
+  };
+  const saveOfflineChoiceFrom = (container, source) => {
+    const webR = container?.querySelector?.('[data-pwa-offline-webr]');
+    const latex = container?.querySelector?.('[data-pwa-offline-latex]');
+    if (!webR || !latex) return;
+    saveOfflineChoice({ includeWebR: webR.checked, includeLatex: latex.checked }, source);
+  };
+  let deferredPrompt = null, installing = false, relatedInstalled = false, checkingRelated = false;
+  let rememberedInstalled = read(installedKey) === '1';
+  let engaged = false, engagedAt = 0, engagementContext = 'catalogue', cardShownHere = false, dismissedHere = false, pendingOfflineOffer = false;
+  let card, help, helpOpener, entry;
+  let relatedCheckStarted = 0;
+  const dirtyForms = new Set();
+  const appMode = () => mode.matches || navigator.standalone === true || document.referrer.startsWith('android-app://com.psilocybinresearch.tracker');
+  const knownInstalled = () => appMode() || rememberedInstalled || relatedInstalled;
+  const pendingInstall = () => Number(preferences().pendingUntil || 0) > Date.now();
+  const isiOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const researchPage = !/^\/(?:account[^/]*|admin[^/]*|internal-traffic|webr)(?:[/.?]|$)/.test(location.pathname);
+  const manualSupported = () => isiOS() || (/Macintosh/.test(navigator.userAgent) && /Safari/.test(navigator.userAgent) && !/Chrome|Chromium|Edg/.test(navigator.userAgent));
+  const restoreFocus = preferred => {
+    const target = [preferred, entry?.querySelector('button'), installButton, document.querySelector('.header-publication-search')].find(el => el && !el.hidden && el.getClientRects().length);
+    target?.focus({ preventScroll: true });
+  };
+  const hideCard = () => {
+    if (!card || card.hidden) return;
+    const hadFocus = card.contains(document.activeElement);
+    card.hidden = true;
+    if (hadFocus && !installing) restoreFocus();
+  };
+  const blocked = () => {
+    for (const form of dirtyForms) if (!form.isConnected) dirtyForms.delete(form);
+    return document.visibilityState !== 'visible' || navigator.onLine === false || window.TrackerOffline?.busy || dirtyForms.size > 0
+      || !!document.querySelector('dialog[open], .is-searching, .is-preloading, .app-toast.is-visible, .explorer-toast.is-visible')
+      || document.activeElement?.matches('input,textarea,select,[contenteditable="true"]')
+      || (window.visualViewport && window.visualViewport.height < 450)
+      || (matchMedia('(max-width: 1180px)').matches && !document.documentElement.classList.contains('nav-sidebar-collapsed'));
+  };
+  const rememberInstalled = () => {
+    rememberedInstalled = true;
+    if (read(installedKey) !== '1') write(installedKey, '1');
+    if (Number(preferences().pendingUntil || 0)) savePreferences({ pendingUntil: 0 });
+    deferredPrompt = null;
+    hideCard();
+    if (help?.open) help.close();
+    installButton.hidden = true;
+    if (mobileInstallButton) mobileInstallButton.hidden = true;
+  };
+  const dismiss = (forever = false) => {
+    const previous = preferences();
+    const dismissals = Math.min(10, Number(previous.dismissals || 0) + 1);
+    savePreferences({ never: forever || previous.never === true, dismissals, nextOfferAt: Date.now() + (dismissals > 1 ? 30 : 7) * day });
+    dismissedHere = true;
+    hideCard();
+  };
+  const ensureEntry = () => {
+    if (entry || !researchPage) return;
+    const main = document.querySelector('main');
+    if (!main) return;
+    entry = document.createElement('aside');
+    entry.className = 'pwa-install-entry'; entry.hidden = true;
+    entry.setAttribute('aria-label', 'Get the research app');
+    entry.innerHTML = `<img src="/assets/mushroom-brand-mark-96.webp" width="40" height="40" alt=""><div><strong>Your research, a tap away</strong><p>Free app · Optional offline downloads</p></div><button type="button" class="primary" data-install-entry>Install free app</button>`;
+    main.prepend(entry);
+    if ('IntersectionObserver' in window) new IntersectionObserver(rows => {
+      if (rows.some(row => row.isIntersecting) && !entry.hidden) track('install_control_visible', `publicationTrackerPwa-${strategy}-control-${new Date().toISOString().slice(0,10)}`, 'manual');
+    }, { threshold: 0.5 }).observe(entry);
+    entry.querySelector('button').addEventListener('click', requestInstall);
+  };
+  const showCard = () => {
+    if (!card) {
+      card = document.createElement('aside');
+      card.className = 'pwa-install-invitation'; card.hidden = true;
+      card.setAttribute('aria-labelledby', 'pwa-offer-title');
+      card.innerHTML = `<button type="button" class="pwa-install-close" aria-label="Dismiss app invitation">×</button><div class="pwa-install-invitation-heading"><img src="/assets/mushroom-brand-mark-96.webp" width="44" height="44" alt=""><div><p class="pwa-install-eyebrow">FREE RESEARCH APP</p><h2 id="pwa-offer-title">Keep research close</h2></div></div><p>Open the tracker from your home screen or desktop. Download the catalogue separately when you want to research offline.</p><div class="pwa-install-invitation-actions"><button type="button" class="primary" data-install-now>Install free app</button><button type="button" class="secondary" data-install-later>Not now</button></div><button type="button" class="pwa-install-no-thanks" data-install-never>Don't suggest again</button>`;
+      document.body.append(card);
+      card.querySelector('[data-install-now]').addEventListener('click', requestInstall);
+      const decline = forever => { track(forever ? 'install_invitation_never' : 'install_invitation_later', eventKey('decline'), 'automatic'); dismiss(forever); };
+      card.querySelector('[data-install-later]').addEventListener('click', () => decline(false));
+      card.querySelector('.pwa-install-close').addEventListener('click', () => decline(false));
+      card.querySelector('[data-install-never]').addEventListener('click', () => decline(true));
+      card.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); decline(false); } });
     }
-    pushButton.hidden = false;
-    if (Notification.permission === "granted") {
-      const registration = await navigator.serviceWorker.ready.catch(() => null);
-      const subscription = registration ? await registration.pushManager.getSubscription() : null;
-      pushButton.querySelector("span").textContent = subscription ? "Push on" : "Enable push";
-      pushButton.classList.toggle("is-enabled", !!subscription);
-    } else {
-      pushButton.querySelector("span").textContent = "Enable push";
-      pushButton.classList.remove("is-enabled");
+    card.querySelector('[data-install-now]').textContent = isiOS() ? 'Add to Home Screen' : 'Install free app';
+    card.hidden = false;
+    if (!cardShownHere) {
+      cardShownHere = true; write(sessionKey, '1', true);
+      track('install_invitation_shown', eventKey('offer'), 'automatic');
+      track('install_invitation_browser_day', `publicationTrackerPwa-${strategy}-offer-${new Date().toISOString().slice(0,10)}`, 'automatic');
+      track('install_invitation_first_seen', `publicationTrackerPwa-${strategy}-offer-first`, 'automatic');
     }
   };
-
-  if ((standalone || installedFlag) && installButton) {
-    installButton.hidden = true;
-  }
-
-  window.addEventListener("beforeinstallprompt", (event) => {
-    event.preventDefault();
-    deferredPrompt = event;
-    if (installButton) {
-      installButton.hidden = false;
-      installButton.removeAttribute("aria-disabled");
+  const showHelp = () => {
+    if (knownInstalled() || pendingInstall()) return;
+    if (!help) {
+      help = document.createElement('dialog');
+      help.className = 'pwa-install-help';
+      help.setAttribute('aria-labelledby', 'pwa-install-help-title');
+      help.innerHTML = `<div class="pwa-install-help-head"><h2 id="pwa-install-help-title">Install the Psilocybin Research app</h2><button type="button" data-install-help-close aria-label="Close installation help">×</button></div><p class="pwa-install-help-intro">Use the research app on your phone or computer. Installation is free; no app-store account is needed.</p><div data-install-steps></div><p class="pwa-install-help-note">The app opens in its own window. The public catalogue and app pages can be downloaded separately in Offline library; videos and audio require a connection.</p><div class="pwa-install-help-actions"><button type="button" class="secondary" data-install-already>I've already added it</button><button type="button" class="primary" data-install-help-close>Done</button></div>`;
+      document.body.append(help);
+      help.querySelectorAll('[data-install-help-close]').forEach(button => button.addEventListener('click', () => help.close()));
+      help.querySelector('[data-install-already]').addEventListener('click', () => { rememberInstalled(); updatePushButton(); });
+      help.addEventListener('click', event => { if (event.target === help) help.close(); });
+      help.addEventListener('close', () => restoreFocus(helpOpener));
     }
-  });
-
-  if (installButton) {
-    installButton.addEventListener("click", async () => {
-      if (!deferredPrompt) {
-        window.alert("Use your browser menu to install the tracker on this device.");
-        return;
+    const ua = navigator.userAgent;
+    const steps = help.querySelector('[data-install-steps]');
+    if (isiOS()) {
+      const safari = !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
+      steps.innerHTML = `${safari ? '' : '<p>Open this website in Safari for these steps.</p>'}<ol><li>Tap <strong>Share</strong> in Safari (the square with an upward arrow).</li><li>Choose <strong>Add to Home Screen</strong>. You may need to scroll through the actions.</li><li>If shown, leave <strong>Open as Web App</strong> enabled, then tap <strong>Add</strong>.</li></ol>`;
+    } else if (/Android/.test(ua)) {
+      steps.innerHTML = '<ol><li>Open your browser menu.</li><li>Choose <strong>Install app</strong> or <strong>Add to Home screen</strong> (wording varies by browser).</li><li>Confirm, then open the database from its new home-screen icon.</li></ol><p>If installation is unavailable in an embedded browser, open this website in Chrome or another browser that supports installation.</p>';
+    } else if (/Macintosh/.test(ua) && /Safari/.test(ua) && !/Chrome|Chromium|Edg/.test(ua)) {
+      steps.innerHTML = '<ol><li>In a recent Safari version, open <strong>File</strong>.</li><li>Choose <strong>Add to Dock</strong>, then confirm.</li></ol><p>If that option is unavailable, use a browser with web-app installation support, such as Chrome or Edge.</p>';
+    } else {
+      steps.innerHTML = '<ol><li>In Chrome or Edge, look for the install icon in the address bar, or open the browser menu.</li><li>Choose <strong>Install</strong> or the option to install this page as an app, then confirm.</li></ol><p>Available options depend on your browser. If it has no installation option, you can still bookmark and use the full tracker on the web.</p>';
+    }
+    helpOpener = document.activeElement;
+    hideCard();
+    if (!help.open) {
+      help.showModal();
+      track('install_help_shown', eventKey('help'));
+    }
+  };
+  const requestInstall = async event => {
+    installSurface = event?.currentTarget?.hasAttribute('data-install-now') ? 'automatic'
+      : 'manual';
+    if (navigator.onLine === false || installing || knownInstalled() || pendingInstall()) return;
+    track('install_control_clicked', eventKey('control-click'));
+    if (installSurface === 'automatic') track('install_invitation_install', eventKey('invitation-install'));
+    saveOfflineChoiceFrom(event?.currentTarget?.closest?.('.pwa-install-invitation,.pwa-install-help,.install-hero'), installSurface);
+    if (!deferredPrompt) { showHelp(); return; }
+    const prompt = deferredPrompt;
+    deferredPrompt = null; // Each browser event can be used only once.
+    installing = true;
+    installButton.disabled = true;
+    if (mobileInstallButton) mobileInstallButton.disabled = true;
+    if (card) card.querySelector('[data-install-now]').disabled = true;
+    hideCard();
+    try {
+      track('install_prompt_requested', eventKey('prompt-request'));
+      write(attributionKey, JSON.stringify({ strategy, surface: installSurface, at: Date.now() }));
+      await prompt.prompt(); // Called directly in the click gesture, before any async detection.
+      track('install_prompt_shown', eventKey('prompt-shown'));
+      const choice = await prompt.userChoice;
+      if (choice.outcome === 'accepted') {
+        track('install_prompt_accepted_first', `publicationTrackerPwa-${strategy}-accepted-first`);
+        savePreferences({ pendingUntil: Date.now() + day });
+        installButton.hidden = true;
+        if (mobileInstallButton) mobileInstallButton.hidden = true;
+        dismissedHere = true;
+        if (typeof showAppToast === 'function') showAppToast('Installation requested. Your browser will finish adding the app.');
+      } else {
+        dismiss();
+        restoreFocus();
       }
-      installButton.setAttribute("aria-disabled", "true");
-      deferredPrompt.prompt();
-      const choice = await deferredPrompt.userChoice.catch(() => ({ outcome: "dismissed" }));
+      track(choice.outcome === 'accepted' ? 'install_prompt_accepted' : 'install_prompt_dismissed', eventKey('prompt-choice'));
+      if (choice.outcome !== 'accepted') { try { localStorage.removeItem(attributionKey); } catch (_) {} }
+    } catch (_) {
+      track('install_prompt_error', eventKey('prompt-error'));
+      try { localStorage.removeItem(attributionKey); } catch (_) {}
+      dismissedHere = true;
+      savePreferences({ nextOfferAt: Date.now() + 7 * day });
+      showHelp();
+    } finally {
+      installing = false;
+      if (card?.hidden && card.contains(document.activeElement)) restoreFocus();
+      installButton.disabled = false;
+      if (mobileInstallButton) mobileInstallButton.disabled = false;
+      if (card) card.querySelector('[data-install-now]').disabled = false;
+      reconcile();
+    }
+  };
+  let lastNativeInstallAvailability=null;
+  const reconcile = () => {
+    if (appMode()) rememberInstalled();
+    // Keep a compact header shortcut alongside the labelled research-page entry;
+    // keep the full sidebar action for manual-install browsers such as iOS Safari.
+    const useMobileHeaderInstall = !!mobileInstallButton && matchMedia('(max-width: 1180px)').matches && !!deferredPrompt;
+    installButton.hidden = navigator.onLine === false || knownInstalled() || pendingInstall() || useMobileHeaderInstall;
+    if (mobileInstallButton) {
+      mobileInstallButton.hidden = navigator.onLine === false || knownInstalled() || pendingInstall() || !deferredPrompt;
+      mobileInstallButton.disabled = installing;
+    }
+    const nativeAvailable=!!deferredPrompt&&!knownInstalled()&&!pendingInstall()&&!installing&&navigator.onLine!==false;
+    if(nativeAvailable!==lastNativeInstallAvailability){lastNativeInstallAvailability=nativeAvailable;window.dispatchEvent(new CustomEvent('tracker:install-availability',{detail:{available:nativeAvailable}}));}
+    if (knownInstalled()) {
+      hideCard();
+      if (entry) entry.hidden = true;
+      if (help?.open) help.close();
+      if (pendingOfflineOffer && !blocked()) {
+        pendingOfflineOffer = false;
+        window.dispatchEvent(new Event('tracker:installed'));
+        if (!window.TrackerOffline) document.querySelector('script[data-offline-library-loader]')?.addEventListener('load', () => window.TrackerOffline?.offer(), { once: true });
+      }
+      return;
+    }
+    ensureEntry();
+    const eligible = !!deferredPrompt || manualSupported();
+    if (entry) {
+      entry.hidden = !eligible || navigator.onLine === false || pendingInstall();
+      const button = entry.querySelector('button');
+      button.textContent = isiOS() ? 'Add to Home Screen' : 'Install free app';
+      button.disabled = installing;
+
+    }
+    const pref = preferences();
+    if (!researchPage || !eligible || installing || pendingInstall() || blocked() || pref.never === true || Number(pref.nextOfferAt || 0) > Date.now() || dismissedHere) { hideCard(); return; }
+    if (engaged && Date.now() - startedAt >= 15000 && Date.now() - engagedAt >= 4000 && (!read(sessionKey, true) || cardShownHere)) showCard();
+  };
+  const checkRelated = () => {
+    if (!navigator.getInstalledRelatedApps || checkingRelated || relatedInstalled || Date.now() - relatedCheckStarted < 30000) return;
+    relatedCheckStarted = Date.now();
+    checkingRelated = true;
+    const timeout = setTimeout(() => { checkingRelated = false; reconcile(); }, 2500);
+    Promise.resolve().then(() => navigator.getInstalledRelatedApps()).then(apps => {
+      relatedInstalled = apps.some(app => {
+        if (app.platform === 'play') return app.id === 'com.psilocybinresearch.tracker';
+        if (app.platform !== 'webapp') return false;
+        try { const url = new URL(app.url || app.id, location.origin); return url.origin === location.origin && url.pathname === '/manifest.webmanifest'; } catch (_) { return false; }
+      });
+      if (relatedInstalled) rememberInstalled();
+    }).catch(() => {}).finally(() => { clearTimeout(timeout); checkingRelated = false; reconcile(); });
+  };
+  const meaningfulUse = (context = 'catalogue') => { if (!engaged) engagedAt = Date.now(); engaged = true; engagementContext = context; reconcile(); };
+  installButton.addEventListener('click', requestInstall);
+  mobileInstallButton?.addEventListener('click', requestInstall);
+  window.addEventListener('beforeinstallprompt', event => {
+    // Offer the native dialog only after an explicit click on our install controls.
+    event.preventDefault();
+    if (appMode() || relatedInstalled) return;
+    // A fresh installable event is stronger than an old local "installed" flag.
+    rememberedInstalled = false;
+    write(installedKey, '0');
+    if (Number(preferences().pendingUntil || 0)) savePreferences({ pendingUntil: 0 });
+    deferredPrompt = event;
+    track('install_prompt_available', `publicationTrackerPwa-${strategy}-available-${new Date().toISOString().slice(0, 10)}`, 'unknown');
+    installButton.title = 'Install the Psilocybin Research app';
+    reconcile();
+    // A native choice can consume the event without our manual button being used.
+    Promise.resolve(event.userChoice).then(choice => {
+      if (deferredPrompt !== event || !choice?.outcome) return;
       deferredPrompt = null;
-      installButton.hidden = true;
-      if (choice.outcome === "accepted") {
-        localStorage.setItem("publicationTrackerInstalled", "1");
-        updatePushButton();
-        window.alert("Psilocybin Research Tracker installed.");
+      if (choice.outcome === 'accepted') {
+        savePreferences({ pendingUntil: Date.now() + day });
+        write(attributionKey, JSON.stringify({ strategy, surface: 'unknown', at: Date.now() }));
+        track('install_prompt_accepted_first', `publicationTrackerPwa-${strategy}-accepted-first`, 'unknown');
       }
-    });
-  }
-
-  window.addEventListener("appinstalled", () => {
-    deferredPrompt = null;
-    localStorage.setItem("publicationTrackerInstalled", "1");
-    if (installButton) installButton.hidden = true;
-    updatePushButton();
-    window.alert("Psilocybin Research Tracker installed. Use Enable push to receive new-publication notifications on this device.");
+      track(choice.outcome === 'accepted' ? 'install_prompt_accepted' : 'install_prompt_dismissed', eventKey('native-choice'), 'unknown');
+      reconcile();
+    }).catch(() => { if (deferredPrompt === event) { deferredPrompt = null; reconcile(); } });
   });
-
-  if (pushButton) {
-    pushButton.addEventListener("click", async () => {
-      try {
-        if (!canPush) {
-          window.alert("Push notifications are not supported by this browser.");
-          return;
-        }
-        const permission = Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
-        if (permission !== "granted") {
-          window.alert("Push notifications were not enabled.");
-          return;
-        }
-        const registration = await navigator.serviceWorker.ready;
-        const existing = await registration.pushManager.getSubscription();
-        if (existing) {
-          window.alert("Push notifications are already enabled for this device.");
-          await updatePushButton();
-          return;
-        }
-        const keyResponse = await fetch("push.php?action=public-key", { headers: { Accept: "application/json" }, cache: "no-store" });
-        if (!keyResponse.ok) throw new Error("Could not load push key");
-        const keyData = await keyResponse.json();
-        const subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: base64UrlToUint8Array(keyData.publicKey || ""),
-        });
-        const saveResponse = await fetch("push.php?action=subscribe", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify(subscription),
-        });
-        if (!saveResponse.ok) throw new Error("Could not save push subscription");
-        window.alert("Push notifications enabled. You will be notified when newly imported psilocybin or psilocin publications are added.");
-        await updatePushButton();
-      } catch (error) {
-        window.alert("Could not enable push notifications on this device.");
-      }
-    });
+  window.addEventListener('appinstalled', () => {
+    rememberInstalled();
+    pendingOfflineOffer = true;
+    const context = attribution();
+    track('pwa_install', context ? `publicationTrackerPwa-${strategy}-installed-${context.at}` : `publicationTrackerPwa-${strategy}-installed-${new Date().toISOString().slice(0, 10)}`, context?.surface || 'unknown');
+    track('pwa_install_first', `publicationTrackerPwa-${strategy}-installed-first`, context?.surface || 'unknown');
+    updatePushButton();
+    reconcile();
+  });
+  window.addEventListener('tracker:search-complete', () => meaningfulUse('search'));
+  window.addEventListener('tracker:export-requested', () => meaningfulUse('export'));
+  window.addEventListener('tracker:reading-list-saved', () => meaningfulUse('reading'));
+  window.addEventListener('research-analysis-complete', () => meaningfulUse('analysis'));
+  document.addEventListener('click', event => {
+    if (!event.isTrusted) return;
+    if (event.target.closest?.('[data-save-paper]')) window.dispatchEvent(new Event('tracker:reading-list-saved'));
+    if (event.target.closest?.('.publication-exports a,.export-links a,[data-export-selected],[data-sidebar-export]')) window.dispatchEvent(new Event('tracker:export-requested'));
+  }, true);
+  window.addEventListener('storage', event => {
+    if (event.key === installedKey || event.key === null) rememberedInstalled = read(installedKey) === '1';
+    if (event.key === preferenceKey) { dismissedHere = true; hideCard(); }
+    reconcile();
+  });
+  mode.addEventListener?.('change', () => { reconcile(); updatePushButton(); });
+  document.addEventListener('input', event => {
+    const form = event.target.closest?.('form');
+    if (form && !form.matches('[role="search"],.hero-search,.advanced-filter-form,.result-quick-controls,#filters-form,#search-form')) dirtyForms.add(form);
+    reconcile();
+  }, true);
+  document.addEventListener('reset', event => { dirtyForms.delete(event.target); setTimeout(reconcile, 0); }, true);
+  document.addEventListener('focusin', reconcile);
+  document.addEventListener('visibilitychange', () => { reconcile(); if (document.visibilityState === 'visible') checkRelated(); });
+  window.addEventListener('pageshow', () => { reconcile(); checkRelated(); });
+  window.addEventListener('online', reconcile);
+  window.addEventListener('offline', reconcile);
+  window.addEventListener('nav-sidebar-statechange', reconcile);
+  window.addEventListener('tracker:offline-idle', reconcile);
+  window.visualViewport?.addEventListener('resize', reconcile);
+  setInterval(reconcile, 2000);
+  window.TrackerInstall = { open: requestInstall, selectOfflineComponents: saveOfflineChoice, get installed() { return knownInstalled(); }, get available() { return !!deferredPrompt&&!knownInstalled()&&!pendingInstall()&&!installing&&navigator.onLine!==false; } };
+  if (appMode()) {
+    const context = attribution();
+    if (context) track('install_followup_launch', `publicationTrackerPwa-${strategy}-followup-${context.at}`, context.surface);
   }
-
-  updatePushButton();
+  reconcile();
+  checkRelated();
 }
+
+async function initPwa() {
+  const installButton=document.querySelector('#install-app'),pushButton=document.querySelector('#push-app');
+  const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+  const recordPwaMetric=createPwaMetricRecorder();
+  window.TrackerPwaMetrics={record:recordPwaMetric};
+  if(standalone){recordPwaMetric('standalone_first_launch','publicationTrackerStandaloneFirstRecorded');recordPwaMetric('standalone_launch',`publicationTrackerStandaloneLaunch-${new Date().toISOString().slice(0,10)}`);}
+  for(const [attribute,src] of [['offline-library-loader','/assets/offline-library.min.js?'+APP_ENTRY_URL.searchParams.toString()],['offline-interface','/assets/offline-ui.min.js?'+APP_ENTRY_URL.searchParams.toString()],['pwa-freshness','/assets/pwa-freshness.min.js?'+APP_ENTRY_URL.searchParams.toString()]]){
+    if(!document.querySelector(`script[data-${attribute}]`)){const script=document.createElement('script');script.src=src;script.setAttribute('data-'+attribute,'1');document.head.append(script);}
+  }
+  const canPush='serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window;
+  const installed=()=>{try{return standalone||localStorage.getItem('publicationTrackerInstalled')==='1';}catch(_){return standalone;}};
+  let subscription=null,serverActive=null,busy=false,savedLoaded=true,notificationState=null;
+  const registration=async()=>navigator.serviceWorker?.getRegistration('/');
+  const bounded=(promise,ms=6000)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error('Status check timed out. Check your connection and reopen settings.')),ms))]);
+  const updatePushButton=async()=>{
+    try{const reg=canPush?await bounded(registration()):null;subscription=reg?.pushManager?await bounded(reg.pushManager.getSubscription()):null;}catch(error){subscription=null;throw error;}
+    pushButton?.classList.toggle('is-enabled',serverActive!==false&&!!subscription&&Notification.permission==='granted');
+    if(pushButton){pushButton.hidden=false;pushButton.title='Manage research notifications and check this device';}
+  };
+  initPwaInstall({installButton,recordPwaMetric,updatePushButton});
+  try{
+    if(!window.TrackerNotifications)await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='/assets/notification-state.js?v=20261108-received-history-v1';script.onload=resolve;script.onerror=reject;document.head.append(script);});
+    notificationState=await TrackerNotifications.badge();
+    window.trackerTouchHaptics=notificationState.preferences.haptics;
+  }catch(_){}
+  const showUnread=async()=>{
+    try{notificationState=await TrackerNotifications.read();}catch(_){}
+  };
+  const confirmViewed=async()=>{
+    if(document.visibilityState!=='visible')return;
+    const marker=document.querySelector('[data-notification-batch]'),id=marker?.dataset.notificationBatch;
+    if(!/^[a-f0-9]{64}$/.test(id||''))return;
+    try{
+      await TrackerNotifications.viewed(id);
+      const reg=await registration();for(const notice of await reg?.getNotifications()||[])if(notice.data?.batch===id)notice.close();
+      await showUnread();
+    }catch(_){}
+  };
+  await confirmViewed();await showUnread();
+  navigator.serviceWorker?.addEventListener('message',event=>{if(event.data?.type==='research-notification')showUnread();});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){confirmViewed();showUnread();}});
+  window.addEventListener('pageshow',confirmViewed);
+  window.addEventListener('tracker:results-loaded',confirmViewed);
+  const createPushPreferences = async () => {
+  let dialog=document.querySelector('#push-preferences');
+  if(!dialog){
+    try{const response=await fetch('/push.php?action=form',{cache:'no-store'});if(!response.ok)throw Error();document.body.insertAdjacentHTML('beforeend',await response.text());dialog=document.querySelector('#push-preferences');}catch(_){throw new Error('Connect to open notification settings, then try again.');}
+  }
+  const form=dialog.querySelector('form'),submit=form.querySelector('[type="submit"]'),stop=form.querySelector('[data-push-unsubscribe]'),test=form.querySelector('[data-push-test]');
+  const feedback=(text,error=false)=>{const node=form.querySelector('[data-push-feedback]');node.textContent=text;node.dataset.error=String(error);};
+  const choice=name=>form.querySelector(`[name="${name}"]`);
+  const aliases=value=>{try{const parsed=JSON.parse(value);return Array.isArray(parsed)?parsed:[value];}catch(_){return [value];}};
+  const sync=()=>{
+    const targeted=form.querySelector('[name="push_scope"]:checked')?.value==='targeted';
+    form.querySelectorAll('.alert-targeting input, .alert-targeting select, .alert-targeting button').forEach(input=>input.disabled=!targeted||busy);
+    choice('push_vibration').disabled=!choice('push_sound').checked||busy;
+    const data=new FormData(form),parts=[];
+    if(targeted){
+      for(const [key,label] of [['keywords','Keywords'],['author','Author'],['cited_doi','Cites DOI']]){const value=String(data.get('push_'+key)||'').trim();if(value)parts.push(label+': '+value);}
+      for(const [key,label] of [['journal','Journals'],['topic','Topics']]){const values=[...form.querySelectorAll(`[name="push_${key}[]"]:checked`)].map(input=>input.closest('label').querySelector('span').textContent);if(values.length)parts.push(label+': '+values.join(', '));}
+    }
+    form.querySelector('[data-push-review]').textContent=`${data.get('push_frequency')||'daily'} digest · ${data.getAll('push_substances[]').join(', ')||'Choose at least one substance'}. ${parts.length?parts.join(' · ')+'. Any selection within a group; all filter groups must match.':'All new publications in this coverage.'} ${choice('push_sound').checked?'Phone sound settings apply.':'Quiet delivery: no sound or vibration.'}`;
+    submit.disabled=busy||!savedLoaded||!canPush||!installed()||(canPush&&Notification.permission==='denied')||!navigator.onLine;
+    test.disabled=busy||!serverActive||!subscription||!navigator.onLine;
+    stop.disabled=busy||!navigator.onLine;
+  };
+  const status=async()=>{
+    try { await updatePushButton(); } catch (_) { savedLoaded=false; }
+    const pairs=[['Notifications',canPush?Notification.permission:'Not supported'],['App installation',installed()?'Installed':'Install the app to enable push'],['Subscription',serverActive?'Enabled for this device':subscription?'Not enabled on the server':'Not enabled'],['Connection',navigator.onLine?'Online':'Offline'],['Unread badge',notificationState?`${TrackerNotifications.count(notificationState)} unseen research updates`:'Device storage unavailable']];
+    const summary=form.querySelector('[data-push-summary]');
+    const enabled=canPush && Notification.permission==='granted' && !!subscription && serverActive===true;
+    summary.textContent=!savedLoaded?'Status could not be verified. Reopen settings to try again.':enabled?'Push is enabled on this device.':!canPush?'Push notifications are not supported on this device.':Notification.permission==='denied'?'Push is blocked in your device or browser settings.':subscription && !serverActive?'Push is not active on the server. Save your preferences to enable it.':'Push is not enabled on this device.';
+    summary.dataset.active=String(enabled);
+    const host=form.querySelector('[data-push-device-status]');host.replaceChildren();
+    for(const [label,value] of pairs){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=value;host.append(dt,dd);}
+    sync();
+  };
+  const refreshPickers=preferences=>{
+    for(const key of ['journal','topic']){
+      const name=`push_${key}[]`,old=form.querySelector(`[name="${name}"]`)?.closest('[data-alert-multiselect]');if(!old)continue;
+      const root=old.cloneNode(true);root.removeAttribute('data-picker-ready');old.replaceWith(root);
+      const values=aliases(preferences[key]||'').filter(Boolean),represented=new Set([...root.querySelectorAll('[type="checkbox"]')].flatMap(box=>aliases(box.value)));
+      for(const value of values)if(!represented.has(value)){
+        const label=document.createElement('label'),box=document.createElement('input'),span=document.createElement('span');box.type='checkbox';box.name=name;box.value=value;span.textContent=value;label.append(box,span);root.querySelector('.alert-selection-options').append(label);
+      }
+      root.querySelectorAll('[type="checkbox"]').forEach(box=>box.checked=aliases(box.value).some(value=>values.includes(value)));
+      root.querySelector('[data-selection-search]').value='';root.open=false;
+    }
+    initAlertMultiselects();
+  };
+  const close=()=>{dialog.close();dialog.classList.remove('is-open');updateModalOpenState();};
+  let opening=0;
+  const open=async()=>{
+    if(dialog.open)return;
+    const generation=++opening;
+    dialog.showModal();dialog.classList.add('is-open');updateModalOpenState();refreshIcons();
+    form.reset();form.querySelectorAll('details').forEach(node=>node.open=false);feedback('Checking this device…');savedLoaded=false;sync();
+    try{
+      await updatePushButton();
+      let preferences={};serverActive=false;
+      if(subscription){const response=await bounded(fetch('/push.php?action=preferences',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(subscription.toJSON()),cache:'no-store'}));const data=await response.json();if(!response.ok)throw Error(data.message||'Saved preferences are unavailable.');preferences=data.preferences;serverActive=data.active;}
+      if(generation!==opening||!dialog.open)return;
+      form.querySelectorAll('[name="push_frequency"]').forEach(input=>input.checked=input.value===(preferences.frequency||'daily'));
+      form.querySelectorAll('[name="push_substances[]"]').forEach(input=>input.checked=(preferences.substances||'psilocybin,psilocin').split(',').includes(input.value));
+      for(const key of ['keywords','author','cited_doi'])choice('push_'+key).value=preferences[key]||'';
+      refreshPickers(preferences);
+      const targeted=['keywords','author','journal','topic','cited_doi'].some(key=>preferences[key]);
+      form.querySelector(`[name="push_scope"][value="${targeted?'targeted':'all'}"]`).checked=true;
+      form.querySelector('.alert-targeting').open=targeted;
+      if(notificationState)for(const [key,name] of [['sound','push_sound'],['vibration','push_vibration'],['badge','push_badge'],['haptics','push_haptics']])choice(name).checked=notificationState.preferences[key];
+      stop.hidden=!subscription;savedLoaded=true;
+      feedback(!canPush?'This browser does not support push notifications.':!installed()?'Install the app, then open it from your home screen to enable push.':Notification.permission==='denied'?'Notifications are blocked. Allow them in your browser or phone settings.':'');
+    }catch(error){feedback(error.message||'Could not load saved preferences. Reopen settings to try again.',true);}
+    await status();form.querySelector('[data-close-push-preferences]').focus({preventScroll:true});
+  };
+  dialog.querySelectorAll('[data-close-push-preferences]').forEach(button=>button.addEventListener('click',close));
+  dialog.addEventListener('close',()=>{opening++;dialog.classList.remove('is-open');updateModalOpenState();});
+  dialog.addEventListener('click',event=>{if(event.target===dialog)close();});
+  form.addEventListener('input',sync);form.addEventListener('change',event=>{if(event.target.name==='push_scope'&&event.target.value==='targeted')form.querySelector('.alert-targeting').open=true;sync();});
+  form.querySelector('.alert-targeting').addEventListener('toggle',()=>{if(form.querySelector('.alert-targeting').open){form.querySelector('[name="push_scope"][value="targeted"]').checked=true;sync();}});
+  form.addEventListener('submit',async event=>{
+    event.preventDefault();if(submit.disabled)return;
+    if(!form.querySelector('[name="push_substances[]"]:checked')){feedback('Choose at least one substance.',true);return;}
+    const data=new FormData(form),targeted=data.get('push_scope')==='targeted';
+    const preferences={frequency:data.get('push_frequency'),substances:data.getAll('push_substances[]')};
+    for(const key of ['keywords','author','cited_doi'])preferences[key]=targeted?data.get('push_'+key):'';
+    for(const key of ['journal','topic'])preferences[key]=targeted?data.getAll(`push_${key}[]`).flatMap(aliases):[];
+    busy=true;sync();feedback('Saving preferences…');
+    try{
+      // Keep the permission prompt directly inside the user's submit gesture.
+      const permission=Notification.permission==='granted'?'granted':await Notification.requestPermission();
+      if(permission!=='granted')throw Error('Notifications are not allowed. You can change this in browser or phone settings.');
+      const reg=await Promise.race([navigator.serviceWorker.ready,new Promise((_,reject)=>setTimeout(()=>reject(Error('The app is still preparing notifications. Please try again.')),8000))]);
+      subscription=await reg.pushManager.getSubscription();
+      if(!subscription){const response=await fetch('/push.php?action=public-key',{cache:'no-store'});if(!response.ok)throw Error('Could not prepare notifications.');const key=await response.json();subscription=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:base64UrlToUint8Array(key.publicKey)});}
+      const response=await fetch('/push.php?action=subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...subscription.toJSON(),preferences})});const result=await response.json();if(!response.ok||!result.ok)throw Error(result.message||'Could not save preferences.');
+      serverActive=true;
+      try{notificationState=await TrackerNotifications.preferences({sound:choice('push_sound').checked,vibration:choice('push_vibration').checked,badge:choice('push_badge').checked,haptics:choice('push_haptics').checked});window.trackerTouchHaptics=notificationState.preferences.haptics;feedback('');showAppToast('Push preferences saved for this device.');}catch(_){feedback('Research preferences saved. Device delivery choices could not be stored; browser defaults apply.',true);}
+      stop.hidden=false;await showUnread();
+    }catch(error){feedback(error.message||'Could not save preferences. Please try again.',true);}
+    finally{busy=false;await status();}
+  });
+  stop.addEventListener('click',async()=>{
+    if(busy||!subscription)return;busy=true;sync();
+    try{const response=await fetch('/push.php?action=unsubscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(subscription.toJSON())});if(!response.ok)throw Error('Could not stop delivery. Try again or revoke notification permission in browser settings.');serverActive=false;await subscription.unsubscribe();subscription=null;stop.hidden=true;feedback('Push delivery stopped for this device.');}
+    catch(error){feedback(error.message,true);}finally{busy=false;await status();}
+  });
+  test.addEventListener('click',async()=>{
+    if(test.disabled)return;busy=true;sync();feedback('Sending a test to this device…');
+    try{const response=await fetch('/push.php?action=test',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(subscription.toJSON())});const result=await response.json();if(!response.ok||!result.ok)throw Error(result.message||'The test could not be delivered.');feedback(result.message);}
+    catch(error){feedback(error.message,true);}finally{busy=false;await status();}
+  });
+  const historyDetails=form.querySelector('[data-push-history]');
+  historyDetails.addEventListener('toggle',async()=>{
+    if(!historyDetails.open)return;
+    const list=historyDetails.querySelector('[data-push-history-list]');list.replaceChildren();
+    try {
+      const state=await TrackerNotifications.read(),history=Array.isArray(state.history)?state.history:[];
+      if(!history.length){list.textContent='No received notifications recorded yet.';return;}
+      const ul=document.createElement('ul');
+      for(const item of history){const li=document.createElement('li'),time=document.createElement('time');time.dateTime=new Date(item.time).toISOString();time.textContent=new Date(item.time).toLocaleString();li.textContent=(item.title||'Research notification')+' · ';li.append(time);ul.append(li);}list.append(ul);
+    } catch (_) {list.textContent='Notification history is unavailable on this device.';}
+  });
+  form.querySelector('[data-push-read]').addEventListener('click',async()=>{
+    try{notificationState=await TrackerNotifications.viewed();const reg=await registration();for(const notice of await reg?.getNotifications()||[])if(notice.data?.kind!=='test')notice.close();await showUnread();await status();feedback('Research updates marked as viewed.');}catch(_){feedback('Device storage is unavailable.',true);}
+  });
+  window.addEventListener('online',status);window.addEventListener('offline',status);
+  return open;
+  };
+  let preferencesRequest = null;
+  const openPushPreferences = async () => {
+    collapsePrimaryNavSidebarOnCompact();
+    pushButton?.setAttribute('aria-busy', 'true');
+    try {
+      if (!preferencesRequest) preferencesRequest = createPushPreferences().catch(error => { preferencesRequest = null; throw error; });
+      const open = await preferencesRequest;
+      await open();
+    } catch (error) { showAppToast(error.message || 'Notification settings could not load. Try again.'); }
+    finally { pushButton?.removeAttribute('aria-busy'); }
+  };
+  pushButton?.addEventListener('click', openPushPreferences);
+  const hashSettings = () => { if (location.hash === '#notifications') openPushPreferences(); };
+  window.addEventListener('hashchange', hashSettings);
+  await updatePushButton().catch(()=>{}); hashSettings();
+}
+
+function initVisitorActivity() {
+  const online = document.querySelector('#visitor-online-count');
+  if (!online) return;
+  const active = document.querySelector('#visitor-active-count');
+  const views = document.querySelector('#visitor-pageview-count');
+  const spinner = document.querySelector('#visitor-poll-spinner');
+  const refresh = async () => {
+    if (document.hidden) return;
+    spinner?.classList.add('is-polling');
+    try {
+      const response = await fetch('visitor-activity.php', { headers: { Accept: 'application/json' }, cache: 'no-store' });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (Number.isInteger(data.online)) online.textContent = data.online.toLocaleString();
+      if (active && Number.isInteger(data.active_sessions)) active.textContent = data.active_sessions.toLocaleString();
+      if (views && Number.isInteger(data.page_views)) views.textContent = data.page_views.toLocaleString();
+    } catch (error) {} finally { spinner?.classList.remove('is-polling'); }
+  };
+  window.setInterval(refresh, 30000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+}
+
+function initGlobalInteractionFeedback() {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  let keyboardNavigation = false;
+  const ripple = (x, y) => {
+    const element = document.createElement("span");
+    element.className = "tracker-interaction-ripple";
+    element.setAttribute("aria-hidden", "true");
+    element.style.left = `${Math.round(x)}px`;
+    element.style.top = `${Math.round(y)}px`;
+    document.body.append(element);
+    window.requestAnimationFrame(() => element.classList.add("is-visible"));
+    window.setTimeout(() => element.remove(), 680);
+  };
+  document.addEventListener("pointerdown", (event) => {
+    keyboardNavigation = false;
+    if (!event.isPrimary || event.button !== 0) return;
+    ripple(event.clientX, event.clientY);
+  }, { capture: true, passive: true });
+  document.addEventListener("keydown", (event) => { keyboardNavigation = event.key === "Tab"; }, { capture: true });
+  document.addEventListener("focusin", (event) => {
+    if (!keyboardNavigation || !(event.target instanceof HTMLElement)) return;
+    const rect = event.target.getBoundingClientRect();
+    if (rect.width && rect.height) ripple(rect.left + rect.width / 2, rect.top + rect.height / 2);
+  }, { capture: true });
+}
+
+function renderToastContent(node, message) {
+  if(!node.dataset.dismissOnClick){node.dataset.dismissOnClick='true';node.addEventListener('click',()=>{if(node.popover&&node.matches(':popover-open'))node.hidePopover();node.classList.remove('is-visible');node.hidden=true;});}
+  const icon = /could not|unavailable|not available|failed|error|unable|before adding|before exporting/i.test(message) ? 'info'
+    : /copied|copy this|copy it/i.test(message) ? 'copy'
+    : /fullscreen/i.test(message) ? 'maximize'
+    : /search|results updated|showing.*publications/i.test(message) ? 'search'
+    : /saved|reading list/i.test(message) ? 'book-marked'
+    : /install|download/i.test(message) ? 'download' : 'check';
+  const graphic=document.createElement('span');graphic.className='toast-icon';graphic.setAttribute('aria-hidden','true');graphic.innerHTML=ICONS[icon]||ICONS.info;
+  const text=document.createElement('span');text.className='toast-message';text.textContent=message;
+  const close=document.createElement('button');close.type='button';close.className='toast-close';close.setAttribute('aria-label','Dismiss notification');close.title='Dismiss notification';close.textContent='×';
+  node.replaceChildren(graphic,text,close);
+}
+window.TrackerToast={render:renderToastContent};
 
 function showAppToast(message, timeout = 5200) {
   let toast = document.querySelector("#app-toast");
@@ -2509,35 +3104,84 @@ function showAppToast(message, timeout = 5200) {
     toast.hidden = true;
     document.body.append(toast);
   }
-  toast.textContent = message;
-  toast.hidden = false;
-  requestAnimationFrame(() => toast.classList.add("is-visible"));
+  // Cancel both stages so a previous message cannot hide a newer confirmation.
   window.clearTimeout(showAppToast.timer);
+  window.clearTimeout(showAppToast.hideTimer);
+  renderToastContent(toast, message);
+  toast.hidden = false;
+  // Keep the live region inside the active modal's accessible subtree.
+  const host = document.querySelector("dialog[open]") || document.body;
+  if (toast.parentElement !== host) host.append(toast);
+  if (typeof toast.showPopover === "function") {
+    toast.popover = "manual";
+    if (toast.matches(":popover-open")) toast.hidePopover();
+    toast.showPopover(); // The top layer keeps feedback visible above native dialogs.
+  }
+  requestAnimationFrame(() => toast.classList.add("is-visible"));
   showAppToast.timer = window.setTimeout(() => {
     toast.classList.remove("is-visible");
-    window.setTimeout(() => {
+    showAppToast.hideTimer = window.setTimeout(() => {
+      if (toast.popover && toast.matches(":popover-open")) toast.hidePopover();
       toast.hidden = true;
     }, 220);
   }, timeout);
 }
 
 function initCollectionExport() {
-  const boxes = [...document.querySelectorAll("[data-collection-paper]")];
-  const trigger = document.querySelector("[data-export-selected]");
-  if (!boxes.length || !trigger) return;
+  const host = document.querySelector('#publication-results');
+  const list = host?.querySelector('.paper-list');
+  if (!list || host.dataset.selectionBound || !host.querySelector('[data-collection-paper]')) return;
+  host.dataset.selectionBound = 'true';
+  const bar = document.createElement('div');
+  bar.className = 'collection-selection-bar';
+  bar.hidden = true;
+  bar.setAttribute('aria-label', 'Selected records on this page');
+  bar.setAttribute('role', 'region');
+  bar.innerHTML = '<span data-selection-count role="status" aria-live="polite" aria-atomic="true"></span><label>Format <select data-selection-format aria-label="Selected records export format"><option value="bibtex">BibTeX</option><option value="ris">RIS</option><option value="csv">CSV</option><option value="json">JSON</option><option value="latex">LaTeX</option></select></label><button type="button" class="primary" data-export-selected><span>Export</span></button><button type="button" class="secondary" data-selection-clear>Clear</button>';
+  list.before(bar);
+  const boxes = () => [...host.querySelectorAll('input[type="checkbox"][data-collection-paper]')];
+  const selectedIds = () => [...new Set(boxes().filter(box => box.checked).map(box => box.value).filter(id => /^[1-9]\d*$/.test(id)))];
+  const setText = (node, value) => { if (node && node.textContent !== value) node.textContent = value; };
   const sync = () => {
-    const count = boxes.filter((box) => box.checked).length;
-    trigger.disabled = count === 0;
-    trigger.querySelector("span").textContent = count > 0 ? `Export selected (${count})` : "Export selected";
+    const count = selectedIds().length;
+    bar.hidden = count === 0;
+    setText(bar.querySelector('[data-selection-count]'), `${count} selected`);
+    host.querySelectorAll('[data-export-selected]').forEach(trigger => {
+      trigger.disabled = count === 0;
+      if (!bar.contains(trigger)) {
+        let label = trigger.querySelector('span');
+        if (!label) { label = document.createElement('span'); trigger.append(label); }
+        setText(label, count ? `Export selected (${count})` : 'Export selected');
+      }
+    });
+    scheduleSmartResultBarUpdate();
   };
-  boxes.forEach((box) => box.addEventListener("change", sync));
-  trigger.addEventListener("click", () => {
-    const ids = boxes.filter((box) => box.checked).map((box) => box.value);
-    if (!ids.length) return;
-    const url = new URL("export.php", window.location.href);
-    url.searchParams.set("format", "bibtex");
-    ids.forEach((id) => url.searchParams.append("ids[]", id));
-    window.location.href = url.href;
+  host.addEventListener('change', event => {
+    if (event.target.matches?.('input[data-collection-paper]')) {
+      sync();
+      const menu = event.target.closest('.paper-citation-menu');
+      if (menu) { menu.open = false; menu.querySelector('summary')?.focus({ preventScroll: true }); }
+      showAppToast(`${selectedIds().length} selected for export. Use the export toolbar above the papers.`);
+    }
+  });
+  host.addEventListener('click', event => {
+    const clear = event.target.closest?.('[data-selection-clear]');
+    if (clear && bar.contains(clear)) {
+      boxes().forEach(box => { box.checked = false; });
+      host.focus({ preventScroll: true });
+      sync();
+      showAppToast('Selection cleared.');
+      return;
+    }
+    const trigger = event.target.closest?.('[data-export-selected]');
+    if (!trigger || !host.contains(trigger)) return;
+    event.preventDefault();
+    const ids = selectedIds();
+    if (!ids.length) { sync(); return; }
+    const url = new URL('export.php', window.location.href);
+    url.searchParams.set('format', bar.querySelector('[data-selection-format]').value);
+    ids.forEach(id => url.searchParams.append('ids[]', id));
+    const download=document.createElement('a');download.href=url.href;download.click();
   });
   sync();
 }
@@ -2576,974 +3220,6 @@ function initEvidenceMapSort() {
   });
 }
 
-function initCitationNetwork() {
-  const host = document.querySelector("[data-citation-network]");
-  const dataScript = document.querySelector("#citation-network-data");
-  if (!host || !dataScript) return;
-  let graph;
-  try {
-    graph = JSON.parse(dataScript.textContent || "{}");
-  } catch (error) {
-    host.innerHTML = '<div class="citation-network-empty">Network data could not be loaded.</div>';
-    return;
-  }
-  const nodes = Array.isArray(graph.nodes) ? graph.nodes.map((node, index) => ({ ...node, index })) : [];
-  const nodeById = new Map(nodes.map((node) => [node.id, node]));
-  const edges = (Array.isArray(graph.edges) ? graph.edges : []).filter((edge) => nodeById.has(edge.source) && nodeById.has(edge.target));
-  if (!nodes.length) {
-    const printButton = document.querySelector("[data-citation-print]");
-    if (printButton) {
-      printButton.disabled = true;
-      printButton.setAttribute("aria-disabled", "true");
-      printButton.setAttribute("title", "No displayed references to print");
-    }
-    host.innerHTML = '<div class="citation-network-empty">No graph records matched these filters.</div>';
-    return;
-  }
-
-  const detail = document.querySelector("[data-citation-detail]");
-  const fitButton = document.querySelector("[data-citation-fit]");
-  const labelButton = document.querySelector("[data-citation-labels]");
-  const printButton = document.querySelector("[data-citation-print]");
-  const fullscreenButton = document.querySelector("[data-citation-fullscreen]");
-  const fullscreenTarget = document.querySelector("[data-citation-fullscreen-target]");
-  const searchInput = document.querySelector("[data-citation-search]");
-  const seedLimitSelect = document.querySelector("[data-citation-seed-limit]");
-  const clearSearchButton = document.querySelector("[data-citation-clear-search]");
-  const copySelectedButton = document.querySelector("[data-citation-copy-selected]");
-  const focusSelectedButton = document.querySelector("[data-citation-focus-selected]");
-  const shareViewButton = document.querySelector("[data-citation-share-view]");
-  const exportJsonButton = document.querySelector("[data-citation-export-json]");
-  const exportSubgraphButton = document.querySelector("[data-citation-export-subgraph]");
-  const exportCsvButton = document.querySelector("[data-citation-export-csv]");
-  const layoutModeSelect = document.querySelector("[data-citation-layout-mode]");
-  const labelModeSelect = document.querySelector("[data-citation-label-mode]");
-  const clusterToggle = document.querySelector("[data-citation-clusters]");
-  const nodeTypeInputs = [...document.querySelectorAll("[data-citation-node-type]")];
-  const edgeTypeInputs = [...document.querySelectorAll("[data-citation-edge-type]")];
-  const insight = document.querySelector("[data-citation-insight]");
-  const typeRadius = { paper: 13, reference: 8, author: 9, topic: 9, journal: 9 };
-  const labels = { paper: "Paper", reference: "Reference", author: "Author", topic: "Topic", journal: "Journal" };
-  const relationLabels = { cites: "Cites", author: "Author link", topic: "Topic link", journal: "Journal link" };
-  const svgNs = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(svgNs, "svg");
-  svg.setAttribute("role", "presentation");
-  host.replaceChildren(svg);
-  const hoverPreview = document.createElement("div");
-  hoverPreview.className = "citation-node-preview";
-  hoverPreview.hidden = true;
-  host.append(hoverPreview);
-  const defs = document.createElementNS(svgNs, "defs");
-  const arrow = document.createElementNS(svgNs, "marker");
-  arrow.setAttribute("id", "citation-arrow");
-  arrow.setAttribute("viewBox", "0 0 10 10");
-  arrow.setAttribute("refX", "9");
-  arrow.setAttribute("refY", "5");
-  arrow.setAttribute("markerWidth", "7");
-  arrow.setAttribute("markerHeight", "7");
-  arrow.setAttribute("orient", "auto-start-reverse");
-  const arrowPath = document.createElementNS(svgNs, "path");
-  arrowPath.setAttribute("d", "M 0 0 L 10 5 L 0 10 z");
-  arrow.append(arrowPath);
-  defs.append(arrow);
-  const edgeLayer = document.createElementNS(svgNs, "g");
-  const nodeLayer = document.createElementNS(svgNs, "g");
-  svg.append(defs, edgeLayer, nodeLayer);
-
-  const dimensions = () => {
-    const rect = host.getBoundingClientRect();
-    return { width: Math.max(320, rect.width), height: Math.max(420, rect.height || 640) };
-  };
-  let { width, height } = dimensions();
-  const center = () => ({ x: width / 2, y: height / 2 });
-  const layoutLabels = {
-    force: "Organic map",
-    radial: "Citation rings",
-    timeline: "Publication timeline",
-  };
-  const layoutMode = () => layoutModeSelect?.value || "force";
-  const initialParams = new URLSearchParams(window.location.search);
-  if (layoutModeSelect && ["force", "radial", "timeline"].includes(initialParams.get("layout") || "")) {
-    layoutModeSelect.value = initialParams.get("layout") || "force";
-  }
-  if (labelModeSelect && ["important", "all", "selected", "off"].includes(initialParams.get("labels") || "")) {
-    labelModeSelect.value = initialParams.get("labels") || "important";
-  }
-  if (clusterToggle && initialParams.get("clusters") === "0") {
-    clusterToggle.checked = false;
-  }
-  const paperYears = nodes
-    .filter((node) => node.type === "paper" && /^\d{4}/.test(String(node.date || "")))
-    .map((node) => Number(String(node.date).slice(0, 4)));
-  const minPaperYear = paperYears.length ? Math.min(...paperYears) : new Date().getFullYear() - 1;
-  const maxPaperYear = paperYears.length ? Math.max(...paperYears) : new Date().getFullYear();
-  const nodesByType = nodes.reduce((groups, node) => {
-    if (!groups[node.type]) groups[node.type] = [];
-    groups[node.type].push(node);
-    return groups;
-  }, {});
-  const nodeTypeIndexes = new Map();
-  Object.values(nodesByType).forEach((group) => {
-    group.forEach((node, index) => nodeTypeIndexes.set(node.id, index));
-  });
-  const layoutIndex = (node) => nodeTypeIndexes.get(node.id) || 0;
-  const layoutCount = (type) => nodesByType[type]?.length || 1;
-  const nodeYear = (node) => {
-    const match = String(node.date || "").match(/^(\d{4})/);
-    return match ? Number(match[1]) : Math.round((minPaperYear + maxPaperYear) / 2);
-  };
-  const layoutTarget = (node) => {
-    const mode = layoutMode();
-    const c = center();
-    const margin = 54;
-    if (mode === "timeline") {
-      const yearSpan = Math.max(1, maxPaperYear - minPaperYear);
-      const x = margin + ((nodeYear(node) - minPaperYear) / yearSpan) * Math.max(1, width - margin * 2);
-      const bands = { topic: .16, author: .29, paper: .48, reference: .69, journal: .84 };
-      const index = layoutIndex(node);
-      const count = layoutCount(node.type);
-      const jitter = count > 1 ? ((index / Math.max(1, count - 1)) - .5) * 54 : 0;
-      return { x, y: height * (bands[node.type] || .5) + jitter };
-    }
-    if (mode === "radial") {
-      const index = layoutIndex(node);
-      const count = layoutCount(node.type);
-      const angle = (Math.PI * 2 * index) / count - Math.PI / 2;
-      const radiusScale = { paper: .14, author: .28, topic: .39, reference: .5, journal: .59 };
-      const radius = Math.min(width, height) * (radiusScale[node.type] || .35);
-      return { x: c.x + Math.cos(angle) * radius, y: c.y + Math.sin(angle) * radius };
-    }
-    return c;
-  };
-  const settleLayout = (iterations = 90) => {
-    for (let i = 0; i < iterations; i++) tick();
-    render();
-  };
-  const applyLayoutMode = (snap = false) => {
-    const mode = layoutMode();
-    host.dataset.citationCurrentLayout = mode;
-    if (snap && mode !== "force") {
-      nodes.forEach((node) => {
-        const target = layoutTarget(node);
-        node.x = target.x;
-        node.y = target.y;
-        node.vx = 0;
-        node.vy = 0;
-      });
-      settleLayout(28);
-      return;
-    }
-    settleLayout(mode === "force" ? 90 : 36);
-  };
-
-  nodes.forEach((node, index) => {
-    const angle = (Math.PI * 2 * index) / Math.max(nodes.length, 1);
-    const radius = Math.min(width, height) * (node.type === "paper" ? 0.23 : 0.35);
-    node.x = width / 2 + Math.cos(angle) * radius;
-    node.y = height / 2 + Math.sin(angle) * radius;
-    node.vx = 0;
-    node.vy = 0;
-    node.r = typeRadius[node.type] || 8;
-    if (node.type === "paper") node.r += Math.min(7, Number(node.weight || 1));
-    node.degree = 0;
-    node.searchText = [
-      node.label,
-      node.authors,
-      node.journal,
-      node.doi,
-      node.pubmed_id,
-      node.source,
-      node.status,
-      node.type,
-    ].filter(Boolean).join(" ").toLowerCase();
-  });
-
-  edges.forEach((edge) => {
-    const source = nodeById.get(edge.source);
-    const target = nodeById.get(edge.target);
-    if (source) source.degree += 1;
-    if (target) target.degree += 1;
-  });
-
-  const edgeElements = edges.map((edge) => {
-    const line = document.createElementNS(svgNs, "line");
-    line.classList.add("citation-edge", `citation-edge-${edge.type || "related"}`);
-    if (edge.type === "cites") line.setAttribute("marker-end", "url(#citation-arrow)");
-    edgeLayer.append(line);
-    return { edge, line };
-  });
-
-  const connectedEdgesForNode = (node) => edges.filter((edge) => edge.source === node.id || edge.target === node.id);
-  const isClusteringNode = (node) => node.type === "author" || node.type === "topic" || node.type === "journal";
-  const clusteringVisible = () => !clusterToggle || clusterToggle.checked;
-  const visibleTypes = () => nodeTypeInputs.length
-    ? new Set(nodeTypeInputs.filter((input) => input.checked).map((input) => input.dataset.citationNodeType))
-    : new Set(nodes.map((node) => node.type));
-  const visibleEdgeTypes = () => edgeTypeInputs.length
-    ? new Set(edgeTypeInputs.filter((input) => input.checked).map((input) => input.dataset.citationEdgeType))
-    : new Set(edges.map((edge) => edge.type));
-  const currentSearchTerm = () => (searchInput?.value || "").trim().toLowerCase();
-  const nodeTypeVisible = (node) => (!nodeTypeInputs.length || visibleTypes().has(node.type)) && (clusteringVisible() || !isClusteringNode(node));
-  const edgeTypeVisible = (edge) => {
-    if (edgeTypeInputs.length && !visibleEdgeTypes().has(edge.type)) return false;
-    if (!clusteringVisible() && edge.type !== "cites") return false;
-    return true;
-  };
-  const applySeedLimit = (value) => {
-    const url = new URL(window.location.href);
-    url.searchParams.set("limit", value || "8");
-    url.searchParams.set("layout", layoutMode());
-    if (labelModeSelect?.value) url.searchParams.set("labels", labelModeSelect.value);
-    url.searchParams.set("clusters", clusteringVisible() ? "1" : "0");
-    url.hash = "network";
-    window.location.href = url.href;
-  };
-  const updateSavedViewUrl = () => {
-    const url = new URL(window.location.href);
-    url.searchParams.set("layout", layoutMode());
-    if (labelModeSelect?.value) url.searchParams.set("labels", labelModeSelect.value);
-    url.searchParams.set("clusters", clusteringVisible() ? "1" : "0");
-    if (selectedState.focusNodeId) url.searchParams.set("network_node", selectedState.focusNodeId);
-    else url.searchParams.delete("network_node");
-    url.hash = "network";
-    window.history.replaceState(null, "", url.href);
-    return url;
-  };
-
-  const visibleGraphSnapshot = (selectedNeighborhoodOnly = false) => {
-    const focus = graphFocusSets();
-    const visibleNodeIds = new Set();
-    const visibleNodes = nodes.filter((node) => {
-      const show = selectedNeighborhoodOnly ? isInSelectedNeighborhood(node, true) && nodeTypeVisible(node) : shouldShowNode(node, focus);
-      if (show) visibleNodeIds.add(node.id);
-      return show;
-    });
-    const visibleEdges = edges.filter((edge) => visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target) && shouldShowEdge(edge, focus));
-    return { focus, nodes: visibleNodes, edges: visibleEdges };
-  };
-
-  const downloadCitationGraphFile = (filename, content, type) => {
-    const blob = new Blob([content], { type });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    document.body.append(link);
-    link.click();
-    link.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-  };
-
-  const csvCell = (value) => `"${String(value ?? "").replaceAll('"', '""')}"`;
-
-  const selectedNodeText = () => {
-    const node = selectedState.node;
-    if (!node) return "";
-    const relationLines = connectedEdgesForNode(node)
-      .slice(0, 20)
-      .map((edge) => `- ${relationSentence(node, edge)}`);
-    return [
-      `${labels[node.type] || "Node"}: ${node.label || "Untitled"}`,
-      node.authors ? `Authors: ${splitCitationNames(node.authors).join("; ")}` : "",
-      node.journal ? `Journal: ${node.journal}` : "",
-      node.date ? `Date: ${node.date}` : "",
-      nodeDoi(node) ? `DOI: ${nodeDoi(node)}` : "",
-      node.pubmed_id ? `PubMed ID: ${node.pubmed_id}` : "",
-      node.source ? `Source: ${node.source}` : "",
-      node.status ? `Status: ${node.status}` : "",
-      node.url ? `URL: ${new URL(node.url, window.location.href).href}` : "",
-      relationLines.length ? `Connected evidence:\n${relationLines.join("\n")}` : "",
-    ].filter(Boolean).join("\n");
-  };
-
-  const printableReferenceNodes = () => nodes
-    .filter((node) => node.type === "paper" || node.type === "reference")
-    .map((node) => ({
-      type: node.type,
-      title: node.label || "Untitled reference",
-      authors: node.authors || "",
-      journal: node.journal || "",
-      date: node.date || "",
-      doi: node.doi || (node.type === "reference" ? node.label : ""),
-      pubmedId: node.pubmed_id || "",
-      source: node.source || (node.type === "reference" ? "External DOI reference" : ""),
-      status: node.status || "",
-      url: node.url || "",
-    }))
-    .sort((a, b) => {
-      if (a.type !== b.type) return a.type === "paper" ? -1 : 1;
-      return String(b.date || "").localeCompare(String(a.date || "")) || String(a.title).localeCompare(String(b.title));
-    });
-
-  const citationPrintReferenceText = (item) => {
-    if (item.type === "reference" && item.doi) return `External DOI reference. doi:${item.doi}`;
-    return printReferenceText(item);
-  };
-
-  const citationNetworkPrintHtml = (items) => {
-    const paperCount = items.filter((item) => item.type === "paper").length;
-    const referenceCount = items.filter((item) => item.type === "reference").length;
-    const dateRange = printDateRangeLabel(items);
-    const sources = printSourcesLabel(items);
-    const generated = new Date().toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
-    const pageUrl = window.location.href;
-    return `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>Citation network references | Psilocybin Research</title>
-  <style>
-    @page{margin:16mm 14mm}
-    body{margin:0;color:#111;font-family:Georgia,"Times New Roman",serif;font-size:11pt;line-height:1.42}
-    header{border-bottom:1px solid #111;margin-bottom:14px;padding-bottom:8px;font-family:Arial,Helvetica,sans-serif;font-size:9pt;color:#222}
-    header h1{margin:0 0 6px;font-size:15pt;line-height:1.2}
-    header dl{display:grid;grid-template-columns:34mm 1fr;gap:3px 8px;margin:0}
-    header dt{font-weight:700}
-    header dd{margin:0;overflow-wrap:anywhere}
-    ol{margin:0;padding-left:20px}
-    li{break-inside:avoid;margin:0 0 8px;padding-left:3px}
-    footer{border-top:1px solid #bbb;margin-top:14px;padding-top:7px;font-family:Arial,Helvetica,sans-serif;font-size:9pt;color:#333}
-    footer a{color:#111;text-decoration:none}
-    @media screen{body{background:#ffffff;padding:28px}main{max-width:850px;margin:auto;background:white;border:1px solid #d8d2c4;border-left:4px solid #123c31;border-radius:8px;padding:28px;box-shadow:0 1px 2px rgba(36,37,31,.08)}footer a{color:#1a6b54;font-weight:800}}
-  </style>
-</head>
-<body>
-  <main>
-    <header>
-      <h1>Citation network references</h1>
-      <dl>
-        <dt>Generated</dt><dd>${escapeHtml(generated)}</dd>
-        <dt>Displayed entries</dt><dd>${escapeHtml(String(items.length))}</dd>
-        <dt>Papers</dt><dd>${escapeHtml(String(paperCount))}</dd>
-        <dt>External DOIs</dt><dd>${escapeHtml(String(referenceCount))}</dd>
-        <dt>Date range</dt><dd>${escapeHtml(dateRange)}</dd>
-        <dt>Sources</dt><dd>${escapeHtml(sources)}</dd>
-        <dt>Network URL</dt><dd>${escapeHtml(pageUrl)}</dd>
-      </dl>
-    </header>
-    <ol>
-      ${items.map((item) => `<li>${escapeHtml(citationPrintReferenceText(item))}</li>`).join("")}
-    </ol>
-    <footer><a href="https://psilocybin-research.com/citation-network.php">psilocybin-research.com/citation-network.php</a></footer>
-  </main>
-</body>
-</html>`;
-  };
-
-  const printDisplayedCitationReferences = () => {
-    const items = printableReferenceNodes();
-    if (!items.length) {
-      showAppToast("No displayed citation references are available to print.");
-      return;
-    }
-    const paperCount = items.filter((item) => item.type === "paper").length;
-    const referenceCount = items.filter((item) => item.type === "reference").length;
-    if (!window.confirm(`Print ${items.length} displayed ${items.length === 1 ? "reference" : "references"}?\n\nPapers: ${paperCount}\nExternal DOI references: ${referenceCount}`)) return;
-    const frame = document.createElement("iframe");
-    frame.title = "Printable citation network references";
-    frame.setAttribute("aria-hidden", "true");
-    frame.style.position = "fixed";
-    frame.style.right = "0";
-    frame.style.bottom = "0";
-    frame.style.width = "0";
-    frame.style.height = "0";
-    frame.style.border = "0";
-    document.body.append(frame);
-    const printDocument = frame.contentDocument || frame.contentWindow?.document;
-    if (!printDocument || !frame.contentWindow) {
-      frame.remove();
-      showAppToast("Could not prepare the citation network print view.");
-      return;
-    }
-    printDocument.open();
-    printDocument.write(citationNetworkPrintHtml(items));
-    printDocument.close();
-    frame.onload = () => {
-      frame.contentWindow?.focus();
-      frame.contentWindow?.print();
-      window.setTimeout(() => frame.remove(), 1000);
-    };
-    window.setTimeout(() => {
-      if (!frame.isConnected) return;
-      frame.contentWindow?.focus();
-      frame.contentWindow?.print();
-      window.setTimeout(() => frame.remove(), 1000);
-    }, 350);
-  };
-
-  const fullscreenEnabled = document.fullscreenEnabled || document.webkitFullscreenEnabled;
-  const fullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
-  const requestFullscreen = (element) => {
-    if (element.requestFullscreen) return element.requestFullscreen();
-    if (element.webkitRequestFullscreen) return element.webkitRequestFullscreen();
-    return Promise.reject(new Error("Fullscreen unavailable"));
-  };
-  const exitFullscreen = () => {
-    if (document.exitFullscreen) return document.exitFullscreen();
-    if (document.webkitExitFullscreen) return document.webkitExitFullscreen();
-    return Promise.reject(new Error("Fullscreen exit unavailable"));
-  };
-  const syncCitationFullscreen = () => {
-    if (!fullscreenButton || !fullscreenTarget || !fullscreenEnabled) return;
-    const active = fullscreenElement() === fullscreenTarget;
-    fullscreenButton.hidden = false;
-    fullscreenButton.setAttribute("aria-pressed", active ? "true" : "false");
-    fullscreenButton.setAttribute("title", active ? "Exit citation network fullscreen" : "Open citation network fullscreen");
-    fullscreenButton.innerHTML = `<i data-icon="${active ? "minimize" : "maximize"}" aria-hidden="true"></i><span>${active ? "Exit fullscreen" : "Fullscreen"}</span>`;
-    fullscreenTarget.classList.toggle("is-citation-fullscreen", active);
-    refreshIcons();
-    window.setTimeout(fitGraph, 80);
-  };
-  if (fullscreenButton && fullscreenTarget) {
-    if (!fullscreenEnabled) {
-      fullscreenButton.hidden = true;
-    } else {
-      fullscreenButton.hidden = false;
-      fullscreenButton.addEventListener("click", async () => {
-        try {
-          if (fullscreenElement() === fullscreenTarget) {
-            await exitFullscreen();
-            showAppToast("Exited citation network fullscreen.");
-          } else {
-            if (fullscreenElement()) await exitFullscreen();
-            await requestFullscreen(fullscreenTarget);
-            showAppToast("Citation network fullscreen enabled.");
-          }
-        } catch (error) {
-          showAppToast("Fullscreen is not available in this browser window.");
-        } finally {
-          window.setTimeout(syncCitationFullscreen, 80);
-        }
-      });
-      document.addEventListener("fullscreenchange", syncCitationFullscreen);
-      document.addEventListener("webkitfullscreenchange", syncCitationFullscreen);
-      syncCitationFullscreen();
-    }
-  }
-
-  if (printButton) {
-    const printableCount = printableReferenceNodes().length;
-    printButton.disabled = printableCount === 0;
-    printButton.setAttribute("aria-disabled", printableCount === 0 ? "true" : "false");
-    printButton.setAttribute("title", printableCount === 0 ? "No displayed references to print" : "Print displayed citation references");
-    printButton.addEventListener("click", printDisplayedCitationReferences);
-  }
-
-  const selectedState = {
-    node: null,
-    focusNodeId: initialParams.get("network_node") || "",
-  };
-  const syncCitationSelectionActions = () => {
-    const hasSelection = Boolean(selectedState.node);
-    [copySelectedButton, focusSelectedButton, exportSubgraphButton].forEach((button) => {
-      if (!button) return;
-      button.disabled = !hasSelection;
-      button.setAttribute("aria-disabled", hasSelection ? "false" : "true");
-      button.title = hasSelection ? "" : "Select a node first";
-    });
-  };
-  syncCitationSelectionActions();
-  const splitCitationNames = (value) => String(value || "")
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
-  const authorLinksHtml = (authors) => splitCitationNames(authors)
-    .slice(0, 12)
-    .map((author) => `<a href="authors.php?author=${encodeURIComponent(author)}">${escapeHtml(author)}</a>`)
-    .join(", ");
-  const nodeDoi = (node) => node.doi || (node.type === "reference" ? node.label : "");
-  const nodeDetailDescription = (node) => {
-    if (node.type === "paper") {
-      return "Indexed publication. Citation links point toward referenced papers or external DOI records; dashed links explain shared authors, topics, and journals.";
-    }
-    if (node.type === "reference") {
-      return "External DOI reference cited by one or more indexed papers. Full title, authors, journal, and date appear only when that DOI is also indexed as a publication record.";
-    }
-    if (node.type === "author") return "Author node. Connected papers show where this name appears in the current graph.";
-    if (node.type === "topic") return "Topic node. Connected papers share this stored topic tag in the current graph.";
-    if (node.type === "journal") return "Journal node. Connected papers were published or indexed under this journal/source label.";
-    return "Relationship node used to explain why publications cluster together.";
-  };
-  const relationCardMeta = (node) => [
-    node.authors ? `Authors: ${splitCitationNames(node.authors).slice(0, 4).join("; ")}` : "",
-    node.journal ? `Journal: ${node.journal}` : "",
-    node.date ? `Date: ${node.date}` : "",
-    nodeDoi(node) ? `DOI: ${nodeDoi(node)}` : "",
-    node.source ? `Source: ${node.source}` : "",
-    node.status ? `Status: ${node.status}` : "",
-  ].filter(Boolean);
-  const selectedNeighborhoodIds = (fallbackToSelected = false) => {
-    const centerId = selectedState.focusNodeId || (fallbackToSelected ? selectedState.node?.id : "") || "";
-    if (!centerId) return new Set();
-    const ids = new Set([centerId]);
-    edges.forEach((edge) => {
-      if (edge.source === centerId) ids.add(edge.target);
-      if (edge.target === centerId) ids.add(edge.source);
-    });
-    return ids;
-  };
-  const isInSelectedNeighborhood = (node, fallbackToSelected = false) => {
-    const ids = selectedNeighborhoodIds(fallbackToSelected);
-    return !ids.size || ids.has(node.id);
-  };
-  const focusSelectedNode = (node = selectedState.node) => {
-    if (!node) {
-      showAppToast("Select a network node before focusing.");
-      return;
-    }
-    selectedState.focusNodeId = selectedState.focusNodeId === node.id ? "" : node.id;
-    updateSavedViewUrl();
-    updateGraphState();
-    showAppToast(selectedState.focusNodeId ? "Focused selected node neighborhood." : "Node focus cleared.");
-  };
-  const compactNodeMeta = (node) => [
-    node.date,
-    node.journal,
-    nodeDoi(node) ? `DOI: ${nodeDoi(node)}` : "",
-    node.source,
-    node.status,
-  ].filter(Boolean).join(" · ");
-  const relatedListHtml = (node) => {
-    const related = Array.isArray(node.related) ? node.related.slice(0, 5) : [];
-    if (!related.length) return "";
-    return `<div class="citation-node-related"><h3>Related indexed papers</h3>${related.map((paper, index) => `<a href="${escapeHtml(paper.url || "#")}"><strong>${escapeHtml(String(index + 1))}. ${escapeHtml(paper.label || "Untitled publication")}</strong><small>${escapeHtml([paper.authors, paper.journal, paper.date, paper.doi ? `DOI: ${paper.doi}` : "", paper.status].filter(Boolean).join(" · "))}</small></a>`).join("")}</div>`;
-  };
-  const previewHtml = (node) => `
-    <strong>${escapeHtml(labels[node.type] || "Node")}: ${escapeHtml(node.label || "Untitled node")}</strong>
-    <span>${escapeHtml(node.authors || nodeDetailDescription(node))}</span>
-    ${compactNodeMeta(node) ? `<em>${escapeHtml(compactNodeMeta(node))}</em>` : ""}
-  `;
-  const showNodePreview = (node, event) => {
-    hoverPreview.innerHTML = previewHtml(node);
-    hoverPreview.hidden = false;
-    moveNodePreview(event);
-  };
-  const moveNodePreview = (event) => {
-    if (hoverPreview.hidden) return;
-    const rect = host.getBoundingClientRect();
-    hoverPreview.style.left = `${Math.min(rect.width - 260, Math.max(10, event.clientX - rect.left + 14))}px`;
-    hoverPreview.style.top = `${Math.min(rect.height - 130, Math.max(10, event.clientY - rect.top + 14))}px`;
-  };
-  const hideNodePreview = () => {
-    hoverPreview.hidden = true;
-  };
-  const relationSentence = (node, edge) => {
-    const otherId = edge.source === node.id ? edge.target : edge.source;
-    const other = nodeById.get(otherId);
-    const relation = relationLabels[edge.type] || "Related";
-    if (!other) return relation;
-    if (edge.type === "cites") {
-      return edge.source === node.id
-        ? `Cites ${labels[other.type] || "node"}: ${other.label || other.id}`
-        : `Cited by ${labels[other.type] || "node"}: ${other.label || other.id}`;
-    }
-    return `${relation}: ${other.label || other.id}`;
-  };
-  const updateDetail = (node) => {
-    selectedState.node = node;
-    syncCitationSelectionActions();
-    nodeLayer.querySelectorAll(".citation-node").forEach((element) => {
-      element.classList.toggle("is-selected", element.dataset.nodeId === node.id);
-    });
-    updateGraphState();
-    if (!detail) return;
-    const nodeRelations = connectedEdgesForNode(node)
-      .map((edge) => ({ edge, other: nodeById.get(edge.source === node.id ? edge.target : edge.source) }))
-      .filter((item) => item.other)
-      .sort((a, b) => String(a.edge.type).localeCompare(String(b.edge.type)) || String(a.other.label).localeCompare(String(b.other.label)))
-      .slice(0, 14);
-    const meta = [
-      node.authors ? `<div><dt>Authors</dt><dd class="citation-detail-authors">${authorLinksHtml(node.authors)}</dd></div>` : "",
-      node.date ? `<div><dt>Date</dt><dd>${escapeHtml(node.date)}</dd></div>` : "",
-      node.journal ? `<div><dt>Journal</dt><dd>${escapeHtml(node.journal)}</dd></div>` : "",
-      nodeDoi(node) ? `<div><dt>DOI</dt><dd>${escapeHtml(nodeDoi(node))}</dd></div>` : "",
-      node.source ? `<div><dt>Source</dt><dd>${escapeHtml(node.source)}</dd></div>` : "",
-      node.status ? `<div><dt>Status</dt><dd>${escapeHtml(node.status)}</dd></div>` : "",
-      `<div><dt>Type</dt><dd>${escapeHtml(labels[node.type] || node.type || "Node")}</dd></div>`,
-      `<div><dt>Visible links</dt><dd>${escapeHtml(String(connectedEdgesForNode(node).length))}</dd></div>`,
-    ].filter(Boolean).join("");
-    const matchNote = node.reference_match
-      ? `<p class="citation-match-note">This node was matched from a cited DOI/reference to an indexed publication${node.matched_reference_doi ? ` (${escapeHtml(node.matched_reference_doi)})` : ""}.</p>`
-      : "";
-    const action = `<div class="citation-network-detail-actions">
-      ${node.url ? `<a class="primary iconed" href="${escapeHtml(node.url)}"><i data-icon="external-link" aria-hidden="true"></i><span>Open</span></a>` : ""}
-      <button class="secondary" type="button" data-citation-detail-focus>${selectedState.focusNodeId === node.id ? "Clear node focus" : "Focus on this node"}</button>
-      <button class="secondary" type="button" data-citation-detail-copy>Copy context</button>
-    </div>`;
-    const relationList = nodeRelations.length
-      ? `<div class="citation-node-relations" data-citation-relations><h3>Connected evidence</h3>${nodeRelations.map(({ edge, other }) => `<a href="${escapeHtml(other.url || "#")}" ${other.url ? "" : 'aria-disabled="true"'}><span>${escapeHtml(relationSentence(node, edge))}</span><em>${escapeHtml(labels[other.type] || other.type || "Node")}</em>${relationCardMeta(other).length ? `<small>${relationCardMeta(other).map(escapeHtml).join(" · ")}</small>` : ""}</a>`).join("")}</div>`
-      : '<div class="citation-node-relations" data-citation-relations><h3>Connected evidence</h3><p>No visible relationships for this node under the current filters.</p></div>';
-    detail.innerHTML = `
-      <span class="eyebrow">Selected ${escapeHtml(labels[node.type] || "node")}</span>
-      <h2>${escapeHtml(node.label || "Untitled node")}</h2>
-      <p>${escapeHtml(nodeDetailDescription(node))}</p>
-      ${matchNote}
-      <dl class="detail-list">${meta}</dl>
-      ${action}
-      ${relationList}
-      ${relatedListHtml(node)}
-    `;
-    refreshIcons();
-  };
-  detail?.addEventListener("click", async (event) => {
-    if (event.target.closest?.("[data-citation-detail-focus]")) {
-      focusSelectedNode();
-      if (selectedState.node) updateDetail(selectedState.node);
-      return;
-    }
-    if (event.target.closest?.("[data-citation-detail-copy]")) {
-      const text = selectedNodeText();
-      if (!text) return;
-      try {
-        await navigator.clipboard.writeText(text);
-        showAppToast("Selected network context copied.");
-      } catch (error) {
-        window.prompt("Copy selected network context:", text);
-      }
-    }
-  });
-
-  const nodeElements = nodes.map((node) => {
-    const group = document.createElementNS(svgNs, "g");
-    group.classList.add("citation-node", `citation-node-${node.type || "unknown"}`);
-    group.dataset.nodeId = node.id;
-    group.setAttribute("tabindex", "0");
-    group.setAttribute("role", "button");
-    group.setAttribute("aria-label", `${labels[node.type] || "Node"}: ${node.label || ""}`);
-    const circle = document.createElementNS(svgNs, "circle");
-    circle.setAttribute("r", String(node.r));
-    const title = document.createElementNS(svgNs, "title");
-    title.textContent = `${labels[node.type] || "Node"}: ${node.label || ""}${node.doi ? `; DOI ${node.doi}` : ""}${node.date ? `; ${node.date}` : ""}`;
-    const text = document.createElementNS(svgNs, "text");
-    text.setAttribute("x", String(node.r + 6));
-    text.setAttribute("y", "4");
-    const label = String(node.label || "Node");
-    text.textContent = label.length > 44 ? `${label.slice(0, 41)}...` : label;
-    group.append(title, circle, text);
-    nodeLayer.append(group);
-    group.addEventListener("click", () => updateDetail(node));
-    group.addEventListener("pointerenter", (event) => showNodePreview(node, event));
-    group.addEventListener("pointermove", moveNodePreview);
-    group.addEventListener("pointerleave", hideNodePreview);
-    group.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        updateDetail(node);
-      }
-    });
-    let dragging = false;
-    const move = (event) => {
-      if (!dragging) return;
-      const rect = svg.getBoundingClientRect();
-      node.x = Math.max(node.r + 4, Math.min(width - node.r - 4, event.clientX - rect.left));
-      node.y = Math.max(node.r + 4, Math.min(height - node.r - 4, event.clientY - rect.top));
-      node.vx = 0;
-      node.vy = 0;
-      render();
-    };
-    group.addEventListener("pointerdown", (event) => {
-      dragging = true;
-      group.setPointerCapture?.(event.pointerId);
-      updateDetail(node);
-    });
-    group.addEventListener("pointermove", move);
-    group.addEventListener("pointerup", (event) => {
-      dragging = false;
-      group.releasePointerCapture?.(event.pointerId);
-    });
-    group.addEventListener("pointercancel", () => {
-      dragging = false;
-    });
-    return { node, group, text };
-  });
-
-
-  function tick() {
-    const c = center();
-    for (const node of nodes) {
-      const mode = layoutMode();
-      const target = mode === "force" ? c : layoutTarget(node);
-      const pull = mode === "force"
-        ? (node.type === "paper" ? 0.008 : 0.004)
-        : (node.type === "paper" ? 0.045 : 0.035);
-      node.vx += (target.x - node.x) * pull;
-      node.vy += (target.y - node.y) * pull;
-    }
-    for (const edge of edges) {
-      const source = nodeById.get(edge.source);
-      const target = nodeById.get(edge.target);
-      if (!source || !target) continue;
-      const dx = target.x - source.x;
-      const dy = target.y - source.y;
-      const distance = Math.max(1, Math.hypot(dx, dy));
-      const desired = edge.type === "cites" ? 110 : 92;
-      const force = (distance - desired) * (layoutMode() === "force" ? 0.004 : 0.0016) * Math.max(0.6, Number(edge.weight || 1));
-      const fx = (dx / distance) * force;
-      const fy = (dy / distance) * force;
-      source.vx += fx;
-      source.vy += fy;
-      target.vx -= fx;
-      target.vy -= fy;
-    }
-    for (let i = 0; i < nodes.length; i++) {
-      for (let j = i + 1; j < nodes.length; j++) {
-        const a = nodes[i];
-        const b = nodes[j];
-        const dx = b.x - a.x;
-        const dy = b.y - a.y;
-        const distance = Math.max(1, Math.hypot(dx, dy));
-        const minDistance = a.r + b.r + 34;
-        if (distance >= minDistance) continue;
-        const force = (minDistance - distance) * 0.018;
-        const fx = (dx / distance) * force;
-        const fy = (dy / distance) * force;
-        a.vx -= fx;
-        a.vy -= fy;
-        b.vx += fx;
-        b.vy += fy;
-      }
-    }
-    for (const node of nodes) {
-      node.vx *= 0.78;
-      node.vy *= 0.78;
-      node.x = Math.max(node.r + 6, Math.min(width - node.r - 6, node.x + node.vx));
-      node.y = Math.max(node.r + 6, Math.min(height - node.r - 6, node.y + node.vy));
-    }
-  }
-
-  function graphFocusSets() {
-    const term = currentSearchTerm();
-    const matching = new Set();
-    const neighbors = new Set();
-    if (term) {
-      nodes.forEach((node) => {
-        if (node.searchText.includes(term)) matching.add(node.id);
-      });
-      edges.forEach((edge) => {
-        if (matching.has(edge.source)) neighbors.add(edge.target);
-        if (matching.has(edge.target)) neighbors.add(edge.source);
-      });
-    }
-    return { term, matching, neighbors };
-  }
-
-  function shouldShowNode(node, focus = graphFocusSets()) {
-    if (!nodeTypeVisible(node)) return false;
-    if (!isInSelectedNeighborhood(node)) return false;
-    if (!focus.term) return true;
-    return focus.matching.has(node.id) || focus.neighbors.has(node.id);
-  }
-
-  function shouldShowEdge(edge, focus = graphFocusSets()) {
-    const source = nodeById.get(edge.source);
-    const target = nodeById.get(edge.target);
-    if (!source || !target || !edgeTypeVisible(edge)) return false;
-    if (!shouldShowNode(source, focus) || !shouldShowNode(target, focus)) return false;
-    if (!focus.term) return true;
-    return focus.matching.has(edge.source) || focus.matching.has(edge.target);
-  }
-
-  function shouldShowLabel(node, focus) {
-    const mode = labelModeSelect?.value || (labelButton?.getAttribute("aria-pressed") === "false" ? "off" : "important");
-    if (mode === "off") return false;
-    if (mode === "all") return true;
-    if (mode === "selected") return selectedState.node?.id === node.id || focus.matching.has(node.id);
-    return node.type === "paper" || node.degree >= 3 || focus.matching.has(node.id) || selectedState.node?.id === node.id;
-  }
-
-  function updateGraphState() {
-    const focus = graphFocusSets();
-    let visibleNodeCount = 0;
-    let visibleEdgeCount = 0;
-    edgeElements.forEach(({ edge, line }) => {
-      const show = shouldShowEdge(edge, focus);
-      line.hidden = !show;
-      line.classList.toggle("is-highlighted", Boolean(focus.term && (focus.matching.has(edge.source) || focus.matching.has(edge.target))));
-      if (show) visibleEdgeCount++;
-    });
-    nodeElements.forEach(({ node, group, text }) => {
-      const show = shouldShowNode(node, focus);
-      const matched = focus.matching.has(node.id);
-      const neighbor = focus.neighbors.has(node.id);
-      group.hidden = !show;
-      group.classList.toggle("is-match", matched);
-      group.classList.toggle("is-neighbor", Boolean(focus.term && neighbor && !matched));
-      group.classList.toggle("is-dimmed", Boolean(focus.term && show && !matched && !neighbor));
-      text.style.display = show && shouldShowLabel(node, focus) ? "" : "none";
-      if (show) visibleNodeCount++;
-    });
-    if (insight) {
-      const topology = layoutLabels[layoutMode()] || "Network";
-      const focusLabel = selectedState.focusNodeId ? " Focused on one node neighborhood." : "";
-      const clusterLabel = clusteringVisible() ? "" : " Clustering nodes hidden.";
-      insight.textContent = focus.term
-        ? `${topology}: ${visibleNodeCount} nodes and ${visibleEdgeCount} links around ${focus.matching.size} direct match${focus.matching.size === 1 ? "" : "es"}.${focusLabel}${clusterLabel}`
-        : `${topology}: showing ${visibleNodeCount} nodes and ${visibleEdgeCount} links in the current graph.${focusLabel}${clusterLabel}`;
-    }
-  }
-
-  function render() {
-    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-    edgeElements.forEach(({ edge, line }) => {
-      const source = nodeById.get(edge.source);
-      const target = nodeById.get(edge.target);
-      if (!source || !target) return;
-      line.setAttribute("x1", source.x.toFixed(1));
-      line.setAttribute("y1", source.y.toFixed(1));
-      line.setAttribute("x2", target.x.toFixed(1));
-      line.setAttribute("y2", target.y.toFixed(1));
-    });
-    nodeElements.forEach(({ node, group }) => {
-      group.setAttribute("transform", `translate(${node.x.toFixed(1)} ${node.y.toFixed(1)})`);
-    });
-    updateGraphState();
-  }
-
-  function fitGraph() {
-    ({ width, height } = dimensions());
-    const minX = Math.min(...nodes.map((node) => node.x));
-    const maxX = Math.max(...nodes.map((node) => node.x));
-    const minY = Math.min(...nodes.map((node) => node.y));
-    const maxY = Math.max(...nodes.map((node) => node.y));
-    const graphWidth = Math.max(1, maxX - minX);
-    const graphHeight = Math.max(1, maxY - minY);
-    const scale = Math.min((width - 64) / graphWidth, (height - 64) / graphHeight, 1.8);
-    nodes.forEach((node) => {
-      node.x = 32 + (node.x - minX) * scale + Math.max(0, (width - 64 - graphWidth * scale) / 2);
-      node.y = 32 + (node.y - minY) * scale + Math.max(0, (height - 64 - graphHeight * scale) / 2);
-    });
-    render();
-  }
-
-  applyLayoutMode(false);
-  fitGraph();
-  updateDetail(nodes.find((node) => node.id === selectedState.focusNodeId) || nodes.find((node) => node.type === "paper") || nodes[0]);
-
-  fitButton?.addEventListener("click", fitGraph);
-  labelButton?.addEventListener("click", () => {
-    const modes = ["important", "all", "selected", "off"];
-    const current = labelModeSelect?.value || "important";
-    const next = modes[(modes.indexOf(current) + 1) % modes.length] || "important";
-    if (labelModeSelect) labelModeSelect.value = next;
-    labelButton.setAttribute("aria-pressed", next === "off" ? "false" : "true");
-    labelButton.querySelector("span").textContent = next === "off" ? "Labels off" : `Labels: ${next}`;
-    updateGraphState();
-  });
-  labelModeSelect?.addEventListener("change", () => {
-    const mode = labelModeSelect.value || "important";
-    labelButton?.setAttribute("aria-pressed", mode === "off" ? "false" : "true");
-    const label = labelButton?.querySelector("span");
-    if (label) label.textContent = mode === "off" ? "Labels off" : `Labels: ${mode}`;
-    updateSavedViewUrl();
-    updateGraphState();
-  });
-  layoutModeSelect?.addEventListener("change", () => {
-    updateSavedViewUrl();
-    applyLayoutMode(true);
-    fitGraph();
-    showAppToast(`Network topology: ${layoutLabels[layoutMode()] || "updated"}.`);
-  });
-  clusterToggle?.addEventListener("change", () => {
-    updateSavedViewUrl();
-    updateGraphState();
-    showAppToast(clusteringVisible() ? "Clustering nodes shown." : "Clustering nodes hidden.");
-  });
-  searchInput?.addEventListener("input", updateGraphState);
-  seedLimitSelect?.addEventListener("change", () => {
-    applySeedLimit(seedLimitSelect.value || "8");
-  });
-  copySelectedButton?.addEventListener("click", async () => {
-    const text = selectedNodeText();
-    if (!text) {
-      showAppToast("Select a network node before copying context.");
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(text);
-      showAppToast("Selected network context copied.");
-    } catch (error) {
-      window.prompt("Copy selected network context:", text);
-    }
-  });
-  focusSelectedButton?.addEventListener("click", () => {
-    focusSelectedNode();
-    if (selectedState.node) updateDetail(selectedState.node);
-  });
-  shareViewButton?.addEventListener("click", async () => {
-    const url = updateSavedViewUrl().href;
-    try {
-      await navigator.clipboard.writeText(url);
-      showAppToast("Shareable network view URL copied.");
-    } catch (error) {
-      window.prompt("Copy network view URL:", url);
-    }
-  });
-  exportJsonButton?.addEventListener("click", () => {
-    const snapshot = visibleGraphSnapshot();
-    downloadCitationGraphFile(
-      "psilocybin-citation-network.json",
-      JSON.stringify({
-        generated_at: new Date().toISOString(),
-        page_url: window.location.href,
-        visible_nodes: snapshot.nodes.length,
-        visible_edges: snapshot.edges.length,
-        search: snapshot.focus.term,
-        nodes: snapshot.nodes,
-        edges: snapshot.edges,
-      }, null, 2),
-      "application/json"
-    );
-    showAppToast("Visible citation network JSON exported.");
-  });
-  exportSubgraphButton?.addEventListener("click", () => {
-    const snapshot = visibleGraphSnapshot(true);
-    downloadCitationGraphFile(
-      "psilocybin-citation-network-focused-subgraph.json",
-      JSON.stringify({
-        generated_at: new Date().toISOString(),
-        page_url: updateSavedViewUrl().href,
-        selected_node: selectedState.node,
-        focus_node_id: selectedState.focusNodeId || selectedState.node?.id || "",
-        visible_nodes: snapshot.nodes.length,
-        visible_edges: snapshot.edges.length,
-        nodes: snapshot.nodes,
-        edges: snapshot.edges,
-      }, null, 2),
-      "application/json"
-    );
-    showAppToast("Focused citation subgraph JSON exported.");
-  });
-  exportCsvButton?.addEventListener("click", () => {
-    const snapshot = visibleGraphSnapshot();
-    const nodeRows = [
-      ["record_type", "id", "type", "label", "authors", "journal", "date", "doi", "pubmed_id", "source", "status", "url"].map(csvCell).join(","),
-      ...snapshot.nodes.map((node) => [
-        "node", node.id, node.type, node.label, node.authors, node.journal, node.date, nodeDoi(node), node.pubmed_id, node.source, node.status, node.url ? new URL(node.url, window.location.href).href : "",
-      ].map(csvCell).join(",")),
-      "",
-      ["record_type", "id", "type", "source", "target", "weight"].map(csvCell).join(","),
-      ...snapshot.edges.map((edge) => ["edge", edge.id, edge.type, edge.source, edge.target, edge.weight].map(csvCell).join(",")),
-    ].join("\n");
-    downloadCitationGraphFile("psilocybin-citation-network.csv", nodeRows, "text/csv");
-    showAppToast("Visible citation network CSV exported.");
-  });
-  clearSearchButton?.addEventListener("click", () => {
-    if (searchInput) searchInput.value = "";
-    nodeTypeInputs.forEach((input) => input.checked = true);
-    edgeTypeInputs.forEach((input) => input.checked = true);
-    selectedState.focusNodeId = "";
-    if (clusterToggle) clusterToggle.checked = true;
-    updateSavedViewUrl();
-    updateGraphState();
-    showAppToast("Graph view reset.");
-  });
-  [...nodeTypeInputs, ...edgeTypeInputs].forEach((input) => input.addEventListener("change", updateGraphState));
-  window.addEventListener("resize", () => {
-    ({ width, height } = dimensions());
-    applyLayoutMode(layoutMode() !== "force");
-    fitGraph();
-  });
-}
 
 function base64UrlToUint8Array(value) {
   const padding = "=".repeat((4 - value.length % 4) % 4);
@@ -3554,22 +3230,117 @@ function base64UrlToUint8Array(value) {
   return output;
 }
 
-function initPublicationTracker() {
+// Feature requests are shared, retryable, and keyed to this entry script's release.
+const APP_ENTRY_URL = new URL(document.currentScript?.src || [...document.scripts].find(script => /\/assets\/app(?:\.min)?\.js/.test(script.src))?.src || location.href);
+const APP_ASSET_VERSION = (APP_ENTRY_URL.searchParams.get('v') || '20261114') + (APP_ENTRY_URL.searchParams.get('r') ? '-'+APP_ENTRY_URL.searchParams.get('r') : '');
+const featureRequests = new Map();
+const featureAttempts = new Map();
+function loadAppFeature(name, dependencies) {
+  if (featureRequests.has(name)) return featureRequests.get(name);
+  const attempt = (featureAttempts.get(name) || 0) + 1;
+  featureAttempts.set(name, attempt);
+  const url = `/assets/features/${name}.min.js?v=${encodeURIComponent(APP_ASSET_VERSION)}${attempt > 1 ? `&retry=${attempt}` : ''}`;
+  const request = import(url).then(module => module.init(dependencies)).catch(error => { featureRequests.delete(name); throw error; });
+  featureRequests.set(name, request);
+  return request;
+}
+function ensureAnalyticsFeature() {
+  return loadAppFeature('analytics', { escapeHtml, printDateRangeLabel, printReferenceText, printSourcesLabel, refreshIcons });
+}
+function initPageFeatures() {
+  const growth = document.querySelector('#publication-growth-chart');
+  if (growth) {
+    const showGrowth = () => ensureAnalyticsFeature().then(feature => feature.renderGrowth()).catch(() => {});
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(entries => {
+        if (entries.some(entry => entry.isIntersecting)) { observer.disconnect(); showGrowth(); }
+      }, { rootMargin: '160px' });
+      observer.observe(growth);
+    } else scheduleIdleTask(showGrowth);
+  }
+  if (document.querySelector('[data-research-film]')) {
+    loadAppFeature('research-film', { ICONS, showAppToast, updateModalOpenState }).catch(() => {
+      // Native playback and downloads remain available if enhancement cannot load.
+      document.querySelectorAll('[data-research-film] video:not(.research-film-blur)').forEach(video => { video.controls = true; try { video.muted = localStorage.getItem('psilocybin-research-film-muted') === '1'; } catch { video.muted = true; } });
+    });
+  }
+  syncRecencyBadges();
+}
+window.addEventListener('pagehide', () => pendingSearchController?.abort());
+window.addEventListener('pageshow', event => {
+  if (!event.persisted) return;
+  pendingSearchController = null;
+  document.documentElement.classList.remove('is-searching');
+  hidePreloader();
+});
+
+function initPageTransitions() {
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const uiDocument = href => {
+    const url = new URL(href, location.href);
+    return url.origin === location.origin && !/\.(?:mp4|webm|pdf|zip|csv|json|sqlite|bib|ris|r|py)$/i.test(url.pathname)
+      && !/\/(?:api(?:-v1)?|export|database|linked-data|status|health|sitemap(?:-[a-z]+)?|widget)\.php$/i.test(url.pathname);
+  };
+  addEventListener('pageswap', event => {
+    if (!event.viewTransition) return;
+    if (reduced.matches || !event.activation || !uiDocument(event.activation.entry.url) || document.querySelector('dialog[open]')) event.viewTransition.skipTransition();
+  });
+  addEventListener('pagereveal', event => {
+    if (!event.viewTransition) return;
+    if (reduced.matches || !uiDocument(location.href)) { event.viewTransition.skipTransition(); return; }
+    document.documentElement.classList.add('native-page-transition');
+    const clearTransition = () => document.documentElement.classList.remove('native-page-transition');
+    event.viewTransition.finished.then(clearTransition, clearTransition);
+  });
+}
+
+function initToolDirectory() {
+  const input = document.querySelector('[data-tool-directory-search]');
+  if (!input || input.dataset.ready === '1') return;
+  input.dataset.ready = '1';
+  const directory = input.closest('.tool-directory');
+  const rows = [...directory.querySelectorAll('[data-directory-key]')];
+  const normalize = value => value.normalize('NFKD').replace(/\p{M}/gu, '').toLocaleLowerCase();
+  const index = rows.map(row => ({ row, text: normalize(row.textContent + ' ' + row.dataset.directoryKeywords) }));
+  const update = () => {
+    const terms = normalize(input.value).trim().split(/\s+/).filter(Boolean);
+    let count = 0;
+    index.forEach(({ row, text }) => { row.hidden = !terms.every(term => text.includes(term)); if (!row.hidden) count++; });
+    directory.querySelectorAll(':scope > section').forEach(section => { section.hidden = !section.querySelector('li:not([hidden])'); });
+    directory.querySelector('[data-tool-directory-count]').textContent = count ? `${count} ${count === 1 ? 'tool' : 'tools'}${terms.length ? ' matching your search' : ' available'}` : 'No matching tools. Try a broader term such as trials, data or evidence.';
+  };
+  input.addEventListener('input', update); update();
+}
+
+async function initPublicationTracker() {
   if (document.documentElement.dataset.publicationTrackerInitialized === "1") return;
   document.documentElement.dataset.publicationTrackerInitialized = "1";
-  initPwa();
+  initPageTransitions();
+  initImmediatePageTransitions();
+  initGlobalInteractionFeedback();
+  initVisitorActivity();
+  refreshHeroUpdatedTime();
   initAppSheets();
-  initSectionNavigation();
+  initAdvancedFilterSearchSync();
+  initPublicationSearchFocus();
   initSettingsMenus();
   initSidebarControls();
+  initResultQuickControls();
+  initFloatingExportHoverMenu();
   initNavSidebarCollapse();
   initNavGroups();
+  initToolFinder();
+  initToolDirectory();
   initFullscreenToggle();
   initPrintResults();
   initNativeShare();
   initEntryChoices();
   initAjaxSearch();
-  initScrollProgress();
+  // Paint usable server-rendered content before measuring secondary controls.
+  if (!document.documentElement.classList.contains('is-searching')) hidePreloader();
+  await new Promise(resolve => requestAnimationFrame(() => window.setTimeout(resolve, 0)));
+  initSectionNavigation();
+  initSmartResultBar();
   initScrollTop();
   initCountUpStats();
   initClientEnvironment();
@@ -3581,10 +3352,13 @@ function initPublicationTracker() {
   initSidebarSelectedExport();
   initCollectionExport();
   initEvidenceMapSort();
-  initCitationNetwork();
   initAlertVanta();
   initDownloadConfirmations();
   initApiConfirmations();
+  initPageFeatures();
+  // Usable server-rendered content does not wait for images, analytics or PWA storage.
+  requestAnimationFrame(() => { if (!document.documentElement.classList.contains('is-searching')) hidePreloader(); });
+  initPwa().catch(() => showAppToast("Notification settings are unavailable. Please reconnect and try again."));
 }
 
 if (document.readyState === "loading") {
@@ -3592,3 +3366,185 @@ if (document.readyState === "loading") {
 } else {
   initPublicationTracker();
 }
+
+// Reading-list access uses existing device-local storage; nothing is sent to the server.
+(() => {
+ const refresh = () => {
+  let ids=[], searches=[];
+  try {const value=JSON.parse(localStorage.getItem('psilocybinResearchWorkspaceV1')||'{}');ids=Array.isArray(value.ids)?[...new Set(value.ids.filter(id=>Number.isSafeInteger(id)&&id>0))].slice(0,50):[];searches=Array.isArray(value.searches)?value.searches.slice(0,30):[];} catch {}
+  document.querySelectorAll('[data-reading-list-shortcut]').forEach(link=>{link.hidden=!(ids.length||searches.length);const count=link.querySelector('[data-reading-list-count]');if(count)count.textContent=ids.length?'('+ids.length+')':'';});
+  document.querySelectorAll('[data-sidebar-reading-count]').forEach(badge=>{badge.hidden=!ids.length;badge.textContent=String(ids.length);badge.setAttribute('aria-label',`${ids.length} saved ${ids.length===1?'publication':'publications'}`);});
+ };
+ window.addEventListener('storage',refresh);window.addEventListener('research-workspace-change',refresh);
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh,{once:true});else refresh();
+})();
+
+// A shared metadata-only catalogue keeps thousands of inactive controls out of the DOM.
+function hydrateDeferredOptions(root, all = false) {
+  const key = root.dataset.optionsKey;
+  if (!key || root.dataset.optionsHydrated === '1') return;
+  const script = document.querySelector('#alert-option-catalog');
+  if (script && script.dataset.catalogRead !== '1') {
+    try { for (const [id, groups] of Object.entries(JSON.parse(script.textContent))) if (Array.isArray(groups) && groups.length <= 10000) deferredOptionCatalog.set(id, groups); script.dataset.catalogRead = '1'; } catch { return; }
+  }
+  const activeKeys = new Set([...document.querySelectorAll('[data-options-key]')].map(node => node.dataset.optionsKey));
+  for (const id of deferredOptionCatalog.keys()) if (!activeKeys.has(id)) deferredOptionCatalog.delete(id);
+  const groups = deferredOptionCatalog.get(key);
+  if (!groups) return;
+  let selected;
+  try { selected = root.dataset.optionsSynced === '1' ? [...root.querySelectorAll('input:checked')].map(box => box.value) : JSON.parse(root.dataset.optionsSelected || '[]'); } catch { selected = []; }
+  selected = new Set(Array.isArray(selected) ? selected.filter(value => typeof value === 'string').slice(0, 100) : []);
+  const options = root.querySelector('.alert-selection-options');
+  const fragment = document.createDocumentFragment();
+  const targeted = root.closest('.alert-targeting');
+  const disabled = targeted && root.closest('form')?.querySelector('[name="alert_scope"]:checked')?.value !== 'targeted';
+  for (const item of groups) {
+    const group = typeof item === 'string' ? { label: item, aliases: [item] } : item;
+    if (!group || typeof group.label !== 'string' || !Array.isArray(group.aliases) || !group.aliases.length || group.aliases.some(alias => typeof alias !== 'string')) continue;
+    const value = group.aliases.length === 1 ? group.aliases[0] : JSON.stringify(group.aliases);
+    const checked = selected.has(value) || group.aliases.some(alias => selected.has(alias));
+    if (!all && !checked) continue;
+    const label = document.createElement('label'), box = document.createElement('input'), text = document.createElement('span');
+    box.type = 'checkbox'; box.name = root.dataset.optionsName + '[]'; box.value = value; box.checked = checked; box.disabled = Boolean(disabled);
+    text.textContent = group.label; label.classList.toggle('is-selected', checked); label.append(box, text); fragment.append(label);
+  }
+  options.replaceChildren(fragment);
+  root.dataset.optionsSynced = '1';
+  if (all) root.dataset.optionsHydrated = '1';
+}
+
+function initAlertMultiselects(scope = document) {
+  scope.querySelectorAll('[data-alert-multiselect]').forEach(root => {
+    const dialog = root.closest('dialog');
+    if (dialog && !dialog.open) return;
+    if(root.dataset.pickerReady==='1')return;
+    root.dataset.pickerReady='1';
+    hydrateDeferredOptions(root);
+    let boxes = Array.from(root.querySelectorAll('input[type="checkbox"]'));
+    const search = root.querySelector('[data-selection-search]');
+    const summary = root.querySelector('.alert-selection-summary');
+    const count = root.querySelector('.alert-selection-count');
+    const clear = root.querySelector('.alert-selection-clear');
+    const options = root.querySelector('.alert-selection-options');
+    const results = root.querySelector('[data-selection-result]');
+    const filter = () => {
+      const query = search.value.trim().toLocaleLowerCase();
+      boxes.forEach(box => { box.closest('label').hidden = !box.closest('label').textContent.toLocaleLowerCase().includes(query); });
+      const visible = boxes.filter(box => !box.closest('label').hidden).length;
+      results.textContent = `${visible} ${query ? 'matching' : 'available'}`;
+      root.querySelector('[data-selection-empty]').hidden = visible > 0;
+    };
+    const sync = () => {
+      const selected = boxes.filter(box => box.checked).map(box => box.closest('label').querySelector('span')?.textContent || box.value);
+      summary.textContent = selected.length ? selected.join(', ') : summary.dataset.emptyLabel;
+      summary.title = selected.join(', ');
+      count.textContent = selected.length ? `${selected.length} selected` : 'All';
+      root.classList.toggle('has-selection', selected.length > 0);
+      clear.disabled = selected.length === 0;
+      boxes.forEach(box => box.closest('label').classList.toggle('is-selected', box.checked));
+    };
+    options.addEventListener('change', sync);
+    clear.addEventListener('click', () => {
+      boxes.forEach(box => { box.checked = false; });
+      sync();
+      boxes[0]?.dispatchEvent(new Event('change', {bubbles: true}));
+    });
+    search.addEventListener('input', filter);
+    root.addEventListener('toggle', () => {
+      if (!root.open) return;
+      hydrateDeferredOptions(root, true);
+      boxes = Array.from(root.querySelectorAll('input[type="checkbox"]'));
+      sync();
+      // Keep one choice list open per form, without resetting either selection.
+      root.closest('form')?.querySelectorAll('[data-alert-multiselect]').forEach(other => {
+        if (other !== root) other.open = false;
+      });
+      // Reopening brings chosen options to the top; rows stay still while selecting.
+      [...boxes].sort((a, b) => Number(b.checked) - Number(a.checked)).forEach(box => options.append(box.closest('label')));
+      filter();
+    });
+    sync();
+    filter();
+  });
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => initAlertMultiselects());
+else initAlertMultiselects();
+
+
+// Search-to-alert is delegated so it also works after an AJAX result replacement.
+function initSearchAlerts() {
+  const form = document.querySelector('#alert-enrollment .alert-form');
+  if (!form) return;
+  const readAliases = value => { try { const v=JSON.parse(value); return Array.isArray(v)?v:[value]; } catch { return [value]; } };
+  const refresh = () => {
+    const data = new FormData(form), targeted = data.get('alert_scope') === 'targeted';
+    const parts = [];
+    if (targeted) {
+      for (const [key,label] of [['alert_keywords','Keywords'],['alert_author','Author'],['alert_cited_doi','Cites DOI']]) {
+        const value=String(data.get(key)||'').trim(); if(value) parts.push(`${label}: ${value}`);
+      }
+      for (const [key,label] of [['alert_journal','Journals'],['alert_topic','Topics']]) {
+        const names=[...form.querySelectorAll(`input[name="${key}[]"]:checked`)].map(e=>e.closest('label').querySelector('span').textContent);
+        if(names.length) parts.push(`${label}: ${names.join(', ')}`);
+      }
+    }
+    const substances=data.getAll('alert_substances[]').join(', ') || 'No substances selected';
+    const summary=form.querySelector('[data-alert-review]');
+    summary.textContent=`${data.get('frequency') || 'daily'} digest · ${substances}. ${parts.length?parts.join(' · ')+'.':'All new publications in this coverage.'}${targeted&&parts.length?' Any selection within journals or topics; all filter groups must match.':''} Confirmation by email is required.`;
+  };
+  form.addEventListener('input', refresh); form.addEventListener('change', refresh);
+  document.addEventListener('click', event => {
+    if (!event.target.closest('[data-alert-from-search]')) return;
+    form.querySelectorAll('[data-options-key]').forEach(root => hydrateDeferredOptions(root, true));
+    const p = new URLSearchParams(location.search);
+    const set=(name,value)=>{const input=form.elements.namedItem(name); if(input)input.value=value||'';};
+    set('alert_keywords',p.get('search')||p.get('q'));set('alert_author',p.get('author'));set('alert_cited_doi',p.get('cited_doi'));
+    for (const [field,key] of [['alert_journal','journal'],['alert_topic','topic']]) {
+      const values=[...p.entries()].filter(([k])=>k===key||k.startsWith(key+'[')).flatMap(([,v])=>readAliases(v));
+      const boxes=[...form.querySelectorAll(`input[name="${field}[]"]`)];
+      boxes.forEach(box=>{box.checked=readAliases(box.value).some(v=>values.includes(v));});
+      boxes[0]?.dispatchEvent(new Event('change',{bubbles:true}));
+    }
+    const values=[...p.entries()].filter(([k])=>/^substances(?:\[.*\])?$/.test(k)).map(([,v])=>v);
+    form.querySelectorAll('[name="alert_substances[]"]').forEach(box=>box.checked=!values.length||values.includes(box.value));
+    const targeted=['search','q','author','journal','topic','cited_doi'].some(key=>[...p.keys()].some(k=>(k===key||k.startsWith(key+'['))&&p.get(k)));
+    const radio=form.querySelector(`[name="alert_scope"][value="${targeted?'targeted':'all'}"]`);radio.checked=true;radio.dispatchEvent(new Event('change',{bubbles:true}));
+    const ignored=[];
+    for(const [key,label] of [['year','year'],['from','date range'],['to','date range'],['added_from','date added'],['added_to','date added'],['study_type','study type']]) if(p.get(key))ignored.push(label);
+    if(p.get('range')&&!['all','custom'].includes(p.get('range')))ignored.push('date range');
+    for(const [key,label] of [['sources','source database'],['publication_statuses','evidence status']]) if([...p.keys()].some(k=>k===key||k.startsWith(key+'[')))ignored.push(label);
+    const note=form.querySelector('[data-alert-search-note]');note.hidden=false;
+    note.textContent=ignored.length?`Copied supported search criteria. Alerts do not apply these search filters: ${[...new Set(ignored)].join(', ')}. Review your alert coverage below.`:'Search criteria copied. Review your alert coverage below.';
+    refresh();
+  });
+  refresh();
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initSearchAlerts);
+else initSearchAlerts();
+
+document.addEventListener('toggle', event => {
+  const menu = event.target;
+  if (!(menu instanceof HTMLDetailsElement) || !menu.matches('.paper-citation-menu')) return;
+  menu.querySelector('summary')?.setAttribute('aria-expanded', String(menu.open));
+  if (!menu.open) return;
+  document.querySelectorAll('.paper-citation-menu[open]').forEach(other => { if (other !== menu) other.open = false; });
+  menu.classList.remove('opens-above');
+  const panel = menu.querySelector(':scope > div'), anchor = menu.querySelector('summary').getBoundingClientRect();
+  const below = innerHeight - anchor.bottom - 16, above = anchor.top - 16;
+  const opensAbove = panel.scrollHeight > below && above > below;
+  menu.classList.toggle('opens-above', opensAbove);
+  panel.style.maxHeight = Math.max(100, Math.min(360, opensAbove ? above : below)) + 'px';
+}, true);
+document.addEventListener('focusin', event => {
+  document.querySelectorAll('.paper-citation-menu[open]').forEach(menu => { if (!menu.contains(event.target)) menu.open = false; });
+});
+document.addEventListener('click', event => {
+  document.querySelectorAll('.paper-citation-menu[open]').forEach(menu => { if(!menu.contains(event.target)) menu.open=false; });
+});
+document.addEventListener('keydown', event => {
+  if(event.key!=='Escape')return;
+  document.querySelectorAll('.paper-citation-menu[open]').forEach(menu=>{menu.open=false;menu.querySelector('summary')?.focus();});
+});
+
+// Account sync is loaded only for a browser that has signed in previously.
+(() => { try { if(localStorage.getItem('psilocybinResearchAccountV1')&&!document.querySelector('script[data-account-sync]')) { const s=document.createElement('script');s.src='/assets/account-sync.min.js?v=20261108-accounts-v1';s.dataset.accountSync='';document.head.append(s); } } catch (_) {} })();

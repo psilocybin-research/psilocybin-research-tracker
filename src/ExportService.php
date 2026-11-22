@@ -8,40 +8,41 @@ final class ExportService
     public static function csv(array $papers): string
     {
         $stream = fopen('php://temp', 'r+');
-        fputcsv($stream, ['id', 'title', 'authors', 'journal', 'publication_date', 'publication_year', 'doi', 'pubmed_id', 'source_url', 'source_record_id', 'source_name', 'publication_status', 'substance_tags', 'topic_tags', 'study_type', 'abstract_available', 'abstract_source', 'abstract_source_url', 'abstract_redistributed', 'text_rights_status', 'text_license_uri', 'tracker_site_url'], ',', '"', '');
+        fputcsv($stream, ['id', 'title', 'authors', 'journal', 'publication_date', 'publication_year', 'doi', 'pubmed_id', 'source_url', 'source_record_id', 'source_name', 'publication_status', 'substance_tags', 'topic_tags', 'study_type', 'abstract_available', 'abstract_source', 'abstract_source_url', 'abstract_redistributed', 'text_rights_status', 'text_license_uri', 'tracker_site_url', 'source_provenance_json'], ',', '"', '');
         foreach ($papers as $paper) {
             $paper = public_paper($paper);
             fputcsv($stream, [
                 $paper['id'], $paper['title'], $paper['authors'], $paper['journal'], $paper['publication_date'], $paper['publication_year'], $paper['doi'], $paper['pubmed_id'],
                 $paper['source_url'], $paper['source_record_id'], $paper['source_name'] ?? '', $paper['publication_status'] ?? 'published', $paper['substance_tags'], $paper['topic_tags'] ?? '', $paper['study_type'] ?? '',
-                !empty($paper['abstract_available']) ? 'true' : 'false', $paper['abstract_source'], $paper['abstract_source_url'], 'false', $paper['text_rights_status'], $paper['text_license_uri'], self::TRACKER_SITE_URL,
+                !empty($paper['abstract_available']) ? 'true' : 'false', $paper['abstract_source'], $paper['abstract_source_url'], 'false', $paper['text_rights_status'], $paper['text_license_uri'], self::TRACKER_SITE_URL, json_encode($paper['source_provenance'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
             ], ',', '"', '');
         }
         rewind($stream);
         return stream_get_contents($stream) ?: '';
     }
 
-    public static function json(array $papers): string
+    public static function json(array $papers, ?string $generatedAt = null): string
     {
         return json_encode([
             'meta' => [
                 'tracker_site_url' => self::TRACKER_SITE_URL,
                 'publication_tracker_url' => Config::publicBaseUrl(),
-                'generated_at_utc' => current_utc(),
+                'generated_at_utc' => $generatedAt ?? current_utc(),
                 'record_count' => count($papers),
                 'schema_variant' => 'rights-safe-core-v1',
+                'infrastructure_funding' => LinkedData::funding(),
                 'text_redistribution' => 'Source-derived abstracts, descriptions, keywords, and unrestricted payload text are not redistributed.',
             ],
             'papers' => public_papers($papers),
-        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{"papers":[]}';
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
     }
 
     public static function bibtex(array $papers): string
     {
         $entries = [
-            '% Exported from Psilocybin Research Publication Tracker',
-            '% Tracker site: ' . self::TRACKER_SITE_URL,
-            '% Publication tracker: ' . Config::publicBaseUrl(),
+            '% Exported from Psilocybin Research Database',
+            '% Database site: ' . self::TRACKER_SITE_URL,
+            '% Research database: ' . Config::publicBaseUrl(),
             '',
         ];
         foreach ($papers as $paper) {
@@ -72,7 +73,7 @@ final class ExportService
         $entries = [];
         foreach ($papers as $paper) {
             $lines = ['TY  - JOUR'];
-            $lines[] = 'N1  - Exported from Psilocybin Research Publication Tracker: ' . self::TRACKER_SITE_URL;
+            $lines[] = 'N1  - Exported from Psilocybin Research Database: ' . self::TRACKER_SITE_URL;
             foreach (array_filter(array_map('trim', explode(',', (string)($paper['authors'] ?? '')))) as $author) {
                 $lines[] = 'AU  - ' . $author;
             }
@@ -91,9 +92,9 @@ final class ExportService
     public static function latex(array $papers): string
     {
         $lines = [
-            '% Exported from Psilocybin Research Publication Tracker',
-            '% Tracker site: ' . self::TRACKER_SITE_URL,
-            '% Publication tracker: ' . Config::publicBaseUrl(),
+            '% Exported from Psilocybin Research Database',
+            '% Database site: ' . self::TRACKER_SITE_URL,
+            '% Research database: ' . Config::publicBaseUrl(),
             '\\documentclass[11pt]{article}',
             '\\usepackage[T1]{fontenc}',
             '\\usepackage[utf8]{inputenc}',
@@ -101,7 +102,7 @@ final class ExportService
             '\\usepackage[hidelinks]{hyperref}',
             '\\usepackage[margin=1in]{geometry}',
             '\\title{Psilocybin and Psilocin Research Export}',
-            '\\author{Psilocybin Research Publication Tracker}',
+            '\\author{Psilocybin Research Database}',
             '\\date{' . self::escapeLatex(gmdate('Y-m-d')) . '}',
             '\\begin{document}',
             '\\maketitle',
@@ -113,7 +114,7 @@ final class ExportService
         foreach ($papers as $paper) {
             $year = substr((string)($paper['publication_date'] ?? ''), 0, 4) ?: 'n.d.';
             $authors = trim((string)($paper['authors'] ?? '')) ?: 'Unknown authors';
-            $journal = trim((string)($paper['journal'] ?? '')) ?: 'Unknown journal';
+            $journal = PublicationMetadata::venue($paper)['label'];
             $status = trim((string)($paper['publication_status'] ?? 'published')) ?: 'published';
             $sourceName = trim((string)($paper['source_name'] ?? '')) ?: 'unknown source';
             $doi = trim((string)($paper['doi'] ?? ''));
@@ -134,7 +135,7 @@ final class ExportService
     {
         $year = substr((string)($paper['publication_date'] ?? ''), 0, 4) ?: 'n.d.';
         $authors = $paper['authors'] ?: 'Unknown authors';
-        $journal = $paper['journal'] ?: 'Unknown journal';
+        $journal = PublicationMetadata::venue($paper)['label'];
         $doi = $paper['doi'] ? ' https://doi.org/' . $paper['doi'] : '';
         return $authors . ' (' . $year . '). ' . $paper['title'] . '. ' . $journal . '.' . $doi;
     }

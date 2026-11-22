@@ -7,7 +7,7 @@ require_once __DIR__ . '/../src/helpers.php';
 $db = new Database();
 $db->initialize();
 $pdo = $db->pdo();
-$stmt = $pdo->query('SELECT id, title, abstract, keywords FROM publications');
+$stmt = $pdo->query('SELECT id, title, abstract, keywords FROM publications WHERE COALESCE(curation_locked, 0) = 0');
 $update = $pdo->prepare('UPDATE publications SET topic_tags = :topics, study_type = :study_type WHERE id = :id');
 $count = 0;
 foreach ($stmt->fetchAll() as $row) {

@@ -1,19 +1,83 @@
+# Unlisted meeting presentation: cover clean URL, legacy alias and assets.
+<IfModule mod_headers.c>
+ Header always set X-Robots-Tag "noindex, nofollow, noarchive, nosnippet, noimageindex" "expr=%{REQUEST_URI} =~ m#^/emory(?:-meeting|-assets)?(?:/|$)#"
+</IfModule>
+RewriteEngine On
+RewriteRule ^psilocybin-telomere-hypothesis-sma/?$ https://ukri.psilocybin-research.com/msca-impact/ [R=301,L]
+# Canonical MSCA host; preserve paths and query strings.
+RewriteCond %{HTTP_HOST} !^ukri\.psilocybin-research\.com$ [NC]
+RewriteRule ^(msca-impact(?:/.*)?)$ https://ukri.psilocybin-research.com/$1 [R=301,L]
+RewriteRule ^emory-meeting/?$ /emory [R=301,L]
+RewriteRule ^emory/?$ emory-assets/index.html [END]
 DirectoryIndex index.php
 Options -Indexes
+# No server-side file uploads are used; reject oversized bodies before PHP.
+LimitRequestBody 1048576
+<FilesMatch "^(?:index|alert|push)\.php$">
+  LimitRequestBody 32768
+</FilesMatch>
 
 <IfModule mod_headers.c>
   Header unset ETag
-  Header set X-Content-Type-Options "nosniff"
-  <FilesMatch "\.(?:css|js|mjs|json|webmanifest|r|R|png|jpe?g|webp|gif|svg|ico|woff2?|mp3)$">
+  Header always set X-Content-Type-Options "nosniff"
+  Header unset X-Powered-By
+  Header always unset X-Powered-By
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Strict-Transport-Security "max-age=31536000"
+  Header always set Permissions-Policy "camera=(), microphone=(), payment=(), usb=(), serial=()"
+  Header always set Content-Security-Policy "base-uri 'self'; object-src 'none'; form-action 'self'; upgrade-insecure-requests"
+  # Public embeddable views retain their existing cross-site embedding support.
+  <FilesMatch "^(?:widget|trials-map|citation-network|research-in-motion|brain-model|chemical-structure|receptor-binding)\.php$">
+    # Explicit CSP overrides a hosting-level X-Frame-Options on public embeds.
+    Header always set Content-Security-Policy "base-uri 'self'; object-src 'none'; form-action 'self'; frame-ancestors *; upgrade-insecure-requests"
+    Header always unset X-Frame-Options
+  </FilesMatch>
+  <FilesMatch "^(?!(?:widget|trials-map|citation-network|research-in-motion|brain-model|chemical-structure|receptor-binding)\.php$).*\.php$">
+    Header always set Content-Security-Policy "base-uri 'self'; object-src 'none'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests"
+    Header always set X-Frame-Options "SAMEORIGIN"
+  </FilesMatch>
+  <FilesMatch "\.(?:css|js|mjs|json|geojson|webmanifest|r|R|png|jpe?g|webp|gif|svg|ico|woff2?|mp3)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  <FilesMatch "^psilocybin-longevity-research-deep-dive-episode-1-[a-f0-9]{12}\.m4a$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
   <FilesMatch "\.(?:html|php)$">
+    # Domain-bound WebMCP trial; expiry is monitored by the private SEO review.
+    Header set Origin-Trial "AtvZMw+lLet5mezSXoTLaJGSqPnTzoGAszvSyfackI9xQ8u7Spq9e2xKC3Amet7+qjpkgP7iYQAhzzG5RtdicQQAAABXeyJvcmlnaW4iOiJodHRwczovL3BzaWxvY3liaW4tcmVzZWFyY2guY29tOjQ0MyIsImZlYXR1cmUiOiJXZWJNQ1AiLCJleHBpcnkiOjE4MDYzNjQ4MDB9"
+    Header append Link "</llms.txt>; rel=\"describedby\", </.well-known/ard.json>; rel=\"ard\""
     Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
   </FilesMatch>
   <Files "assetlinks.json">
     Header set Cache-Control "no-cache, no-store, must-revalidate, max-age=0"
   </Files>
+  <FilesMatch "^[a-f0-9]{32}\.txt$">
+    Header set X-Robots-Tag "noindex, follow"
+    Header set Cache-Control "public, max-age=3600, must-revalidate"
+    Header unset Expires
+  </FilesMatch>
+  <FilesMatch "^(?:llms\.txt|for-ai\.txt|for-ai\.html|ard\.json|research-api\.openapi\.json|research-agent-guide\.md|transcriptomics-mcp\.md|server\.json)$">
+    Header set Cache-Control "public, max-age=3600, must-revalidate"
+    Header unset Expires
+  </FilesMatch>
+  <Files "robots.txt">
+    Header set Cache-Control "public, max-age=3600, must-revalidate"
+    Header unset Expires
+  </Files>
+  <FilesMatch "^(?:api|export|database|health|status|alert|push|widget(?:\.js)?|rss)\.php$">
+    Header set X-Robots-Tag "noindex, nofollow, noarchive"
+  </FilesMatch>
 </IfModule>
+
+# Release discovery must bypass the long-lived cache used by versioned assets.
+<FilesMatch "^(?:sw\.js|manifest\.webmanifest)$">
+  <IfModule mod_headers.c>
+    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+  </IfModule>
+  <IfModule mod_expires.c>
+    ExpiresActive Off
+  </IfModule>
+</FilesMatch>
 
 <IfModule mod_expires.c>
   ExpiresActive On
@@ -32,25 +96,172 @@ Options -Indexes
 </IfModule>
 
 <IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/plain text/css text/javascript application/javascript application/json application/manifest+json image/svg+xml
+  AddOutputFilterByType DEFLATE text/html text/plain text/css text/javascript application/javascript application/json application/geo+json application/manifest+json image/svg+xml
 </IfModule>
 
 <IfModule mod_brotli.c>
-  AddOutputFilterByType BROTLI_COMPRESS text/html text/plain text/css text/javascript application/javascript application/json application/manifest+json image/svg+xml
+  AddOutputFilterByType BROTLI_COMPRESS text/html text/plain text/css text/javascript application/javascript application/json application/geo+json application/manifest+json image/svg+xml
 </IfModule>
 
+<Files "llms.txt">
+  ForceType text/plain
+</Files>
+<Files "for-ai.txt">
+  ForceType text/plain
+</Files>
+<FilesMatch "^(?:research-agent-guide|transcriptomics-mcp)\.md$">
+  ForceType text/markdown
+</FilesMatch>
 AddType text/plain .R .r
+<Files "research_csv.py">
+  ForceType text/plain
+</Files>
+<Files "download-catalogue.py">
+  ForceType text/plain
+</Files>
+<FilesMatch "^research_brief(?:_figure)?\.py$">
+  ForceType text/plain
+</FilesMatch>
+<FilesMatch "^(?:annual_counts\.py|check_examples\.py|annual-counts\.sql\.txt)$">
+  ForceType text/plain
+</FilesMatch>
+<Files "annual_counts.ipynb">
+  ForceType application/x-ipynb+json
+</Files>
+<FilesMatch "^(?:annual_counts\.(?:py|R|ipynb)|check_examples\.py|annual-counts\.sql\.txt|research-task-benchmark\.json)$">
+  <IfModule mod_headers.c>
+    Header set Cache-Control "public, max-age=3600, must-revalidate"
+    Header unset Expires
+  </IfModule>
+  <IfModule mod_expires.c>
+    ExpiresActive Off
+  </IfModule>
+</FilesMatch>
+AddType application/geo+json .geojson
 
-<FilesMatch "^(schema\.sql|README\.md|.*\.(?:sqlite|sqlite3|db|db-wal|db-shm|log|lock|bak))$">
+<FilesMatch "(?i)^(?:AGENTS\.md|README\.md|schema\.sql|package(?:-lock)?\.json|composer\.(?:json|lock)|(?:to[ _-]?do)(?:\..*)?|wp-config(?:-sample)?\.php|.*\.(?:sqlite(?:3)?(?:-(?:wal|shm|journal))?|db(?:-(?:wal|shm|journal))?|sql|log|lock|bak|old|orig|save|swp|swo|ini|env|pem|key|p12|pfx|jks|keystore|properties|pyc|map))$">
   Require all denied
 </FilesMatch>
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
+  RewriteRule ^apps/research-explorer/?$ /shinyapp-live [R=301,L,NE]
+  RewriteRule ^shinyapp-live/$ /shinyapp-live [R=301,L,NE]
+  RewriteRule ^shinyapp-live$ apps/research-explorer/index.php [L,QSA]
+  # Keep the original published workspace URL working at its shorter address.
+  RewriteRule ^r-analysis/workspace/?$ /webR [R=301,L,NE,NC]
+  RewriteCond %{REQUEST_URI} !^/webR$
+  RewriteRule ^webr/?$ /webR [R=301,L,NE,NC]
+  RewriteRule ^webR$ account-analysis.php [L,QSA]
+  # Removed publisher PDF and its generated page previews.
+  RewriteRule ^wp-content/uploads/The-Psilocybin-Telomere-Hypothesis-An-empirically-falsifiable-prediction-concerning-the-beneficial-neuropsychopharmacological-effects-of-psilocybinon-genetic-aging(?:\.pdf|-pdf(?:-[0-9]+x[0-9]+)?\.jpg)(?:/|$) - [G,L,NC]
+  # Operational files stay private at every depth; discovery endpoints stay public.
+  RewriteRule (^|/)\.(?!well-known(?:/|$)) - [F,L,NC]
+  RewriteRule ^(?:data|src|bin|tests|android|config|templates|backup|backups|manuscript|tmp|node_modules|vendor)(?:/|$) - [F,L,NC]
+  RewriteRule ^composer\.(?:json|lock)$ - [F,L,NC]
+  RewriteRule (?:^|/)__pycache__(?:/|$) - [F,L,NC]
+  # Only intentionally published documentation is available directly over HTTP.
+  RewriteRule ^docs/(?!research-api\.openapi\.json$|research-agent-guide\.md$|transcriptomics-mcp\.md$|research-task-benchmark\.json$|licenses/[a-z0-9._-]+\.txt$) - [F,L,NC]
+  # Reproduction clients are public downloads; maintenance/build scripts are not.
+  RewriteCond %{REQUEST_URI} !^/tools/(?:(?:research_csv|research_brief|research_brief_figure|download-catalogue)\.py|reproducible/(?:annual_counts|check_examples)\.py)$ [NC]
+  RewriteRule \.(?:py|sh|bash|ps1|bat|cmd)(?:/|$) - [F,L,NC]
+  # Retired WordPress entry points are not part of the research application.
+  # PHP includes and the hosting WAF remain unaffected by HTTP route restrictions.
+  RewriteRule ^(?:wp-admin(?:/|$)|wp-includes/.*\.php(?:/|$)|wp-content/.*\.(?:php[0-9]?|phtml)(?:/|$)|wp-[^/]+\.php(?:/|$)|xmlrpc\.php(?:/|$)|wordfence-waf\.php(?:/|$)) - [F,L,NC]
+  # Consolidate unencrypted requests while respecting the hosting TLS proxy.
+  RewriteCond %{HTTP_HOST} ^(?:www\.)?psilocybin-research\.com$ [NC]
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !^https$ [NC]
+  RewriteRule ^ https://psilocybin-research.com%{REQUEST_URI} [R=301,L,NE]
+  # Reject the observed forged-browser export crawl before starting PHP.
+  # Browser navigations send Fetch Metadata or a referrer; API clients remain supported.
+  RewriteCond %{REQUEST_METHOD} ^(?:GET|HEAD)$
+  RewriteCond %{HTTP_USER_AGENT} Macintosh.*Chrome/ [NC]
+  RewriteCond %{HTTP:Sec-Fetch-Site} ^$
+  RewriteCond %{HTTP_REFERER} ^(?:-|)$
+  RewriteCond %{QUERY_STRING} (?:^|&)(?:author|cited_doi)= [NC]
+  RewriteCond %{QUERY_STRING} (?:^|&)(?:journal|topic)= [NC]
+  RewriteRule ^export\.php$ - [F,L]
+  RewriteCond %{REQUEST_METHOD} ^(?:GET|HEAD)$
+  RewriteCond %{HTTP_USER_AGENT} Macintosh.*Chrome/ [NC]
+  RewriteCond %{HTTP:Sec-Fetch-Site} ^$
+  RewriteCond %{HTTP_REFERER} ^(?:-|)$
+  RewriteCond %{QUERY_STRING} (?:^|&)journal= [NC]
+  RewriteCond %{QUERY_STRING} (?:^|&)topic= [NC]
+  RewriteRule ^export\.php$ - [F,L]
+  RewriteCond %{HTTP_HOST} ^www\.psilocybin-research\.com$ [NC]
+  RewriteRule ^ https://psilocybin-research.com%{REQUEST_URI} [R=301,L,NE]
+  # Serve the hypothesis alias in place; the page canonical consolidates SEO.
+  RewriteRule ^psilocybin-telomere-hypothesis-sma/?$ msca-impact/index.php [END,QSA]
+  RewriteCond %{THE_REQUEST} \s/+(psilocybin-cancer-anxiety-research|psilocybin-smoking-cessation-research)\.php(?:[?\s]) [NC]
+  RewriteRule ^(psilocybin-cancer-anxiety-research|psilocybin-smoking-cessation-research)\.php$ /$1/ [R=301,L,NE]
+  RewriteRule ^(psilocybin-cancer-anxiety-research|psilocybin-smoking-cessation-research)$ /$1/ [R=301,L,NE]
+  RewriteRule ^(psilocybin-cancer-anxiety-research|psilocybin-smoking-cessation-research)/$ $1.php [L,QSA]
+  RewriteRule ^api/v1(?:/(.*))?/?$ api-v1.php [L,QSA]
+  RewriteRule ^dataset-manifest\.json$ dataset-manifest.php [END,QSA]
+  RewriteRule ^mcp/?$ mcp.php [END,QSA]
+  RewriteRule ^mcp/transcriptomics/?$ transcriptomics-mcp.php [END,QSA]
+  RewriteCond %{THE_REQUEST} \s/+(psilocybin-studies|psilocybin-papers)\.php(?:[?\s]) [NC]
+  RewriteRule ^(psilocybin-studies|psilocybin-papers)\.php$ /$1/ [R=301,L,NE]
+  RewriteRule ^(psilocybin-studies|psilocybin-papers)$ /$1/ [R=301,L,NE]
+  RewriteRule ^(psilocybin-studies|psilocybin-papers)/$ $1.php [L,QSA]
+  RewriteCond %{THE_REQUEST} \s/+(psilocybin-research-guide|psilocybin-alcohol-use-disorder-research)\.php(?:[?\s]) [NC]
+  RewriteRule ^(psilocybin-research-guide|psilocybin-alcohol-use-disorder-research)\.php$ /$1/ [R=301,L,NE]
+  RewriteRule ^(psilocybin-research-guide|psilocybin-alcohol-use-disorder-research)$ /$1/ [R=301,L,NE]
+  RewriteRule ^psilocybin-research-guide/$ psilocybin-research-guide.php [L,QSA]
+  RewriteRule ^psilocybin-alcohol-use-disorder-research/$ psilocybin-alcohol-use-disorder-research.php [L,QSA]
+  RewriteCond %{THE_REQUEST} \s/+psilocybin-depression-research\.php(?:[?\s]) [NC]
+  RewriteRule ^psilocybin-depression-research\.php$ /psilocybin-depression-research/ [R=301,L,NE]
+  RewriteCond %{THE_REQUEST} \s/+research-brief-2026-10\.php(?:[?\s]) [NC]
+  RewriteRule ^research-brief-2026-10\.php$ /psilocybin-research-brief-2026-10/ [R=301,L,NE]
+  RewriteRule ^(psilocybin-depression-research|psilocybin-research-brief-2026-10)$ /$1/ [R=301,L,NE]
+  RewriteRule ^psilocybin-depression-research/$ psilocybin-depression-research.php [L,QSA]
+  RewriteRule ^psilocybin-research-brief-2026-10/$ research-brief-2026-10.php [L,QSA]
+  RewriteCond %{THE_REQUEST} \s/+recruiting-psilocybin-clinical-trials\.php(?:[?\s]) [NC]
+  RewriteRule ^recruiting-psilocybin-clinical-trials\.php$ /recruiting-psilocybin-clinical-trials/ [R=301,L,NE]
+  RewriteRule ^recruiting-psilocybin-clinical-trials/?$ recruiting-psilocybin-clinical-trials.php [L,QSA]
+  RewriteRule ^(psilocybin-clinical-trials-(?:depression|alcohol-use-disorder|ptsd|ocd|cancer-distress|anxiety|opioid-use-disorder|healthy-volunteers|united-states|canada|united-kingdom|switzerland)|(?:early-)?phase-[123]-psilocybin-clinical-trials)/?$ clinical-trials-topic.php?landing=$1 [L,QSA]
+  RewriteCond %{THE_REQUEST} \s/+research-in-motion\.php(?:[?\s]) [NC]
+  RewriteRule ^research-in-motion\.php$ /research-in-motion/ [R=301,L,NE]
+  RewriteRule ^research-in-motion$ /research-in-motion/ [R=301,L,NE]
+  RewriteRule ^research-in-motion/$ research-in-motion.php [L,QSA]
+  RewriteCond %{THE_REQUEST} \s/+for-stakeholders\.php(?:[?\s]) [NC]
+  RewriteRule ^for-stakeholders\.php$ /for-stakeholders/ [R=301,L,NE]
+  RewriteRule ^for-stakeholders$ /for-stakeholders/ [R=301,L,NE]
+  RewriteRule ^for-stakeholders/$ for-stakeholders.php [L,QSA]
+  RewriteCond %{THE_REQUEST} \s/+european-projects\.php(?:[?\s]) [NC]
+  RewriteRule ^european-projects\.php$ /european-psilocybin-research-projects/ [R=301,L,NE]
+  RewriteRule ^european-psilocybin-research-projects$ /european-psilocybin-research-projects/ [R=301,L,NE]
+  RewriteRule ^european-psilocybin-research-projects/$ european-projects.php [L,QSA]
+  RewriteRule ^sitemap-video\.xml$ sitemap-video.php [L]
+  RewriteRule ^sitemap\.xml$ sitemap.php [L]
+  RewriteRule ^sitemap-static\.xml$ sitemap-static.php [L]
+  RewriteRule ^sitemap-trials\.xml$ sitemap-trials.php [L]
+  RewriteRule ^sitemap-publications\.xml$ sitemap-publications.php [L]
   RewriteRule ^var/www/vhosts/[^/]+/html/psilocybin-research\.com/(.*)$ /$1 [R=301,L,NE]
-  RewriteRule ^data/ - [F,L]
-  RewriteRule ^src/ - [F,L]
-  RewriteRule ^bin/ - [F,L]
-  RewriteRule ^tests/ - [F,L]
-  RewriteRule ^android/ - [F,L]
 </IfModule>
+
+AddType video/mp4 .mp4
+AddType text/vtt .vtt
+
+# ES modules require a JavaScript MIME type with nosniff enabled.
+<IfModule mod_mime.c>
+  AddType text/javascript .mjs
+</IfModule>
+
+# Public proof of namespace ownership for the official MCP Registry; never a private key.
+<Files "mcp-registry-auth">
+  ForceType text/plain
+  <IfModule mod_headers.c>
+    Header set Cache-Control "no-store"
+    Header set X-Robots-Tag "noindex, nofollow"
+    Header unset Expires
+  </IfModule>
+</Files>
+
+<Files "sw.js">
+  <IfModule mod_headers.c>
+    Header always set Cache-Control "no-cache, no-store, must-revalidate, max-age=0"
+    Header always set Service-Worker-Allowed "/"
+  </IfModule>
+</Files>

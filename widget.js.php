@@ -16,11 +16,11 @@ ob_start();
     <?php foreach ($papers as $paper): ?>
       <li>
         <a href="<?= h($paper['source_url'] ?: '/') ?>"><?= h($paper['title']) ?></a>
-        <span><?= h(($paper['journal'] ?: 'Unknown journal') . ' · ' . ($paper['publication_date'] ?: 'Unknown date')) ?></span>
+        <span><?= h(PublicationMetadata::venue($paper)['label'] . ' · ' . ($paper['publication_date'] ?: 'Unknown date')) ?></span>
       </li>
     <?php endforeach; ?>
   </ul>
-  <a href="/">View publication tracker</a>
+  <a href="/">View research database</a>
 </section>
 <?php
 $html = ob_get_clean();

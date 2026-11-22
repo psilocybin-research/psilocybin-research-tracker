@@ -1,6 +1,13 @@
 <?php
 declare(strict_types=1);
 
+if (PHP_SAPI !== 'cli') {
+    ini_set('display_errors', '0');
+    ini_set('log_errors', '1');
+    header_remove('X-Powered-By');
+}
+
+
 spl_autoload_register(function (string $class): void {
     $paths = [
         __DIR__ . '/' . str_replace('\\', '/', $class) . '.php',
@@ -113,6 +120,10 @@ function public_paper(array $paper): array
         'publication_date' => (string)($paper['publication_date'] ?? ''),
         'importer_version' => '2.1.3',
         'text_redistributed' => false,
+        'indexed_at' => (string)($paper['date_added'] ?? ''),
+        'last_checked_at' => (string)($paper['last_checked'] ?? ''),
+        'metadata_record_url' => rtrim(Config::publicBaseUrl(), '/') . '/publication.php?id=' . (int)($paper['id'] ?? 0) . '#metadata',
+        'attribution_scope' => 'Original research authorship remains with the listed authors. The tracker aggregates metadata and derives discovery labels; indexing and checking do not constitute scientific validation or individual manual review.',
     ];
     return $public;
 }
@@ -249,3 +260,6 @@ function download_filename(string $prefix, string $extension): string
 }
 
 require_once __DIR__ . '/ViewHelpers.php';
+
+// A marked owner browser remains excluded when its network changes.
+InternalTraffic::registerMarkedRequest();

@@ -8,7 +8,7 @@ $format = request_value('format', 'json');
 try {
     $db = new Database();
     $db->initialize();
-    $report = (new HealthService($db, new PublicationRepository($db), new FetchRunRepository($db)))->report();
+    $report = (new HealthService($db, new PublicationRepository($db), new FetchRunRepository($db)))->publicReport();
     $httpCode = $report['status'] === 'fail' ? 503 : 200;
     http_response_code($httpCode);
     if ($format === 'html') {
@@ -20,6 +20,8 @@ try {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123c31">
+  <meta name="color-scheme" content="light">
   <title>Publication Tracker Health</title>
   <style>
     body{margin:0;background:#ffffff;color:#24251f;font-family:Arial,Helvetica,sans-serif}

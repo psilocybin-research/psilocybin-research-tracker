@@ -19,7 +19,7 @@
   mirrorControls(); controls.after(blendedControls);
   new MutationObserver(mirrorControls).observe(controls, {subtree: true, attributes: true, childList: true, characterData: true});
 
-  let index = 0, active = 0, playing = !reduced.matches, busy = false, queued = null, timer, quietTimer, touchStart, pendingIndex = 0;
+  let index = 0, active = 0, playing = false, busy = false, queued = null, timer, quietTimer, touchStart, pendingIndex = 0;
   const prepared = new Map();
   const pausePath = 'M8 5v14M16 5v14', playPath = 'm9 5 11 7-11 7Z';
   const variant = slide => {
@@ -174,7 +174,9 @@
     const dx = event.clientX - start.x, dy = event.clientY - start.y;
     if (start.type !== 'mouse' && Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.5) {
       show(index + (dx < 0 ? 1 : -1));
-    } else if (Math.hypot(dx, dy) < 12 && performance.now() - start.time < 600) show(index + 1);
+    } else if (Math.hypot(dx, dy) < 12 && performance.now() - start.time < 600) {
+      playing = true; syncPlay(); wake(); show(index + 1);
+    }
   }, {passive: true});
   gallery.addEventListener('pointercancel', () => { touchStart = null; }, {passive: true});
   document.addEventListener('visibilitychange', schedule);

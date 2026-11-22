@@ -1,0 +1,32 @@
+.offline-library-dialog{width:min(720px,calc(100% - 24px));max-height:90dvh;overflow:auto;border:1px solid #cbd8ce;border-radius:16px;padding:0;background:#fafcf8;color:#183b31;box-shadow:0 16px 60px #123c3140}.offline-library{padding:clamp(16px,3vw,30px);font:16px/1.55 system-ui,sans-serif;color:#183b31;background:#fafcf8;border-radius:16px}.offline-library-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.offline-library h2{font-size:1.5rem;margin:0}.offline-library button,.offline-library input,.offline-library select{font:inherit;padding:10px 12px;border:1px solid #96afa2;border-radius:8px;background:#fff;color:#183b31;min-height:44px;max-width:100%}.offline-library button{cursor:pointer}.offline-library button:disabled{opacity:.5;cursor:default}.offline-library button:focus-visible,.offline-library input:focus-visible,.offline-library select:focus-visible{outline:3px solid #49997b;outline-offset:2px}.offline-library-actions,.offline-library-filters{display:flex;gap:10px;flex-wrap:wrap}.offline-library-filters label{display:grid;gap:4px;flex:1 1 180px;min-width:0}.offline-library-note{font-size:.9rem;color:#486457}.offline-library [data-results]{padding:0;list-style:none}.offline-library [data-results] li{padding:16px 0;border-top:1px solid #cbd8ce;overflow-wrap:anywhere}.offline-library h3{font-size:1.05rem;margin:0 0 6px}.offline-library li p{margin:5px 0}.offline-library a{color:#145b43;text-decoration:underline}.offline-library [data-status]{font-weight:600;margin:12px 0 0}.offline-library [data-status]:empty{margin:0}
+.offline-library [hidden]{display:none!important}
+.offline-library [data-ready]{display:inline-block;padding:5px 12px;border-radius:999px;background:#ece9de;color:#3e493e}
+.offline-library [data-ready][data-ready="true"]{background:#d9eddf;color:#123c31}
+.offline-library progress{display:block;width:100%;height:18px;margin:8px 0 16px;accent-color:#23634f}
+.offline-library details{border:1px solid #cbd8ce;border-radius:10px;padding:12px;margin:16px 0}
+.offline-library summary{cursor:pointer;min-height:32px;font-weight:600}
+.offline-library details[open]>summary{margin-bottom:12px}
+.offline-library-searches>label,.offline-library-export>label{display:grid;gap:5px}
+.offline-library-searches [data-saved-searches]{display:grid;gap:10px;margin-top:14px}
+.offline-library-searches>button{margin-top:10px}
+.offline-library .offline-library-reading{display:flex;align-items:center;gap:10px;margin-top:16px}
+.offline-library-reading input{width:22px;min-height:22px;flex:0 0 22px;accent-color:#23634f}
+.offline-library .offline-library-export{align-items:end;margin:18px 0}
+.offline-library [data-record-view]{border:2px solid #79a38c;border-radius:12px;padding:16px;margin:20px 0;background:#f0f6ee;overflow-wrap:anywhere}
+.offline-library [data-record-view] h3{font-size:1.2rem}
+.offline-library dl{display:grid;grid-template-columns:minmax(100px,1fr) minmax(0,3fr);gap:8px 16px}
+.offline-library dt{font-weight:600}.offline-library dd{margin:0;overflow-wrap:anywhere}
+.offline-library [data-empty]{padding:16px;border:1px solid #cbd8ce;border-radius:10px}
+@media(max-width:520px){.offline-library dl{grid-template-columns:minmax(0,1fr)}.offline-library dd{margin-bottom:8px}.offline-library h2{font-size:1.3rem}.offline-library-actions{align-items:stretch}.offline-library-searches input{width:100%}}
+@media(prefers-reduced-motion:reduce){.offline-library{scroll-behavior:auto}}
+
+.offline-library-intro{margin:12px 0 20px;color:#486457;max-width:60ch}
+.offline-library-download{padding:18px;border:1px solid #cbd8ce;border-radius:12px;background:#f0f6ee}
+.offline-library-download [data-snapshot]{margin:10px 0 6px}
+.offline-library-download .offline-library-note{margin:8px 0 16px}
+.offline-library [data-download]{background:#183b31;color:#fff;border-color:#183b31;font-weight:600}
+.offline-library [data-close]{font-size:24px;line-height:1;padding:8px;flex:0 0 44px}
+.offline-library [data-browser]{margin-top:20px}
+.offline-library [data-remove]{color:#823b2f;border-color:#bd9a92}
+.offline-library [data-count]{font-size:.9rem;font-weight:600}
+@media(max-width:520px){.offline-library-download{padding:14px}.offline-library-download .offline-library-actions{display:grid;grid-template-columns:1fr}.offline-library-dialog{max-height:calc(100dvh - 24px)}}

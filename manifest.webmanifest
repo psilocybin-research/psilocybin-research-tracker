@@ -1,33 +1,42 @@
 {
   "name": "Psilocybin Research Tracker",
-  "short_name": "Psilocybin Research Tracker",
+  "short_name": "PsiloTrack",
   "description": "Search source-labeled psilocybin and psilocin publications, preprints, trials, citations, analytics, and alerts.",
   "id": "/",
-  "start_url": "/?source=pwa",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone", "browser"],
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "browser"
+  ],
   "orientation": "any",
-  "background_color": "#ffffff",
+  "background_color": "#123c31",
   "theme_color": "#123c31",
-  "categories": ["education", "medical", "productivity", "utilities"],
+  "categories": [
+    "education",
+    "medical",
+    "productivity",
+    "utilities"
+  ],
   "lang": "en",
   "dir": "ltr",
   "icons": [
     {
-      "src": "assets/pwa/icon-192.png?v=20260809-network-first-v94",
+      "src": "assets/pwa/icon-192.png?v=20260809-sidebar-status-v108",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "assets/pwa/icon-512.png?v=20260809-network-first-v94",
+      "src": "assets/pwa/icon-512.png?v=20260809-sidebar-status-v108",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "assets/pwa/maskable-512.png?v=20260809-network-first-v94",
+      "src": "assets/pwa/maskable-512.png?v=20260809-sidebar-status-v108",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -35,22 +44,79 @@
   ],
   "shortcuts": [
     {
-      "name": "Latest Publications",
-      "short_name": "Latest",
+      "name": "Latest papers",
+      "short_name": "Latest papers",
       "url": "/#papers",
-      "description": "Open the latest psilocybin and psilocin publications."
+      "description": "Open the latest psilocybin and psilocin publications.",
+      "icons": [
+        {
+          "src": "assets/pwa/shortcut-papers-96.png?v=20261101-nature-launcher",
+          "sizes": "96x96",
+          "type": "image/png",
+          "purpose": "any"
+        },
+        {
+          "src": "assets/pwa/shortcut-papers-192.png?v=20261101-nature-launcher",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "any"
+        }
+      ]
     },
     {
       "name": "Analytics",
       "short_name": "Analytics",
       "url": "/#analytics",
-      "description": "Open publication trends and source analytics."
+      "description": "Open publication trends and source analytics.",
+      "icons": [
+        {
+          "src": "assets/pwa/shortcut-analytics-96.png?v=20261101-nature-launcher",
+          "sizes": "96x96",
+          "type": "image/png",
+          "purpose": "any"
+        },
+        {
+          "src": "assets/pwa/shortcut-analytics-192.png?v=20261101-nature-launcher",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "any"
+        }
+      ]
     },
     {
-      "name": "Email Alerts",
-      "short_name": "Alerts",
+      "name": "Email alerts",
+      "short_name": "Email alerts",
       "url": "/#alerts",
-      "description": "Create or manage publication alerts."
+      "description": "Create or manage publication alerts.",
+      "icons": [
+        {
+          "src": "assets/pwa/shortcut-alerts-96.png?v=20261101-nature-launcher",
+          "sizes": "96x96",
+          "type": "image/png",
+          "purpose": "any"
+        },
+        {
+          "src": "assets/pwa/shortcut-alerts-192.png?v=20261101-nature-launcher",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "any"
+        }
+      ]
     }
-  ]
+  ],
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://psilocybin-research.com/manifest.webmanifest"
+    },
+    {
+      "platform": "webapp",
+      "url": "https://psilocybin-research.com/manifest.webmanifest?v=20260906-crossed-tools-v143"
+    },
+    {
+      "platform": "webapp",
+      "url": "https://psilocybin-research.com/manifest.webmanifest?v=20260906-loader-bar-v140"
+    }
+  ],
+  "prefer_related_applications": false
 }

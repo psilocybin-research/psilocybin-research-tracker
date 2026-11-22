@@ -9,11 +9,11 @@ final class AlertService
     {
     }
 
-    public function subscribe(string $email, string $frequency, array $substances, ?string $keywords, ?string $author = null, ?string $journal = null, ?string $topic = null, ?string $citedDoi = null): array
+    public function subscribe(string $email, string $frequency, array $substances, ?string $keywords, ?string $author = null, string|array|null $journal = null, string|array|null $topic = null, ?string $citedDoi = null, array $eventTypes = []): array
     {
         $email = filter_var(SensitiveData::canonicalEmail($email), FILTER_VALIDATE_EMAIL);
-        if (!$email) {
-            throw new InvalidArgumentException('Enter a valid email address.');
+        if (!$email || self::isPlaceholderEmail($email)) {
+            throw new InvalidArgumentException('Enter your own deliverable email address.');
         }
         if (!in_array($frequency, ['daily', 'weekly', 'monthly'], true)) {
             throw new InvalidArgumentException('Invalid alert frequency.');
@@ -24,9 +24,10 @@ final class AlertService
         }
         $keywords = trim((string)$keywords) ?: null;
         $author = trim((string)$author) ?: null;
-        $journal = trim((string)$journal) ?: null;
-        $topic = trim((string)$topic) ?: null;
+        $journal = AlertFilters::encode($journal);
+        $topic = AlertFilters::encode($topic);
         $citedDoi = normalize_doi($citedDoi);
+        $eventTypes=implode(',',ResearchChanges::types($eventTypes));
         $now = current_utc();
         $token = bin2hex(random_bytes(18));
         $confirmationToken = bin2hex(random_bytes(24));
@@ -34,6 +35,7 @@ final class AlertService
 
         $params = [
             'email_blind_index' => SensitiveData::blindIndex('alert-email', $email),
+            'event_types'=>$eventTypes,
             'frequency' => $frequency,
             'substances' => implode(',', $substances),
             'keywords' => $keywords,
@@ -45,6 +47,7 @@ final class AlertService
         $existingStmt = $this->db->pdo()->prepare(
             'SELECT * FROM alert_subscriptions
              WHERE email_blind_index = :email_blind_index
+               AND event_types = :event_types
                AND frequency = :frequency
                AND substances = :substances
                AND COALESCE(keywords, \'\') = COALESCE(:keywords, \'\')
@@ -78,8 +81,8 @@ final class AlertService
         }
 
         $stmt = $this->db->pdo()->prepare(
-            'INSERT INTO alert_subscriptions (public_uuid, email, email_cipher, email_blind_index, frequency, substances, keywords, author, journal, topic, cited_doi, active, token, token_cipher, token_blind_index, confirmation_token, confirmation_token_cipher, confirmation_token_blind_index, created_at, updated_at)
-             VALUES (:public_uuid, :email, :email_cipher, :email_blind_index, :frequency, :substances, :keywords, :author, :journal, :topic, :cited_doi, 0, :token, :token_cipher, :token_blind_index, :confirmation_token, :confirmation_token_cipher, :confirmation_token_blind_index, :created, :updated)'
+            'INSERT INTO alert_subscriptions (public_uuid, email, email_cipher, email_blind_index, frequency, substances, keywords, author, journal, topic, cited_doi, active, token, token_cipher, token_blind_index, confirmation_token, confirmation_token_cipher, confirmation_token_blind_index, created_at, updated_at, event_types, events_since)
+             VALUES (:public_uuid, :email, :email_cipher, :email_blind_index, :frequency, :substances, :keywords, :author, :journal, :topic, :cited_doi, 0, :token, :token_cipher, :token_blind_index, :confirmation_token, :confirmation_token_cipher, :confirmation_token_blind_index, :created, :updated, :event_types, :events_since)'
         );
         $stmt->execute([
             'public_uuid' => $publicUuid,
@@ -99,6 +102,7 @@ final class AlertService
             'confirmation_token' => '[encrypted]',
             'confirmation_token_cipher' => SensitiveData::encrypt($confirmationToken),
             'confirmation_token_blind_index' => SensitiveData::blindIndex('alert-confirmation-token', $confirmationToken),
+            'event_types'=>$eventTypes, 'events_since'=>$now,
             'created' => $now,
             'updated' => $now,
         ]);
@@ -161,7 +165,7 @@ final class AlertService
         return $this->findById((int)$subscription['id']);
     }
 
-    public function updatePreferences(string $token, string $frequency, array $substances, ?string $keywords, ?string $author = null, ?string $journal = null, ?string $topic = null, ?string $citedDoi = null): array
+    public function updatePreferences(string $token, string $frequency, array $substances, ?string $keywords, ?string $author = null, string|array|null $journal = null, string|array|null $topic = null, ?string $citedDoi = null, array $eventTypes = []): array
     {
         $subscription = $this->findByToken($token);
         if (!$subscription) {
@@ -176,16 +180,17 @@ final class AlertService
         }
         $stmt = $this->db->pdo()->prepare(
             'UPDATE alert_subscriptions
-             SET frequency = :frequency, substances = :substances, keywords = :keywords, author = :author, journal = :journal, topic = :topic, cited_doi = :cited_doi, active = CASE WHEN confirmed_at IS NULL THEN 0 ELSE active END, updated_at = :updated
+             SET event_types=:event_types, events_since=CASE WHEN event_types != :event_types THEN :updated ELSE events_since END, frequency = :frequency, substances = :substances, keywords = :keywords, author = :author, journal = :journal, topic = :topic, cited_doi = :cited_doi, active = CASE WHEN confirmed_at IS NULL THEN 0 ELSE active END, updated_at = :updated
              WHERE token_blind_index = :token'
         );
         $stmt->execute([
+            'event_types'=>implode(',',ResearchChanges::types($eventTypes)),
             'frequency' => $frequency,
             'substances' => implode(',', $substances),
             'keywords' => trim((string)$keywords) ?: null,
             'author' => trim((string)$author) ?: null,
-            'journal' => trim((string)$journal) ?: null,
-            'topic' => trim((string)$topic) ?: null,
+            'journal' => AlertFilters::encode($journal),
+            'topic' => AlertFilters::encode($topic),
             'cited_doi' => normalize_doi($citedDoi),
             'updated' => current_utc(),
             'token' => SensitiveData::blindIndex('alert-token', $token),
@@ -234,6 +239,7 @@ final class AlertService
         $pdo = $this->db->pdo();
         $pdo->beginTransaction();
         try {
+            $pdo->prepare('DELETE FROM research_change_deliveries WHERE subscription_id=?')->execute([(int)$subscription['id']]);
             $stmt = $pdo->prepare('DELETE FROM alert_deliveries WHERE subscription_id = :id');
             $stmt->execute(['id' => (int)$subscription['id']]);
             $stmt = $pdo->prepare('DELETE FROM alert_subscriptions WHERE id = :id');
@@ -275,7 +281,8 @@ final class AlertService
                     $new[] = $paper;
                 }
             }
-            if (!$new) {
+            $events=(new ResearchChanges($this->db))->forSubscription($subscription,$since);
+            if (!$new && !$events) {
                 continue;
             }
             if ($mark) {
@@ -283,13 +290,15 @@ final class AlertService
                     $this->markDelivered((int)$subscription['id'], (int)$paper['id'], $frequency);
                 }
             }
+            if($mark)(new ResearchChanges($this->db))->mark((int)$subscription['id'],$events);
             $digests[] = [
                 'subscription' => $subscription,
                 'papers' => $new,
-                'subject' => $this->subjectLine($subscription, count($new)),
-                'body' => $this->renderTextDigest($subscription, $new),
-                'text' => $this->renderTextDigest($subscription, $new),
-                'html' => $this->renderHtmlDigest($subscription, $new),
+                'events'=>$events,
+                'subject' => $this->subjectLine($subscription, count($new),count($events)),
+                'body' => $this->renderTextDigest($subscription, $new,$events),
+                'text' => $this->renderTextDigest($subscription, $new,$events),
+                'html' => $this->renderHtmlDigest($subscription, $new,$events),
                 'headers' => $this->emailHeaders($subscription),
                 'attachments' => $this->embeddedAttachments(),
             ];
@@ -331,6 +340,7 @@ final class AlertService
         if ($subscriptionId <= 0) {
             return;
         }
+        (new ResearchChanges($this->db))->mark($subscriptionId,$digest['events']??[]);
         foreach (($digest['papers'] ?? []) as $paper) {
             $this->markDelivered($subscriptionId, (int)$paper['id'], $frequency);
         }
@@ -341,24 +351,25 @@ final class AlertService
         return $this->renderTextDigest($subscription, $papers);
     }
 
-    public function renderTextDigest(array $subscription, array $papers): string
+    public function renderTextDigest(array $subscription, array $papers, array $events=[]): string
     {
         $lines = [];
         $manageUrl = $this->manageUrl($subscription);
         $unsubscribeUrl = $this->unsubscribeUrl($subscription);
         $dataProtectionUrl = Config::publicBaseUrl() . 'data-protection.php';
         $lines[] = 'To: ' . $subscription['email'];
-        $lines[] = 'Subject: ' . $this->subjectLine($subscription, count($papers));
+        $lines[] = 'Subject: ' . $this->subjectLine($subscription, count($papers),count($events));
         $lines[] = '';
         $publicationCount = count($papers);
         $publicationLabel = $publicationCount === 1 ? 'publication' : 'publications';
+        if($events)$lines[]=count($events).' observed research changes matched your alert.';
         $lines[] = $publicationCount . ' new ' . $publicationLabel . ' matched your ' . $subscription['frequency'] . ' alert.';
         $lines[] = 'Alert UUID: ' . (string)($subscription['public_uuid'] ?? 'unavailable');
         $lines[] = 'Preferences: ' . $this->preferenceSummary($subscription);
         $lines[] = '';
         foreach ($papers as $i => $paper) {
             $lines[] = ($i + 1) . '. ' . $paper['title'];
-            $lines[] = '   ' . trim(($paper['journal'] ?: 'Unknown journal') . ' | ' . ($paper['publication_date'] ?: 'Unknown date'));
+            $lines[] = '   ' . trim(PublicationMetadata::venue($paper)['label'] . ' | ' . ($paper['publication_date'] ?: 'Unknown date'));
             if (!empty($paper['doi'])) {
                 $lines[] = '   DOI: ' . $paper['doi'];
             }
@@ -370,6 +381,7 @@ final class AlertService
             }
             $lines[] = '';
         }
+        foreach($events as $event){$lines[]='Research change: '.$event['label'].' — '.$event['nct_id'];$lines[]='   '.$event['title'];$lines[]='   Observed UTC: '.$event['observed_at'];$lines[]='   '.($event['source_url']??$event['url']);if(isset($event['facts']['before']))$lines[]='   '.$event['facts']['before'].' → '.$event['facts']['after'];$lines[]='';}
         $lines[] = 'Manage alert preferences: ' . $manageUrl;
         $lines[] = 'Unsubscribe from this alert: ' . $unsubscribeUrl;
         $lines[] = 'Data protection notice: ' . $dataProtectionUrl;
@@ -378,7 +390,7 @@ final class AlertService
         return implode("\n", $lines);
     }
 
-    public function renderHtmlDigest(array $subscription, array $papers): string
+    public function renderHtmlDigest(array $subscription, array $papers, array $events=[]): string
     {
         $manageUrl = $this->manageUrl($subscription);
         $unsubscribeUrl = $this->unsubscribeUrl($subscription);
@@ -386,7 +398,7 @@ final class AlertService
         $rows = '';
         foreach ($papers as $paper) {
             $title = self::e((string)$paper['title']);
-            $journal = self::e((string)($paper['journal'] ?: 'Unknown journal'));
+            $journal = self::e((string)PublicationMetadata::venue($paper)['label']);
             $date = self::e((string)($paper['publication_date'] ?: 'Unknown date'));
             $authors = self::e((string)($paper['authors'] ?: 'Authors unavailable'));
             $source = self::e((string)($paper['source_url'] ?: Config::publicBaseUrl()));
@@ -401,21 +413,12 @@ final class AlertService
                 . '</td></tr>';
         }
 
+        foreach($events as $event)$rows.='<tr><td style="padding:18px 0;border-top:1px solid #d8d2c4;"><strong>'.self::e($event['label']).' · '.self::e($event['nct_id']).'</strong><p>'.self::e($event['title']).'</p><p>Observed UTC: '.self::e($event['observed_at']).'</p><a href="'.self::e($event['source_url']??$event['url']).'" style="color:#1a6b54;text-decoration:none;font-weight:700;">Check original record</a></td></tr>';
         $alertUuid = self::e((string)($subscription['public_uuid'] ?? 'unavailable'));
-        return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>'
-            . '<body style="margin:0;background:#ffffff;color:#24251f;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;">'
-            . '<div style="display:none;max-height:0;overflow:hidden;">' . count($papers) . ' new ' . (count($papers) === 1 ? 'publication' : 'publications') . ' matched your psilocybin research alert.</div>'
-            . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#ffffff;"><tr><td align="center" style="padding:24px 12px;">'
-            . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:720px;background:#ffffff;border:1px solid #d8d2c4;border-radius:8px;overflow:hidden;box-shadow:0 1px 2px rgba(36,37,31,.08);">'
-            . '<tr><td style="background:#ffffff;padding:18px 24px;border-bottom:1px solid #d8d2c4;border-left:4px solid #123c31;">'
-            . '<table role="presentation" cellspacing="0" cellpadding="0"><tr>'
-            . '<td style="width:54px;padding-right:13px;"><img src="cid:' . self::LOGO_CID . '" width="46" height="46" alt="" style="display:block;width:46px;height:46px;border:0;border-radius:7px;"></td>'
-            . '<td><div style="color:#24251f;font-size:18px;font-weight:850;line-height:1.1;">Psilocybin-Research.com</div><div style="margin-top:3px;color:#1a6b54;font-size:12px;font-weight:760;line-height:1.2;">Searchable psilocybin and psilocin bibliometric database.</div></td>'
-            . '</tr></table>'
-            . '</td></tr>'
-            . '<tr><td style="padding:26px 24px 8px;">'
-            . '<h1 style="margin:0;color:#24251f;font-size:26px;line-height:1.16;">Publication alert</h1>'
+        $content = '<tr><td style="padding:26px 24px 8px;">'
+            . '<h1 style="margin:0;color:#24251f;font-size:26px;line-height:1.16;">Research alert</h1>'
             . '<p style="margin:8px 0 0;color:#686c61;font-size:15px;line-height:1.5;">' . count($papers) . ' new ' . (count($papers) === 1 ? 'publication' : 'publications') . ' matched your ' . self::e((string)$subscription['frequency']) . ' alert.</p>'
+            . ($events?'<p style="margin:8px 0;color:#686c61;">'.count($events).' observed research changes matched your alert.</p>':'')
             . '<div style="margin:16px 0 0;padding:12px 14px;border:1px solid #d8d2c4;border-radius:7px;background:#f7f6f1;color:#686c61;font-size:13px;line-height:1.55;">'
             . '<div><strong style="color:#24251f;">Alert UUID:</strong> <span style="font-family:Consolas,Menlo,monospace;color:#24251f;">' . $alertUuid . '</span></div>'
             . '<div style="margin-top:5px;"><strong style="color:#24251f;">Research filters:</strong> ' . self::e($this->preferenceSummary($subscription)) . '</div>'
@@ -430,11 +433,8 @@ final class AlertService
             . '<div style="margin-top:12px;padding:14px;border:1px solid #d8d2c4;border-radius:6px;background:#f7f6f1;color:#686c61;font-size:12px;line-height:1.55;">'
             . '<strong style="color:#24251f;">Data protection notice.</strong> This alert uses your email address and selected filters only to send publication updates you requested. Email addresses and alert access tokens are encrypted at rest. The email contains no tracking pixel. You can manage, stop, or delete this alert at any time using the links above. <a href="' . self::e($dataProtectionUrl) . '" style="color:#1a6b54;font-weight:800;text-decoration:none;">Read the full notice</a>.'
             . '</div>'
-            . '</td></tr>'
-            . '<tr><td style="padding:14px 24px;background:#f7f6f1;border-top:1px solid #d8d2c4;color:#686c61;font-size:11px;line-height:1.5;">'
-            . 'Psilocybin-Research.com Publication Tracker. Coverage may be incomplete; verify records before citation or clinical use.'
-            . '</td></tr>'
-            . '</table></td></tr></table></body></html>';
+            . '</td></tr>';
+        return EmailTemplate::render($content, count($papers) . ' new ' . (count($papers) === 1 ? 'publication' : 'publications') . ' matched your psilocybin research alert.', width: 720);
     }
 
     public function sendConfirmation(array $subscription): bool
@@ -510,18 +510,7 @@ final class AlertService
         $manageUrl = self::e($this->manageUrl($subscription));
         $dataProtectionUrl = self::e(Config::publicBaseUrl() . 'data-protection.php');
         $alertUuid = self::e((string)($subscription['public_uuid'] ?? 'unavailable'));
-        return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>'
-            . '<body style="margin:0;background:#ffffff;color:#24251f;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;">'
-            . '<div style="display:none;max-height:0;overflow:hidden;">Confirm your Psilocybin Research publication alert.</div>'
-            . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#ffffff;"><tr><td align="center" style="padding:24px 12px;">'
-            . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px;background:#ffffff;border:1px solid #d8d2c4;border-radius:8px;overflow:hidden;box-shadow:0 1px 2px rgba(36,37,31,.08);">'
-            . '<tr><td style="background:#ffffff;padding:18px 24px;border-bottom:1px solid #d8d2c4;border-left:4px solid #123c31;">'
-            . '<table role="presentation" cellspacing="0" cellpadding="0"><tr>'
-            . '<td style="width:54px;padding-right:13px;"><img src="cid:' . self::LOGO_CID . '" width="46" height="46" alt="" style="display:block;width:46px;height:46px;border:0;border-radius:7px;"></td>'
-            . '<td><div style="color:#24251f;font-size:18px;font-weight:850;line-height:1.1;">Psilocybin-Research.com</div><div style="margin-top:3px;color:#1a6b54;font-size:12px;font-weight:760;line-height:1.2;">Searchable psilocybin and psilocin bibliometric database.</div></td>'
-            . '</tr></table>'
-            . '</td></tr>'
-            . '<tr><td style="padding:26px 24px;">'
+        $content = '<tr><td style="padding:26px 24px;">'
             . '<h1 style="margin:0;color:#24251f;font-size:25px;line-height:1.18;">Confirm your publication alert</h1>'
             . '<p style="margin:10px 0 0;color:#686c61;font-size:15px;line-height:1.55;">Please confirm that you requested email updates for newly indexed psilocybin and psilocin literature.</p>'
             . '<div style="margin:16px 0 0;padding:12px 14px;border:1px solid #d8d2c4;border-radius:7px;background:#f7f6f1;color:#686c61;font-size:13px;line-height:1.55;">'
@@ -533,11 +522,8 @@ final class AlertService
             . '<div style="margin-top:18px;padding:14px;border:1px solid #d8d2c4;border-radius:6px;background:#f7f6f1;color:#686c61;font-size:12px;line-height:1.55;">'
             . '<strong style="color:#24251f;">Data protection notice.</strong> No publication digests will be sent unless this confirmation link is opened. If you did not request this alert, ignore this email. Email addresses and alert access tokens are encrypted at rest. The template contains no tracking pixel. <a href="' . $dataProtectionUrl . '" style="color:#1a6b54;font-weight:800;text-decoration:none;">Read the full notice</a>.'
             . '</div>'
-            . '</td></tr>'
-            . '<tr><td style="padding:14px 24px;background:#f7f6f1;border-top:1px solid #d8d2c4;color:#686c61;font-size:11px;line-height:1.5;">'
-            . 'Psilocybin-Research.com Publication Tracker. Coverage may be incomplete; verify records before citation or clinical use.'
-            . '</td></tr>'
-            . '</table></td></tr></table></body></html>';
+            . '</td></tr>';
+        return EmailTemplate::render($content, 'Confirm your Psilocybin Research publication alert.', width: 680);
     }
 
     public function confirmationHeaders(array $subscription): array
@@ -568,12 +554,12 @@ final class AlertService
 
     public function embeddedAttachments(): array
     {
-        $path = Config::baseDir() . '/assets/mushroom-brand-mark.webp';
+        $path = Config::baseDir() . '/assets/mushroom-email-logo.png';
         return [[
             'path' => $path,
             'content_id' => self::LOGO_CID,
-            'filename' => 'psilocybin-research-mushroom.webp',
-            'content_type' => 'image/webp',
+            'filename' => 'psilocybin-research-mushroom.png',
+            'content_type' => 'image/png',
             'disposition' => 'inline',
         ]];
     }
@@ -669,14 +655,16 @@ final class AlertService
         $parts[] = 'substances: ' . ($subscription['substances'] ?? 'psilocybin,psilocin');
         foreach (['keywords', 'author', 'journal', 'topic', 'cited_doi'] as $key) {
             if (!empty($subscription[$key])) {
-                $parts[] = $key . ': ' . $subscription[$key];
+                $parts[] = $key . ': ' . (in_array($key, ['journal', 'topic'], true) ? implode(', ', AlertFilters::values($subscription[$key])) : $subscription[$key]);
             }
         }
+        if(!empty($subscription['event_types']))$parts[]='research changes: '.implode(', ',array_map(static fn($type)=>ResearchChanges::TYPES[$type],ResearchChanges::types(explode(',',$subscription['event_types']))));
         return implode('; ', $parts);
     }
 
-    public function subjectLine(array $subscription, int $count): string
+    public function subjectLine(array $subscription, int $count, int $eventCount=0): string
     {
+        if($eventCount)return $count.' new records and '.$eventCount.' research changes ('.gmdate('Y-m-d').')';
         $scope = !empty($subscription['cited_doi']) ? 'publications citing ' . $subscription['cited_doi'] : ($this->isBroadAlert($subscription) ? 'psilocybin/psilocin publications' : 'matched research publications');
         return $count . ' new ' . $scope . ' (' . gmdate('Y-m-d') . ')';
     }
@@ -695,6 +683,17 @@ final class AlertService
     private static function e(string $value): string
     {
         return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    }
+
+    private static function isPlaceholderEmail(string $email): bool
+    {
+        [$localPart, $domain] = explode('@', $email, 2);
+        $reservedDomains = ['example.com', 'example.net', 'example.org', 'example.edu', 'invalid', 'localhost', 'test'];
+        if (in_array($domain, $reservedDomains, true) || str_ends_with($domain, '.example') || str_ends_with($domain, '.invalid') || str_ends_with($domain, '.localhost') || str_ends_with($domain, '.test')) {
+            return true;
+        }
+
+        return $localPart === 'you' && $domain === 'university.edu';
     }
 
     private static function uuidV4(): string

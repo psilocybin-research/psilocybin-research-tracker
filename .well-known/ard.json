@@ -1,0 +1,89 @@
+{
+  "entries": [
+    {
+      "@context": "https://agenticresourcediscovery.org/context/v1",
+      "identifier": "urn:air:psilocybin-research.com:api:public-research",
+      "displayName": "Psilocybin Research public metadata API",
+      "type": "application/vnd.oai.openapi+json",
+      "url": "https://psilocybin-research.com/docs/research-api.openapi.json",
+      "description": "Anonymous read-only bibliographic search, registry filtering and source citations. Results preserve source labels and scientific limitations.",
+      "representativeQueries": [
+        "Find psilocybin publications about depression.",
+        "Find indexed trial registrations recruiting in Germany.",
+        "Find the original source and citation for a psilocybin publication.",
+        "Download all catalogue titles and years and verify the exported record count.",
+        "Download the complete verified public metadata as RDS data frames or compressed SQLite."
+      ],
+      "capabilities": [
+        "publication-search",
+        "trial-registry-search",
+        "citation-lookup",
+        "complete-catalogue-download",
+        "annual-publication-statistics",
+        "verified-dataset-downloads"
+      ],
+      "tags": [
+        "research",
+        "bibliography",
+        "psilocybin",
+        "clinical-trials"
+      ],
+      "metadata": {
+        "readOnly": true,
+        "documentation": "https://psilocybin-research.com/for-ai.html",
+        "impactStory": "https://ukri.psilocybin-research.com/msca-impact/",
+        "sourceGuide": "https://psilocybin-research.com/docs/research-agent-guide.md",
+        "completeCatalogue": "https://psilocybin-research.com/catalogue.php",
+        "titlesAndYears": "https://psilocybin-research.com/catalogue.php?format=txt",
+        "sourceCode": "https://github.com/psilocybin-research/psilocybin-research-tracker",
+        "archivedDataset": "https://doi.org/10.5281/zenodo.21293525",
+        "plainTextGuide": "https://psilocybin-research.com/for-ai.txt",
+        "publicDatabase": "https://psilocybin-research.com/database.php",
+        "fullMetadataCsv": "https://psilocybin-research.com/api/v1/papers?format=csv&limit=50000",
+        "fullMetadataJson": "https://psilocybin-research.com/export.php?format=json&limit=50000",
+        "researchTools": "https://psilocybin-research.com/research-hub.php",
+        "datasetManifest": "https://psilocybin-research.com/dataset-manifest.json",
+        "annualStatistics": "https://psilocybin-research.com/api/v1/statistics/publications-by-year",
+        "mcpServer": "https://psilocybin-research.com/mcp",
+        "mcpRegistry": "https://registry.modelcontextprotocol.io/v0.1/servers/com.psilocybin-research%2Fresearch/versions/latest",
+        "mcpServerMetadata": "https://psilocybin-research.com/server.json",
+        "downloadGuide": "https://psilocybin-research.com/research-dataset.php#verified-downloads",
+        "downloadFormats": "sqlite, sqlite-xz, rds, csv, json, bibtex, ris, latex, bundle, compact-json, txt, statistics-json, statistics-csv, study-links",
+        "rDataFramesGuide": "https://psilocybin-research.com/for-ai.html#compressed-sqlite-and-r-data-frames",
+        "reviewedStudyRelationships": "https://psilocybin-research.com/api/v1/study-links",
+        "workedExamples": "https://psilocybin-research.com/research-dataset.php#worked-examples"
+      }
+    },
+    {
+      "@context": "https://agenticresourcediscovery.org/context/v1",
+      "identifier": "urn:air:psilocybin-research.com:mcp:research",
+      "displayName": "Psilocybin Research MCP connector",
+      "type": "application/json",
+      "url": "https://psilocybin-research.com/mcp",
+      "description": "Public read-only research tools over MCP Streamable HTTP. Initialize and list tools using POST; direct GET is not an SSE stream.",
+      "capabilities": [
+        "publication-search",
+        "record-fetch",
+        "trial-registry-search",
+        "citation-lookup",
+        "citation-relationships",
+        "annual-publication-statistics",
+        "verified-dataset-downloads"
+      ],
+      "metadata": {
+        "protocol": "mcp",
+        "transport": "streamable-http",
+        "authentication": "none",
+        "readOnly": true,
+        "documentation": "https://psilocybin-research.com/for-ai.html#connect-using-mcp",
+        "protocolVersions": "2025-11-25, 2025-06-18, 2025-03-26",
+        "mcpRegistry": "https://registry.modelcontextprotocol.io/v0.1/servers/com.psilocybin-research%2Fresearch/versions/latest",
+        "mcpServerMetadata": "https://psilocybin-research.com/server.json"
+      },
+      "representativeQueries": [
+        "Find psilocybin research on depression, then retrieve the source metadata and citation.",
+        "Retrieve the complete verified public dataset and annual publication statistics."
+      ]
+    }
+  ]
+}

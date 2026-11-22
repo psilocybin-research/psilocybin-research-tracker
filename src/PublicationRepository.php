@@ -32,7 +32,12 @@ final class PublicationRepository
         $classificationText = $title . ' ' . ($paper['abstract'] ?? '') . ' ' . ($paper['keywords'] ?? '');
         $studyType = self::classifyStudyType($classificationText);
 
-        $existing = $this->findDuplicate($doi, $pubmedId, $normalizedTitle, $openAlexId);
+        $clinicalTrialId = ($paper['source_name'] ?? null) === 'ClinicalTrials.gov'
+            ? strtoupper(trim((string)($paper['raw']['nct_id'] ?? '')))
+            : '';
+        $existing = preg_match('/^NCT\d{8}$/', $clinicalTrialId)
+            ? $this->findClinicalTrialDuplicate($clinicalTrialId, (string)($paper['source_url'] ?? ''))
+            : $this->findDuplicate($doi, $pubmedId, $normalizedTitle, $openAlexId);
         $isOpenAlexSource = ($paper['source_name'] ?? null) === 'OpenAlex';
         if ($isOpenAlexSource && $openAlexId !== null) {
             $review = $this->openAlexReviewDecision($openAlexId);
@@ -84,6 +89,18 @@ final class PublicationRepository
             if (!empty($existing['curation_locked'])) {
                 foreach (['substance_tags', 'topic_tags', 'study_type'] as $curatedField) {
                     $payload[$curatedField] = $existing[$curatedField] ?? $payload[$curatedField];
+                }
+                $storedRaw = json_decode((string)($existing['raw_json'] ?? ''), true) ?: [];
+                $curated = (array)($storedRaw['tracker_bibliographic_curation']['fields'] ?? []);
+                foreach (array_intersect($curated, ['title', 'authors', 'journal', 'publication_date', 'source_url', 'publication_status', 'doi']) as $field) {
+                    $payload[$field] = $existing[$field];
+                    if ($field === 'title') $payload['normalized_title'] = $existing['normalized_title'];
+                    if ($field === 'publication_date') $payload['publication_year'] = $existing['publication_year'];
+                }
+                if ($curated) {
+                    $incomingRaw = json_decode((string)($payload['raw_json'] ?? ''), true) ?: [];
+                    $incomingRaw['tracker_bibliographic_curation'] = $storedRaw['tracker_bibliographic_curation'];
+                    $payload['raw_json'] = json_encode($incomingRaw, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
                 }
             }
             if ($doi !== null) {
@@ -203,7 +220,7 @@ final class PublicationRepository
             return false;
         }
 
-        $allowed = ['title', 'authors', 'journal', 'publication_date', 'source_url', 'publication_status'];
+        $allowed = ['title', 'authors', 'journal', 'publication_date', 'source_url', 'publication_status', 'doi'];
         $replaceFields = array_values(array_intersect($allowed, $replaceFields));
         $updates = [];
         foreach ($allowed as $field) {
@@ -212,6 +229,14 @@ final class PublicationRepository
             }
             $replace = in_array($field, $replaceFields, true);
             if (!$replace && trim((string)($existing[$field] ?? '')) !== '') {
+                continue;
+            }
+            if ($field === 'doi') {
+                $value = normalize_doi((string)$fields[$field]);
+                if ($value === null || !preg_match('~^10\.\d{4,9}/\S+$~iD', $value)) {
+                    throw new InvalidArgumentException('A curated DOI must have valid syntax and source verification.');
+                }
+                $updates[$field] = $value;
                 continue;
             }
             if ($field === 'publication_date') {
@@ -241,6 +266,13 @@ final class PublicationRepository
         if ($updates === []) {
             return false;
         }
+
+        $raw = json_decode((string)($existing['raw_json'] ?? ''), true) ?: [];
+        $raw['tracker_bibliographic_curation']['fields'] = array_values(array_unique(array_merge(
+            (array)($raw['tracker_bibliographic_curation']['fields'] ?? []),
+            array_values(array_intersect(array_keys($updates), $allowed))
+        )));
+        $updates['raw_json'] = json_encode($raw, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
         $existingNote = trim((string)($existing['curation_notes'] ?? ''));
         $note = clean_scientific_text($note);
@@ -633,6 +665,24 @@ final class PublicationRepository
         return null;
     }
 
+    private function findClinicalTrialDuplicate(string $nctId, string $sourceUrl): ?array
+    {
+        $sourceUrl = trim($sourceUrl);
+        if ($sourceUrl !== '') {
+            $row = $this->one(
+                'SELECT * FROM publications WHERE source_name = :source_name AND source_url = :source_url ORDER BY hidden, false_positive, id LIMIT 1',
+                ['source_name' => 'ClinicalTrials.gov', 'source_url' => $sourceUrl]
+            );
+            if ($row !== null) {
+                return $row;
+            }
+        }
+        return $this->one(
+            'SELECT * FROM publications WHERE source_name = :source_name AND raw_json LIKE :nct_id ORDER BY hidden, false_positive, id LIMIT 1',
+            ['source_name' => 'ClinicalTrials.gov', 'nct_id' => '%"nct_id":"' . $nctId . '"%']
+        );
+    }
+
     private function bestDuplicate(string $where, array $params): ?array
     {
         return $this->one(
@@ -661,9 +711,6 @@ final class PublicationRepository
     public function search(array $filters): array
     {
         [$where, $params] = $this->whereClause($filters);
-        $sortKey = (string)($filters['sort'] ?? 'newest');
-        $sort = $sortKey === 'oldest' ? 'ASC' : 'DESC';
-        $orderColumn = $sortKey === 'newly_added' ? 'date_added' : 'publication_date';
         $perPage = (string)($filters['per_page'] ?? '20');
         $showAll = mb_strtolower($perPage, 'UTF-8') === 'all';
 
@@ -672,10 +719,18 @@ final class PublicationRepository
         $total = (int)$countStmt->fetchColumn();
 
         $limit = $showAll ? max($total, 1) : min(max((int)$perPage, 5), 200);
-        $page = $showAll ? 1 : max((int)($filters['page'] ?? 1), 1);
+        $page = $showAll ? 1 : min(max((int)($filters['page'] ?? 1), 1), max(1, (int)ceil($total / $limit)));
         $offset = $showAll ? 0 : (($page - 1) * $limit);
 
-        $sql = 'SELECT * FROM publications ' . $where . ' ORDER BY ' . $orderColumn . ' ' . $sort . ', id ' . $sort . ' LIMIT :limit OFFSET :offset';
+        // The result list only needs public bibliographic metadata. In particular,
+        // avoid reading raw_json and full source text for every displayed row; those
+        // fields can be substantially larger than the rendered result itself.
+        $columns = 'id, title, authors, journal, publication_date, publication_year,
+                    doi, pubmed_id, openalex_id, source_url, substance_tags, topic_tags,
+                    study_type, source_name, publication_status, date_added, last_checked,
+                    CASE WHEN abstract IS NOT NULL AND TRIM(abstract) != \'\' THEN \'1\' ELSE \'\' END AS abstract';
+        $order = $this->searchOrder($filters, $params);
+        $sql = 'SELECT ' . $columns . ' FROM publications ' . $where . ' ORDER BY ' . $order . ' LIMIT :limit OFFSET :offset';
         $stmt = $this->db->pdo()->prepare($sql);
         foreach ($params as $key => $value) {
             $stmt->bindValue(':' . $key, $value);
@@ -693,17 +748,51 @@ final class PublicationRepository
         ];
     }
 
+    /** Exact bibliographic identities precede secondary text/reference matches. */
+    private function searchOrder(array $filters, array &$params): string
+    {
+        $key = (string)($filters['sort'] ?? 'newest');
+        $direction = $key === 'oldest' ? 'ASC' : 'DESC';
+        $dateColumn = $key === 'newly_added' ? 'date_added' : 'publication_date';
+        $fallback = $dateColumn . ' ' . $direction . ', id ' . $direction;
+        $query = trim((string)($filters['q'] ?? ''));
+        if ($query === '') return $fallback;
+        $exact = [];
+        $title = normalize_title(clean_scientific_text($query));
+        if ($title !== '') {
+            $exact[] = 'normalized_title = :rank_title';
+            $params['rank_title'] = $title;
+        }
+        $doi = normalize_doi($query);
+        if ($doi !== null) {
+            $exact[] = 'doi = :rank_doi';
+            $params['rank_doi'] = $doi;
+        }
+        if (preg_match('~^(?:(?:PMID\s*:?\s*)?|https?://pubmed\.ncbi\.nlm\.nih\.gov/)(\d{5,})/?$~i', $query, $match)) {
+            $exact[] = 'pubmed_id = :rank_pmid';
+            $params['rank_pmid'] = $match[1];
+        }
+        $openAlex = self::normalizeOpenAlexId($query);
+        if ($openAlex !== null) {
+            $exact[] = 'openalex_id = :rank_openalex';
+            $params['rank_openalex'] = $openAlex;
+        }
+        return ($exact ? 'CASE WHEN (' . implode(' OR ', $exact) . ') THEN 0 ELSE 1 END, ' : '') . $fallback;
+    }
+
     public function stats(): array
     {
-        $pdo = $this->db->pdo();
-        $journalWhere = $this->formalJournalWhere();
-        return [
-            'total' => (int)$pdo->query('SELECT COUNT(*) FROM publications WHERE hidden = 0 AND false_positive = 0')->fetchColumn(),
-            'psilocybin' => (int)$pdo->query("SELECT COUNT(*) FROM publications WHERE substance_tags LIKE '%psilocybin%' AND hidden = 0 AND false_positive = 0")->fetchColumn(),
-            'psilocin' => (int)$pdo->query("SELECT COUNT(*) FROM publications WHERE substance_tags LIKE '%psilocin%' AND hidden = 0 AND false_positive = 0")->fetchColumn(),
-            'journals' => (int)$pdo->query('SELECT COUNT(DISTINCT journal) FROM publications WHERE ' . $journalWhere)->fetchColumn(),
-            'last_checked' => $pdo->query("SELECT MAX(last_checked) FROM publications")->fetchColumn() ?: null,
-        ];
+        return PublicAggregateCache::remember($this->db, 'stats', function (): array {
+            $pdo = $this->db->pdo();
+            $journalWhere = $this->formalJournalWhere();
+            return [
+                'total' => (int)$pdo->query('SELECT COUNT(*) FROM publications WHERE hidden = 0 AND false_positive = 0')->fetchColumn(),
+                'psilocybin' => (int)$pdo->query("SELECT COUNT(*) FROM publications WHERE substance_tags LIKE '%psilocybin%' AND hidden = 0 AND false_positive = 0")->fetchColumn(),
+                'psilocin' => (int)$pdo->query("SELECT COUNT(*) FROM publications WHERE substance_tags LIKE '%psilocin%' AND hidden = 0 AND false_positive = 0")->fetchColumn(),
+                'journals' => (int)$pdo->query('SELECT COUNT(DISTINCT journal) FROM publications WHERE ' . $journalWhere)->fetchColumn(),
+                'last_checked' => $pdo->query("SELECT MAX(last_checked) FROM publications")->fetchColumn() ?: null,
+            ];
+        });
     }
 
     public function latest(int $limit = 5, int $offset = 0): array
@@ -717,7 +806,9 @@ final class PublicationRepository
 
     public function journals(): array
     {
-        return $this->db->pdo()->query('SELECT journal, COUNT(*) count FROM publications WHERE ' . $this->formalJournalWhere() . ' GROUP BY journal ORDER BY journal LIMIT 500')->fetchAll();
+        return PublicAggregateCache::remember($this->db, 'journals', function (): array {
+            return $this->db->pdo()->query('SELECT journal, COUNT(*) count FROM publications WHERE ' . $this->formalJournalWhere() . ' GROUP BY journal ORDER BY LOWER(journal), journal')->fetchAll();
+        });
     }
 
     public function authors(?string $query = null, int $limit = 100): array
@@ -737,14 +828,31 @@ final class PublicationRepository
             'substances' => array_filter(explode(',', (string)$subscription['substances'])),
             'q' => $subscription['keywords'] ?: null,
             'author' => $subscription['author'] ?: null,
-            'journal' => $subscription['journal'] ?: null,
-            'topic' => $subscription['topic'] ?: null,
+            'journal' => AlertFilters::values($subscription['journal'] ?? null),
+            'topic' => AlertFilters::values($subscription['topic'] ?? null),
             'cited_doi' => $subscription['cited_doi'] ?: null,
             'per_page' => 100,
             'page' => 1,
         ];
         $result = $this->search($filters);
         return $result['rows'];
+    }
+
+    public function recentForPush(array $subscription, string $since, string $until): array
+    {
+        [$where, $params] = $this->whereClause([
+            'substances' => explode(',', (string)$subscription['substances']),
+            'q' => $subscription['keywords'] ?? null,
+            'author' => $subscription['author'] ?? null,
+            'journal' => $subscription['journal'] ?? null,
+            'topic' => $subscription['topic'] ?? null,
+            'cited_doi' => $subscription['cited_doi'] ?? null,
+        ]);
+        // A half-open import window prevents duplicate notifications at its boundary.
+        $stmt = $this->db->pdo()->prepare('SELECT id, title FROM publications ' . $where
+            . ' AND date_added >= :push_since AND date_added < :push_until ORDER BY date_added DESC, id DESC');
+        $stmt->execute($params + ['push_since' => $since, 'push_until' => $until]);
+        return $stmt->fetchAll();
     }
 
     public static function detectSubstances(string $text): string
@@ -766,6 +874,11 @@ final class PublicationRepository
     {
         $where = [];
         $params = [];
+        if (!empty($filters['notification'])) {
+            $where[] = 'id IN (SELECT CAST(value AS INTEGER) FROM push_notification_batches, json_each(paper_ids) WHERE push_notification_batches.id = :notification_batch)';
+            $params['notification_batch'] = (string)$filters['notification'];
+        }
+
 
         if (!empty($filters['q'])) {
             $queryParts = [];
@@ -780,7 +893,17 @@ final class PublicationRepository
                 $params['q'] = '%' . str_replace(['%', '_'], ['\\%', '\\_'], (string)$filters['q']) . '%';
             }
             $this->appendIdentifierSearchParts($queryParts, $params, (string)$filters['q'], 'q');
-            $this->appendAuthorSearchParts($queryParts, $params, (string)$filters['q'], 'q_author');
+            $titleKey = normalize_title(clean_scientific_text((string)$filters['q']));
+            if ($titleKey !== '') {
+                $queryParts[] = 'normalized_title = :q_title';
+                $params['q_title'] = $titleKey;
+            }
+            // Long pasted titles are not person names. Author filters still use
+            // the full alias workflow, including longer names.
+            preg_match_all('/[\p{L}\p{N}\-]+/u', (string)$filters['q'], $queryTokens);
+            if (count($queryTokens[0] ?? []) <= 5 && preg_match('/^[\p{L}\s.\x{2019}\x{0027},-]+$/u', (string)$filters['q'])) {
+                $this->appendAuthorSearchParts($queryParts, $params, (string)$filters['q'], 'q_author');
+            }
             if ($queryParts) {
                 $where[] = '(' . implode(' OR ', $queryParts) . ')';
             } else {
@@ -797,17 +920,21 @@ final class PublicationRepository
             }
         }
         if (!empty($filters['topic'])) {
-            $where[] = '(topic_tags LIKE :topic OR id IN (SELECT publication_id FROM publication_topics WHERE topic LIKE :topic OR topic_key LIKE :topic_key))';
-            $params['topic'] = '%' . str_replace(['%', '_'], ['\\%', '\\_'], (string)$filters['topic']) . '%';
-            $params['topic_key'] = '%' . self::metadataKey((string)$filters['topic']) . '%';
+            $topicParts = [];
+            foreach (AlertFilters::values($filters['topic']) as $i => $topic) {
+                $topicParts[] = "(topic_tags LIKE :topic_$i OR id IN (SELECT publication_id FROM publication_topics WHERE topic LIKE :topic_$i OR topic_key LIKE :topic_key_$i))";
+                $params["topic_$i"] = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $topic) . '%';
+                $params["topic_key_$i"] = '%' . self::metadataKey($topic) . '%';
+            }
+            if ($topicParts) $where[] = '(' . implode(' OR ', $topicParts) . ')';
         }
         if (!empty($filters['cited_doi'])) {
             $citedDoi = normalize_doi((string)$filters['cited_doi']);
             if ($citedDoi === null) {
                 $where[] = 'id = -1';
             } else {
-                $where[] = 'raw_json LIKE :cited_doi';
-                $params['cited_doi'] = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $citedDoi) . '%';
+                $ids = CitationIndex::citingIds($this->db, $citedDoi);
+                $where[] = $ids ? '(merged_into_id IS NULL AND id IN (' . implode(',', $ids) . '))' : 'id = -1';
             }
         }
         if (!empty($filters['study_type'])) {
@@ -867,8 +994,12 @@ final class PublicationRepository
             $params['year'] = (int)$filters['year'];
         }
         if (!empty($filters['journal'])) {
-            $where[] = 'journal = :journal';
-            $params['journal'] = (string)$filters['journal'];
+            $journalParts = [];
+            foreach (AlertFilters::values($filters['journal']) as $i => $journal) {
+                $journalParts[] = "journal = :journal_$i";
+                $params["journal_$i"] = $journal;
+            }
+            if ($journalParts) $where[] = '(' . implode(' OR ', $journalParts) . ')';
         }
         if (!empty($filters['from'])) {
             $where[] = 'publication_date >= :from_date';
@@ -1044,12 +1175,18 @@ final class PublicationRepository
         return array_values(array_unique($patterns));
     }
 
-    public function allForExport(array $filters, int $limit = 5000): array
+    public function allForExport(array $filters, int $limit = PHP_INT_MAX): array
     {
         [$where, $params] = $this->whereClause($filters);
-        $sort = ($filters['sort'] ?? 'newest') === 'oldest' ? 'ASC' : 'DESC';
-        $limit = min(max($limit, 1), 50000);
-        $sql = 'SELECT * FROM publications ' . $where . ' ORDER BY publication_date ' . $sort . ', id ' . $sort . ' LIMIT :limit';
+        $limit = max($limit, 1);
+        $order = $this->searchOrder($filters, $params);
+        // Export only the public core: large importer payloads and source text
+        // need not enter PHP memory to serialize bibliographic downloads.
+        $sql = 'SELECT id, title, authors, journal, publication_date, publication_year,
+            doi, pubmed_id, openalex_id, source_url, substance_tags, topic_tags,
+            study_type, source_name, publication_status, date_added, last_checked,
+            CASE WHEN abstract IS NOT NULL AND TRIM(abstract) != "" THEN 1 ELSE 0 END abstract_available
+            FROM publications ' . $where . ' ORDER BY ' . $order . ' LIMIT :limit';
         $stmt = $this->db->pdo()->prepare($sql);
         foreach ($params as $key => $value) {
             $stmt->bindValue(':' . $key, $value);
@@ -1061,28 +1198,36 @@ final class PublicationRepository
 
     public function topics(): array
     {
-        return $this->splitCounts('topic_tags');
+        return PublicAggregateCache::remember($this->db, 'topics', function (): array {
+            return $this->splitCounts('topic_tags');
+        });
     }
 
     public function studyTypes(): array
     {
-        return $this->db->pdo()->query("SELECT study_type, COUNT(*) count FROM publications WHERE study_type IS NOT NULL AND study_type != '' AND hidden = 0 AND false_positive = 0 GROUP BY study_type ORDER BY count DESC, study_type")->fetchAll();
+        return PublicAggregateCache::remember($this->db, 'study-types', function (): array {
+            return $this->db->pdo()->query("SELECT study_type, COUNT(*) count FROM publications WHERE study_type IS NOT NULL AND study_type != '' AND hidden = 0 AND false_positive = 0 GROUP BY study_type ORDER BY count DESC, study_type")->fetchAll();
+        });
     }
 
     public function sources(): array
     {
-        return $this->db->pdo()->query("SELECT COALESCE(NULLIF(source_name, ''), 'Unknown') source_name, COUNT(*) count FROM publications WHERE hidden = 0 AND false_positive = 0 GROUP BY COALESCE(NULLIF(source_name, ''), 'Unknown') ORDER BY CASE WHEN COALESCE(NULLIF(source_name, ''), 'Unknown') = 'PubMed' THEN 0 ELSE 1 END, count DESC, source_name")->fetchAll();
+        return PublicAggregateCache::remember($this->db, 'sources', function (): array {
+            return $this->db->pdo()->query("SELECT COALESCE(NULLIF(source_name, ''), 'Unknown') source_name, COUNT(*) count FROM publications WHERE hidden = 0 AND false_positive = 0 GROUP BY COALESCE(NULLIF(source_name, ''), 'Unknown') ORDER BY CASE WHEN COALESCE(NULLIF(source_name, ''), 'Unknown') = 'PubMed' THEN 0 ELSE 1 END, count DESC, source_name")->fetchAll();
+        });
     }
 
     public function publicationStatuses(): array
     {
-        return $this->db->pdo()->query("SELECT publication_status, COUNT(*) count FROM publications WHERE publication_status IS NOT NULL AND publication_status != '' AND hidden = 0 AND false_positive = 0 GROUP BY publication_status ORDER BY count DESC, publication_status")->fetchAll();
+        return PublicAggregateCache::remember($this->db, 'statuses', function (): array {
+            return $this->db->pdo()->query("SELECT publication_status, COUNT(*) count FROM publications WHERE publication_status IS NOT NULL AND publication_status != '' AND hidden = 0 AND false_positive = 0 GROUP BY publication_status ORDER BY count DESC, publication_status")->fetchAll();
+        });
     }
 
     public static function publicationStatusOptions(): array
     {
         return [
-            'published' => 'Published / peer reviewed',
+            'published' => 'Published records',
             'preprint' => 'Preprint (not peer reviewed)',
             'clinical trial' => 'Clinical trial',
             'protocol' => 'Protocol',
@@ -1117,19 +1262,25 @@ final class PublicationRepository
         return 'published';
     }
 
-    public function analytics(): array
+    public function analytics(bool $includePapers = true): array
     {
+        $analytics = PublicAggregateCache::remember($this->db, 'analytics', function (): array {
+            $pdo = $this->db->pdo();
+            $journalWhere = $this->formalJournalWhere();
+            return [
+                'trends' => $pdo->query("SELECT publication_year year, COUNT(*) count FROM publications WHERE publication_year IS NOT NULL AND hidden = 0 AND false_positive = 0 GROUP BY publication_year ORDER BY publication_year")->fetchAll(),
+                'timeline' => $pdo->query("SELECT publication_date date, COUNT(*) count FROM publications WHERE publication_date IS NOT NULL AND hidden = 0 AND false_positive = 0 GROUP BY publication_date ORDER BY publication_date")->fetchAll(),
+                'top_journals' => $pdo->query('SELECT journal, COUNT(*) count FROM publications WHERE ' . $journalWhere . ' GROUP BY journal ORDER BY count DESC, journal LIMIT 10')->fetchAll(),
+                'study_types' => $this->studyTypes(),
+                'topics' => array_slice($this->topics(), 0, 12),
+                'top_authors' => $this->topAuthors(10),
+            ];
+        });
         $pdo = $this->db->pdo();
-        $journalWhere = $this->formalJournalWhere();
-        return [
-            'trends' => $pdo->query("SELECT publication_year year, COUNT(*) count FROM publications WHERE publication_year IS NOT NULL AND hidden = 0 AND false_positive = 0 GROUP BY publication_year ORDER BY publication_year")->fetchAll(),
-            'timeline' => $pdo->query("SELECT publication_date date, COUNT(*) count FROM publications WHERE publication_date IS NOT NULL AND hidden = 0 AND false_positive = 0 GROUP BY publication_date ORDER BY publication_date")->fetchAll(),
-            'timeline_papers' => $pdo->query("SELECT id, title, authors, journal, publication_date, publication_year, doi, pubmed_id, openalex_id, source_url, source_name, publication_status, substance_tags, topic_tags, study_type, date_added, last_checked, CASE WHEN abstract IS NOT NULL AND TRIM(abstract) != '' THEN 1 ELSE 0 END abstract_available FROM publications WHERE publication_date IS NOT NULL AND hidden = 0 AND false_positive = 0 ORDER BY publication_date DESC, title")->fetchAll(),
-            'top_journals' => $pdo->query('SELECT journal, COUNT(*) count FROM publications WHERE ' . $journalWhere . ' GROUP BY journal ORDER BY count DESC, journal LIMIT 10')->fetchAll(),
-            'study_types' => $this->studyTypes(),
-            'topics' => array_slice($this->topics(), 0, 12),
-            'top_authors' => $this->topAuthors(10),
-        ];
+        if ($includePapers) {
+            $analytics['timeline_papers'] = $pdo->query("SELECT id, title, authors, journal, publication_date, publication_year, doi, pubmed_id, openalex_id, source_url, source_name, publication_status, substance_tags, topic_tags, study_type, date_added, last_checked, CASE WHEN abstract IS NOT NULL AND TRIM(abstract) != '' THEN 1 ELSE 0 END abstract_available FROM publications WHERE publication_date IS NOT NULL AND hidden = 0 AND false_positive = 0 ORDER BY publication_date DESC, title")->fetchAll();
+        }
+        return $analytics;
     }
 
     public function findById(int $id): ?array
@@ -1176,6 +1327,7 @@ final class PublicationRepository
         $years = [];
         $orcid = null;
         $openAlexId = null;
+        $authorMetadata = $this->db->pdo()->prepare('SELECT raw_json FROM publications WHERE id = :id');
         foreach ($papers['rows'] as $paper) {
             foreach (array_filter(array_map('trim', explode(',', (string)($paper['topic_tags'] ?? '')))) as $topic) {
                 $topics[$topic] = ($topics[$topic] ?? 0) + 1;
@@ -1188,7 +1340,8 @@ final class PublicationRepository
             if ($year !== '') {
                 $years[$year] = ($years[$year] ?? 0) + 1;
             }
-            $identifiers = self::authorIdentifiersFromRaw((string)($paper['raw_json'] ?? ''), $name);
+            $authorMetadata->execute(['id' => (int)$paper['id']]);
+            $identifiers = self::authorIdentifiersFromRaw((string)$authorMetadata->fetchColumn(), $name);
             if ($orcid === null && $identifiers['orcid'] !== null) {
                 $orcid = $identifiers['orcid'];
             }
@@ -1325,21 +1478,7 @@ final class PublicationRepository
 
     public function citedReferences(array $paper, int $limit = 30): array
     {
-        $raw = json_decode((string)($paper['raw_json'] ?? ''), true);
-        if (!is_array($raw)) {
-            return [];
-        }
-        $dois = [];
-        foreach (['reference_dois', 'references'] as $key) {
-            foreach ((array)($raw[$key] ?? []) as $item) {
-                $doi = is_array($item) ? ($item['doi'] ?? null) : $item;
-                $doi = normalize_doi(is_string($doi) ? $doi : null);
-                if ($doi !== null) {
-                    $dois[$doi] = true;
-                }
-            }
-        }
-        return array_slice(array_keys($dois), 0, max(1, min($limit, 100)));
+        return array_slice(CitationIndex::directDois($paper), 0, max(1, $limit));
     }
 
     public function citingPapers(string $doi, int $limit = 20): array
@@ -1348,9 +1487,10 @@ final class PublicationRepository
         if ($doi === null) {
             return [];
         }
-        $stmt = $this->db->pdo()->prepare('SELECT * FROM publications WHERE hidden = 0 AND false_positive = 0 AND raw_json LIKE :doi ORDER BY publication_date DESC, id DESC LIMIT :limit');
-        $stmt->bindValue(':doi', '%' . str_replace(['%', '_'], ['\\%', '\\_'], $doi) . '%');
-        $stmt->bindValue(':limit', max(1, min($limit, 100)), PDO::PARAM_INT);
+        $ids = CitationIndex::citingIds($this->db, $doi);
+        if (!$ids) return [];
+        $stmt = $this->db->pdo()->prepare('SELECT * FROM publications WHERE hidden = 0 AND false_positive = 0 AND merged_into_id IS NULL AND id IN (' . implode(',', $ids) . ') ORDER BY publication_date DESC, id DESC LIMIT :limit');
+        $stmt->bindValue(':limit', max(1, $limit), PDO::PARAM_INT);
         $stmt->execute();
         return array_map('clean_paper', $stmt->fetchAll());
     }
@@ -1384,7 +1524,7 @@ final class PublicationRepository
             $filters['per_page'] = $limit;
             $filters['page'] = 1;
             $result = $this->search($filters);
-            $seedRows = $result['rows'];
+            $seedRows = $this->publicByIds(array_column($result['rows'], 'id'));
         }
 
         $seedRows = array_slice(array_values($seedRows), 0, $limit);
@@ -1426,10 +1566,10 @@ final class PublicationRepository
                 'weight' => $weight,
             ];
         };
-        $paperNodePayload = function (array $paper, float $weight, array $extra = []): array {
+        $paperNodePayload = function (array $paper, float $weight, array $extra = [], bool $includeRelated = false): array {
             $paperIdValue = (int)($paper['id'] ?? 0);
             $related = [];
-            if ($paperIdValue > 0) {
+            if ($includeRelated && $paperIdValue > 0) {
                 foreach ($this->relatedPapers($paper, 5) as $relatedPaper) {
                     $related[] = [
                         'id' => (int)$relatedPaper['id'],
@@ -1460,7 +1600,7 @@ final class PublicationRepository
             ] + $extra;
         };
 
-        foreach ($seedRows as $paper) {
+        foreach ($seedRows as $seedIndex => $paper) {
             $paperIdValue = (int)($paper['id'] ?? 0);
             if ($paperIdValue <= 0) {
                 continue;
@@ -1474,7 +1614,8 @@ final class PublicationRepository
             if ($openAlexId !== null) {
                 $internalByOpenAlex[$openAlexId] = $paper;
             }
-            $addNode($nodeId, $paperNodePayload($paper, 2 + min(8, max(0, (int)$this->rawCitationCount($paper))), ['seed' => true]));
+            $includeRelated = $seedIndex === 0 || ($paperId > 0 && $paperIdValue === $paperId);
+            $addNode($nodeId, $paperNodePayload($paper, 2 + min(8, max(0, (int)$this->rawCitationCount($paper))), ['seed' => true], $includeRelated));
 
             foreach (array_slice(self::splitMetadataList((string)($paper['authors'] ?? '')), 0, 4) as $author) {
                 $authorNode = 'author:' . normalize_title($author);
@@ -1821,6 +1962,13 @@ final class PublicationRepository
 
     private function authorCounts(int $limit, ?string $query = null): array
     {
+        if (trim((string)$query) !== '') return $this->uncachedAuthorCounts($limit, $query);
+        $rows = PublicAggregateCache::remember($this->db, 'authors', fn(): array => $this->uncachedAuthorCounts(500));
+        return array_slice($rows, 0, max(1, min($limit, 500)));
+    }
+
+    private function uncachedAuthorCounts(int $limit, ?string $query = null): array
+    {
         if ($this->normalizedTableHasRows('publication_authors')) {
             $limit = max(1, min($limit, 500));
             return $this->canonicalAuthorCounts($limit, $query);
@@ -2152,6 +2300,6 @@ final class PublicationRepository
         }
         return implode(' AND ', array_map(static function (string $term): string {
             return '"' . str_replace('"', '""', $term) . '"';
-        }, array_slice($terms, 0, 8)));
+        }, array_slice($terms, 0, 64)));
     }
 }

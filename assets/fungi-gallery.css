@@ -30,3 +30,5 @@
 @media(max-height:480px){.gallery-dots{top:10px}}
 @media(prefers-reduced-motion:reduce){.gallery-dots span{transition:none}}
 #fullscreen{mix-blend-mode:hard-light}#fullscreen[aria-pressed=true]{mix-blend-mode:normal}
+
+.gallery-dots{max-width:calc(100% - 32px)}.gallery-dots button{width:clamp(16px,2.5vw,28px);flex:1 1 28px;min-width:0}
