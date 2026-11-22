@@ -1,6 +1,6 @@
 # Controlled Alfahosting release
 
-This is a **manual-only** SFTP workflow. It is not activated until its pull requests are reviewed and merged, the production environment is protected, and environment secrets are configured.
+This is an **explicitly requested** SFTP workflow (manual GitHub Actions dispatch or commit-pinned owner PR comment). It is not activated until its pull requests are reviewed and merged, the production environment is protected, and environment secrets are configured.
 
 ## Protection requirements
 
@@ -12,13 +12,23 @@ Configure these **environment secrets**:
 | --- | --- |
 | `ALFA_HOST` | Alfahosting SFTP hostname |
 | `ALFA_USER` | Alfahosting SFTP username |
-| `ALFA_PASSWORD` | SFTP password |
+| `ALFA_PRIVATE_KEY` | Dedicated Ed25519 deployment private key (preferred; never use your personal key) |
+| `ALFA_PRIVATE_KEY_PASSPHRASE` | Optional passphrase for that dedicated private key |
+| `ALFA_PASSWORD` | Password, only if explicitly choosing the locked password method |
+| `ALFA_ALLOW_PASSWORD_AUTH` | Optional explicit password method unlock, exactly `yes` |
 | `ALFA_HOST_KEY` | Independently verified OpenSSH known-hosts entry |
 | `ALFA_DOCUMENT_ROOT` | Existing SFTP document root for the domain |
 | `ALFA_PRIVATE_RELEASE_ROOT` | Existing writable directory **outside** the web document root for retained code backups |
 | `ALFA_PRODUCTION_DEPLOY_ENABLED` | Optional lock: set to exactly `yes` only after review, preflight, and backup drills |
 
 Verify the host key fingerprint using an independent Alfahosting channel. Do not accept an unverified first-use fingerprint. Use a dedicated, narrowly scoped deployment account if the hosting plan permits it; otherwise recognize that the main SFTP login is highly privileged.
+
+
+Default to `ALFA_AUTH_METHOD=key` (a GitHub **environment variable**, or leave unset). Supply `ALFA_PRIVATE_KEY` and optionally its passphrase; do not configure `ALFA_PASSWORD` simultaneously. The dedicated Ed25519 private key is parsed only in memory. Agent and local-key discovery are disabled. The server key is checked against the exact SSH hostname with Paramiko's reject-unknown-host policy.
+
+**Password alternative:** Only when key enrollment is unavailable, set the environment variable `ALFA_AUTH_METHOD=password`, set the environment secrets `ALFA_PASSWORD` and `ALFA_ALLOW_PASSWORD_AUTH=yes`, and leave `ALFA_PRIVATE_KEY` unset. A failed key attempt cannot silently fall back to password login.
+
+The existing local user's successful key-only SSH command demonstrates that public-key login works for that *local* account, but does not independently authenticate the server's pinned host key. Before storing `ALFA_HOST_KEY`, obtain independent verification of the precise SSH fingerprint. Do not use FileZilla TLS certificate fingerprints in its place.
 
 The SFTP path `ALFA_PRIVATE_RELEASE_ROOT` must exist before the deploy run. It must not equal, contain, or be contained by the web document root. Use private directory permissions. Ensure available disk quota and inodes for the changed-file snapshots.
 
