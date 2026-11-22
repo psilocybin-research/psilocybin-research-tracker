@@ -5,7 +5,8 @@ import os
 import posixpath
 import stat
 import sys
-import tempfile
+
+from alfahosting_auth import connect
 
 
 def validated_root(value):
@@ -17,28 +18,9 @@ def validated_root(value):
 
 
 def verify():
-    import paramiko
-
-    names = ("ALFA_HOST", "ALFA_USER", "ALFA_PASSWORD", "ALFA_HOST_KEY", "ALFA_DOCUMENT_ROOT")
-    config = {name: os.environ.get(name, "") for name in names}
-    if not all(config.values()):
-        raise ValueError("Missing required configuration")
-    root = validated_root(config["ALFA_DOCUMENT_ROOT"])
-
-    client = paramiko.SSHClient()
-    with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8") as keys:
-        os.chmod(keys.name, 0o600)
-        keys.write(config["ALFA_HOST_KEY"].rstrip() + "\n")
-        keys.flush()
-        client.load_host_keys(keys.name)
-    client.set_missing_host_key_policy(paramiko.RejectPolicy())
+    root = validated_root(os.environ.get("ALFA_DOCUMENT_ROOT", ""))
+    client = connect()
     try:
-        client.connect(
-            hostname=config["ALFA_HOST"], port=22,
-            username=config["ALFA_USER"], password=config["ALFA_PASSWORD"],
-            look_for_keys=False, allow_agent=False,
-            timeout=20, auth_timeout=20, banner_timeout=20,
-        )
         with client.open_sftp() as sftp:
             for name, predicate in (
                 ("", stat.S_ISDIR),
