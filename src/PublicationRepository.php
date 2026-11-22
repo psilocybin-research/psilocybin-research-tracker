@@ -727,7 +727,7 @@ final class PublicationRepository
         // fields can be substantially larger than the rendered result itself.
         $columns = 'id, title, authors, journal, publication_date, publication_year,
                     doi, pubmed_id, openalex_id, source_url, substance_tags, topic_tags,
-                    study_type, source_name, publication_status, date_added, last_checked,
+                    study_type, source_name, publication_status, curation_locked, date_added, last_checked,
                     CASE WHEN abstract IS NOT NULL AND TRIM(abstract) != \'\' THEN \'1\' ELSE \'\' END AS abstract';
         $order = $this->searchOrder($filters, $params);
         $sql = 'SELECT ' . $columns . ' FROM publications ' . $where . ' ORDER BY ' . $order . ' LIMIT :limit OFFSET :offset';
